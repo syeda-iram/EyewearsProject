@@ -1,0 +1,85 @@
+﻿@model List<ReviewListItemViewModel>
+
+<div class="mb-4">
+    <h3 class="mb-1">Reviews</h3>
+    <p class="text-muted mb-0">@ViewBag.PendingCount pending approval.</p>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-4">
+            <select name="filter" class="form-select" onchange="this.form.submit()">
+                <option value="">All Reviews</option>
+                <option value="pending" selected="@("pending" == (string)ViewBag.CurrentFilter)">Pending</option>
+                <option value="approved" selected="@("approved" == (string)ViewBag.CurrentFilter)">Approved</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<table class="table table-bordered bg-white align-middle">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Customer</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.ProductName</td>
+                <td>
+                    <div>@r.CustomerName</div>
+                    <div class="text-muted small">@r.CustomerEmail</div>
+                </td>
+                <td>
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <span style="color:@(i < r.Rating ? "#f5a623" : "#ddd");">&#9733;</span>
+                    }
+                </td>
+                <td style="max-width:280px;">@r.Comment</td>
+                <td>
+                    @if (r.IsApproved)
+                    {
+                        <span class="badge bg-success">Approved</span>
+                    }
+                    else
+                    {
+
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    }
+                </td>
+                <td>@r.CreatedAt.ToString("dd MMM yyyy")</td>
+                <td class="d-flex gap-1">
+                    @if (!r.IsApproved)
+                    {
+                        <form asp-action="Approve" asp-route-id="@r.Id" asp-route-filter="@ViewBag.CurrentFilter" method="post">
+                            <button class="btn btn-sm btn-outline-success">Approve</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Reject" asp-route-id="@r.Id" asp-route-filter="@ViewBag.CurrentFilter" method="post">
+                            <button class="btn btn-sm btn-outline-warning">Hide</button>
+                        </form>
+                    }
+                    <form asp-action="Delete" asp-route-id="@r.Id" asp-route-filter="@ViewBag.CurrentFilter" method="post" onsubmit="return confirm('Delete this review?');">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No reviews yet.</p>
+}

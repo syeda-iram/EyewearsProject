@@ -1,0 +1,15 @@
+﻿@model Brand
+<h4>Edit Brand</h4>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" style="max-width:420px;">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="LogoUrl" class="form-label">Logo URL</label>
+        <input asp-for="LogoUrl" class="form-control" />
+    </div>
+    <button class="btn btn-dark">Save</button>
+</form>

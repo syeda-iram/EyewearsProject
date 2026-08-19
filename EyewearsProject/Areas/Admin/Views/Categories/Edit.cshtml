@@ -1,0 +1,17 @@
+﻿@model Category
+<h4>Edit Category</h4>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" style="max-width:420px;">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ParentCategoryId" class="form-label">Parent Category</label>
+        <select asp-for="ParentCategoryId" class="form-select" asp-items="ViewBag.ParentCategories">
+            <option value="">-- None --</option>
+        </select>
+    </div>
+    <button class="btn btn-dark">Save</button>
+</form>

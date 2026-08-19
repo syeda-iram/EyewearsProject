@@ -1,0 +1,23 @@
+﻿@model ProductVariantFormViewModel
+<h4>Add Variant — @ViewBag.ProductName</h4>
+<form asp-action="CreateVariant" method="post" style="max-width:420px;">
+    <input type="hidden" asp-for="ProductId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Color" class="form-label"></label>
+        <input asp-for="Color" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Size" class="form-label"></label>
+        <input asp-for="Size" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Sku" class="form-label">SKU</label>
+        <input asp-for="Sku" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="StockQuantity" class="form-label"></label>
+        <input asp-for="StockQuantity" class="form-control" />
+    </div>
+    <button class="btn btn-dark">Save</button>
+</form>

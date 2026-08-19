@@ -1,0 +1,60 @@
+﻿@using EyewearsProject.Extensions
+@model ReportsViewModel
+
+<div class="mb-4">
+    <h3 class="mb-1">Reports</h3>
+    <p class="text-muted mb-0">Overview across sales, users, and inventory.</p>
+</div>
+
+<h6 class="text-muted text-uppercase mb-2">Sales</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Orders</small><h3>@Model.TotalOrders</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Revenue (Paid)</small><h3>@Model.TotalRevenue.ToPkr()</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Avg Order Value</small><h3>@Model.AverageOrderValue.ToPkr()</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Pending / Delivered / Cancelled</small><h5>@Model.PendingOrders / @Model.DeliveredOrders / @Model.CancelledOrders</h5></div></div>
+</div>
+
+<h6 class="text-muted text-uppercase mb-2">Users</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card p-3"><small class="text-muted">Total Users</small><h3>@Model.TotalUsers</h3></div></div>
+    <div class="col-md-4"><div class="card p-3"><small class="text-muted">Active Users</small><h3>@Model.ActiveUsers</h3></div></div>
+    <div class="col-md-4"><div class="card p-3"><small class="text-muted">New (Last 30 Days)</small><h3>@Model.NewUsersLast30Days</h3></div></div>
+</div>
+
+<h6 class="text-muted text-uppercase mb-2">Inventory</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Products</small><h3>@Model.TotalProducts</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Active Products</small><h3>@Model.ActiveProducts</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Out of Stock</small><h3 class="text-danger">@Model.OutOfStockVariants</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Low Stock</small><h3 class="text-warning">@Model.LowStockVariants</h3></div></div>
+</div>
+
+<h6 class="text-muted text-uppercase mb-2">Promotions &amp; Returns</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Active Promotions</small><h3>@Model.ActivePromotions</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Coupon Uses</small><h3>@Model.TotalPromotionUsage</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Pending Returns</small><h3>@Model.PendingReturns</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Refunded</small><h3>@Model.TotalRefunded.ToPkr()</h3></div></div>
+</div>
+
+<h6 class="text-muted text-uppercase mb-2">Top Selling Products</h6>
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Product</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+    <tbody>
+        @if (Model.TopProducts.Any())
+        {
+            @foreach (var p in Model.TopProducts)
+            {
+                <tr>
+                    <td>@p.ProductName</td>
+                    <td>@p.UnitsSold</td>
+                    <td>@p.Revenue.ToPkr()</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr><td colspan="3" class="text-muted">No sales data yet.</td></tr>
+        }
+    </tbody>
+</table>

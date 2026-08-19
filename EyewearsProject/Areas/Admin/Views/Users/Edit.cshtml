@@ -1,0 +1,28 @@
+﻿@model UserEditViewModel
+<h4>Edit User</h4>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" style="max-width:480px;">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+    </div>
+    <div class="mb-3 form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <div class="mb-3">
+        <label asp-for="SelectedRole" class="form-label"></label>
+        <select asp-for="SelectedRole" class="form-select">
+            @foreach (var r in (List<string?>)ViewBag.AllRoles)
+            {
+                <option value="@r" selected="@(r == Model.SelectedRole)">@r</option>
+            }
+        </select>
+    </div>
+    <button class="btn btn-dark">Save</button>
+</form>

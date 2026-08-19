@@ -1,0 +1,108 @@
+﻿@using EyewearsProject.Extensions
+@model List<OrderListItemViewModel>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h3 class="mb-1">Orders</h3>
+        <p class="text-muted mb-0">Track and manage customer orders.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card p-3">
+            <small class="text-muted text-uppercase">Total Orders</small>
+            <h2 class="mb-0">@ViewBag.TotalOrders</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <small class="text-muted text-uppercase">Revenue (Paid)</small>
+            <h2 class="mb-0">@(((decimal)ViewBag.TotalRevenue).ToPkr())</h2>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3 h-100">
+            <form method="get" class="row g-2 align-items-center h-100">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control" placeholder="Search order # or email..." value="@ViewBag.CurrentSearch" />
+                </div>
+                <div class="col-md-4">
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        @foreach (var s in (string[])ViewBag.AllStatuses)
+                        {
+                            <option value="@s" selected="@(s == (string)ViewBag.CurrentStatus)">@s</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100">Go</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<table class="table table-bordered bg-white align-middle">
+    <thead>
+        <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Items</th>
+            <th>Order Status</th>
+            <th>Payment</th>
+            <th>Total</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var o in Model)
+        {
+            <tr>
+                <td>@o.OrderNumber</td>
+                <td>
+                    <div>@o.CustomerName</div>
+                    <div class="text-muted small">@o.CustomerEmail</div>
+                </td>
+                <td>@o.OrderDate.ToString("dd MMM yyyy")</td>
+                <td>@o.ItemCount</td>
+                <td>
+                    @{
+                        var badge = o.OrderStatus switch
+                        {
+                            OrderStatus.Delivered => "bg-success",
+                            OrderStatus.Cancelled or OrderStatus.Returned => "bg-danger",
+                            OrderStatus.Shipped => "bg-info text-dark",
+                            OrderStatus.Processing => "bg-warning text-dark",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <span class="badge @badge">@o.OrderStatus</span>
+                </td>
+                <td>
+                    @{
+                        var payBadge = o.PaymentStatus switch
+                        {
+                            PaymentStatus.Paid => "bg-success",
+                            PaymentStatus.Failed => "bg-danger",
+                            PaymentStatus.Refunded => "bg-secondary",
+                            _ => "bg-warning text-dark"
+                        };
+                    }
+                    <span class="badge @payBadge">@o.PaymentStatus</span>
+                </td>
+                <td>@o.GrandTotal.ToPkr()</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@o.Id" class="btn btn-sm btn-outline-primary">View</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No orders yet — this fills up once checkout starts creating real orders.</p>
+}

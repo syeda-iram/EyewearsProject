@@ -1,0 +1,44 @@
+﻿@using EyewearsProject.Extensions
+
+@model List<Product>
+<div class="d-flex justify-content-between mb-3">
+    <h4>Products</h4>
+    <a asp-action="Create" class="btn btn-dark">+ New Product</a>
+</div>
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Name</th><th>SKU</th><th>Category</th><th>Brand</th><th>Price</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.Name</td>
+                <td>@p.Sku</td>
+                <td>@p.Category?.Name</td>
+                <td>@p.Brand?.Name</td>
+                <td>@p.Price.ToPkr()</td>
+                <td>
+                    @if (p.IsActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </td>
+                <td class="d-flex gap-1">
+                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a asp-action="Variants" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">Variants</a>
+                    <a asp-action="Images" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">Images</a>
+                    <form asp-action="ToggleActive" asp-route-id="@p.Id" method="post">
+                        <button class="btn btn-sm btn-outline-warning">@(p.IsActive ? "Deactivate" : "Activate")</button>
+                    </form>
+                    <form asp-action="Delete" asp-route-id="@p.Id" method="post" onsubmit="return confirm('Delete this product?');">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

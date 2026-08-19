@@ -1,0 +1,42 @@
+﻿@model List<CmsContent>
+@{
+    ViewData["Title"] = "Home";
+}
+
+@if (Model.Any())
+{
+    <div id="bannerCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                var banner = Model[i];
+                <div class="carousel-item @(i == 0 ? "active" : "")">
+                    @if (!string.IsNullOrEmpty(banner.LinkUrl))
+                    {
+                        <a href="@banner.LinkUrl">
+                            <img src="@banner.ImageUrl" class="d-block w-100" alt="@banner.Title" style="max-height:350px;object-fit:cover;" />
+                        </a>
+                    }
+                    else
+                    {
+                        <img src="@banner.ImageUrl" class="d-block w-100" alt="@banner.Title" style="max-height:350px;object-fit:cover;" />
+                    }
+                </div>
+            }
+        </div>
+        @if (Model.Count > 1)
+        {
+            <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        }
+    </div>
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Browse our <a asp-controller="Products" asp-action="Index">eyewear collection</a>.</p>
+</div>

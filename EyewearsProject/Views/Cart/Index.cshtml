@@ -1,0 +1,63 @@
+﻿@using EyewearsProject.Extensions
+@model List<EyewearsProject.Models.CartItem>
+
+@{
+    ViewData["Title"] = "Your Cart";
+    var grandTotal = Model.Sum(i => i.TotalPrice);
+}
+
+<h1 class="mb-4">Your Cart</h1>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Your cart is empty.</p>
+    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Continue Shopping</a>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Color</th>
+                <th>Unit Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="d-flex align-items-center gap-2">
+                        <img src="@(item.ImageUrl ?? "/images/placeholder.jpg")" style="width:50px;height:50px;object-fit:cover;" />
+                        @item.ProductName
+                    </td>
+                    <td>@item.Color</td>
+                    <td>@item.UnitPrice.ToPkr()</td>
+                    <td style="max-width:100px;">
+                        <form asp-controller="Cart" asp-action="UpdateQuantity" method="post" class="d-flex gap-1">
+                            <input type="hidden" name="variantId" value="@item.ProductVariantId" />
+                            <input type="number" name="quantity" value="@item.Quantity" min="1"
+                                   class="form-control form-control-sm" style="width:70px;" />
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Update</button>
+                        </form>
+                    </td>
+                    <td>@item.TotalPrice.ToPkr()</td>
+                    <td>
+                        <form asp-controller="Cart" asp-action="Remove" method="post">
+                            <input type="hidden" name="variantId" value="@item.ProductVariantId" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="text-end">
+        <h4>Grand Total: @grandTotal.ToPkr()</h4>
+        <a asp-controller="Cart" asp-action="Checkout" class="btn btn-success btn-lg mt-2">Proceed to Checkout</a>
+    </div>
+}

@@ -1,0 +1,165 @@
+﻿@model List<UserListItemViewModel>
+@{
+    var allRoles = (List<string?>)ViewBag.AllRoles;
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h3 class="mb-1">User Management</h3>
+        <p class="text-muted mb-0">Manage platform access, roles, and user statuses.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-dark">+ Add User</a>
+</div>
+
+@if (TempData["ResetResults"] != null)
+{
+    <div class="alert alert-info">
+        <strong>Temporary passwords generated</strong> (share securely — email delivery isn't wired up yet):
+        <div>@TempData["ResetResults"]</div>
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card p-3 h-100">
+            <small class="text-muted text-uppercase">Total Users</small>
+            <h2 class="mb-0">@ViewBag.TotalUsers</h2>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div class="card p-3">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" name="search" class="form-control" placeholder="Search by name, email..." value="@ViewBag.CurrentSearch" />
+                </div>
+                <div class="col-md-3">
+                    <select name="role" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Roles</option>
+                        @foreach (var r in allRoles)
+                        {
+                            <option value="@r" selected="@(r == (string)ViewBag.CurrentRole)">@r</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        <option value="active" selected="@("active" == (string)ViewBag.CurrentStatus)">Active</option>
+                        <option value="inactive" selected="@("inactive" == (string)ViewBag.CurrentStatus)">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-outline-secondary w-100">Go</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form id="usersForm" method="post">
+    @Html.AntiForgeryToken()
+
+    <div id="bulkBar" class="d-none bg-dark text-white p-2 rounded mb-2 d-flex align-items-center justify-content-between">
+        <span><span id="selectedCount">0</span> user(s) selected</span>
+        <div class="d-flex gap-2 align-items-center">
+            <select name="newRole" class="form-select form-select-sm" style="width:auto;">
+                <option value="">-- change role to --</option>
+                @foreach (var r in allRoles)
+                {
+                    <option value="@r">@r</option>
+                }
+            </select>
+            <button type="submit" formaction="@Url.Action("BulkChangeRole")" class="btn btn-sm btn-light">Change Role</button>
+            <button type="submit" formaction="@Url.Action("BulkResetPassword")" class="btn btn-sm btn-light">Reset Password</button>
+            <button type="submit" formaction="@Url.Action("BulkBlock")" class="btn btn-sm btn-danger"
+                    onclick="return confirm('Block selected users?');">
+                Block Users
+            </button>
+        </div>
+    </div>
+
+    <table class="table table-bordered bg-white align-middle">
+        <thead>
+            <tr>
+                <th style="width:36px;"><input type="checkbox" id="selectAll" /></th>
+                <th>User</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                var initials = string.Join("", u.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0])));
+                <tr>
+                    <td><input type="checkbox" class="row-check" name="selectedIds" value="@u.Id" /></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                 style="width:36px;height:36px;font-size:.8rem;flex-shrink:0;">
+                                @initials
+                            </div>
+                            <div>
+                                <div class="fw-semibold">@u.FullName</div>
+                                <div class="text-muted small">@u.Email</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        @foreach (var r in u.Roles)
+                        {
+                            <span class="badge bg-primary">@r</span>
+                        }
+                    </td>
+                    <td>
+                        @if (u.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+
+                            <span class="badge bg-secondary">Blocked</span>
+                        }
+                    </td>
+                    <td>@u.CreatedAt.ToString("dd MMM yyyy")</td>
+                    <td class="d-flex gap-1">
+                        <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <button type="submit" formaction="@Url.Action("ToggleActive", new { id = u.Id })" class="btn btn-sm btn-outline-warning">
+                            @(u.IsActive ? "Deactivate" : "Activate")
+                        </button>
+                        <button type="submit" formaction="@Url.Action("Delete", new { id = u.Id })" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Delete this user?');">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</form>
+
+@section Scripts {
+    <script>
+        const selectAll = document.getElementById('selectAll');
+        const bulkBar = document.getElementById('bulkBar');
+        const selectedCount = document.getElementById('selectedCount');
+
+        function updateBulkBar() {
+            const checked = document.querySelectorAll('.row-check:checked');
+            selectedCount.textContent = checked.length;
+            bulkBar.classList.toggle('d-none', checked.length === 0);
+        }
+
+        selectAll?.addEventListener('change', () => {
+            document.querySelectorAll('.row-check').forEach(c => c.checked = selectAll.checked);
+            updateBulkBar();
+        });
+
+        document.addEventListener('change', e => {
+            if (e.target.classList.contains('row-check')) updateBulkBar();
+        });
+    </script>
+}

@@ -1,0 +1,12 @@
+﻿@using EyewearsProject.Extensions
+@model Order
+@{
+    ViewData["Title"] = "Order Confirmed";
+}
+
+<div class="text-center">
+    <h1 class="text-success mb-3">Thank you!</h1>
+    <p>Your order <strong>@Model.OrderNumber</strong> has been placed.</p>
+    <p>Total: @Model.GrandTotal.ToPkr() &middot; Payment: @Model.PaymentMethod</p>
+    <a asp-controller="Products" asp-action="Index" class="btn btn-primary mt-3">Continue Shopping</a>
+</div>

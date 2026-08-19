@@ -1,0 +1,70 @@
+﻿@using EyewearsProject.Extensions
+@model OrderDetailsViewModel
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h3 class="mb-1">Order @Model.OrderNumber</h3>
+        <p class="text-muted mb-0">Placed @Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to Orders</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Customer</h6>
+            <p class="mb-0">@Model.CustomerName</p>
+            <p class="text-muted small">@Model.CustomerEmail</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Shipping Address</h6>
+            <p class="mb-0">@Model.RecipientName</p>
+            <p class="mb-0">@Model.RecipientPhone &middot; @Model.RecipientEmail</p>
+            <p class="mb-0">@Model.ShippingAddressLine, @Model.ShippingCity, @Model.ShippingPostalCode, @Model.ShippingCountry</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Payment</h6>
+            <p class="mb-0">@(Model.PaymentMethod ?? "-")</p>
+            <span class="badge @(Model.PaymentStatus == PaymentStatus.Paid ? "bg-success" : "bg-warning text-dark")">@Model.PaymentStatus</span>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3 mb-4">
+    <h6>Update Order Status</h6>
+    <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+        <select name="newStatus" class="form-select" style="max-width:220px;">
+            @foreach (var s in (string[])ViewBag.AllStatuses)
+            {
+                <option value="@s" selected="@(s == Model.OrderStatus.ToString())">@s</option>
+            }
+        </select>
+        <button class="btn btn-dark">Update</button>
+    </form>
+</div>
+
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+    <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.ProductName</td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitPrice.ToPkr()</td>
+                <td>@item.TotalPrice.ToPkr()</td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr><td colspan="3" class="text-end">Subtotal</td><td>@Model.TotalAmount.ToPkr()</td></tr>
+        <tr><td colspan="3" class="text-end">Discount</td><td>-@Model.DiscountAmount.ToPkr()</td></tr>
+        <tr><td colspan="3" class="text-end">Shipping</td><td>@Model.ShippingAmount.ToPkr()</td></tr>
+        <tr><td colspan="3" class="text-end">Tax</td><td>@Model.TaxAmount.ToPkr()</td></tr>
+        <tr class="fw-bold"><td colspan="3" class="text-end">Grand Total</td><td>@Model.GrandTotal.ToPkr()</td></tr>
+    </tfoot>
+</table>

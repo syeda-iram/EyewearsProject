@@ -1,0 +1,33 @@
+﻿@model List<ProductVariant>
+<div class="d-flex justify-content-between mb-3">
+    <h4>Variants — @ViewBag.ProductName</h4>
+    <a asp-action="CreateVariant" asp-route-productId="@ViewBag.ProductId" class="btn btn-dark">+ Add Variant</a>
+</div>
+
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Color</th><th>Size</th><th>SKU</th><th>Stock</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var v in Model)
+        {
+            <tr>
+                <td>@v.Color</td>
+                <td>@(v.Size ?? "-")</td>
+                <td>@v.Sku</td>
+                <td>@v.StockQuantity</td>
+                <td class="d-flex gap-1">
+                    <a asp-action="EditVariant" asp-route-id="@v.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <form asp-action="DeleteVariant" asp-route-id="@v.Id" asp-route-productId="@ViewBag.ProductId" method="post" onsubmit="return confirm('Delete this variant?');">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-danger">No variants yet — this product can't be added to cart until at least one variant exists.</p>
+}
+
+<a asp-action="Index" class="btn btn-outline-secondary mt-2">Back to Products</a>

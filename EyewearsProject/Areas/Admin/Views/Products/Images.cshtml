@@ -1,0 +1,39 @@
+﻿@model List<ProductImage>
+<div class="d-flex justify-content-between mb-3">
+    <h4>Images — @ViewBag.ProductName</h4>
+    <a asp-action="CreateImage" asp-route-productId="@ViewBag.ProductId" class="btn btn-dark">+ Add Image</a>
+</div>
+
+<div class="row g-3">
+    @foreach (var img in Model)
+    {
+        <div class="col-md-3">
+            <div class="card p-2">
+                <img src="@img.ImageUrl" class="img-fluid rounded mb-2" style="height:150px;object-fit:cover;" />
+                <p class="small text-muted mb-1">
+                    @(img.ProductVariant != null ? $"Color: {img.ProductVariant.Color}" : "General (no specific color)")
+                </p>
+                @if (img.IsPrimary)
+                {
+                    <span class="badge bg-success mb-2">Primary</span>
+                }
+                else
+                {
+                    <form asp-action="SetPrimaryImage" asp-route-id="@img.Id" asp-route-productId="@ViewBag.ProductId" method="post">
+                        <button class="btn btn-sm btn-outline-secondary w-100 mb-2">Set as Primary</button>
+                    </form>
+                }
+                <form asp-action="DeleteImage" asp-route-id="@img.Id" asp-route-productId="@ViewBag.ProductId" method="post" onsubmit="return confirm('Delete this image?');">
+                    <button class="btn btn-sm btn-outline-danger w-100">Delete</button>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No images yet — the shop will show a placeholder until you add one.</p>
+}
+
+<a asp-action="Index" class="btn btn-outline-secondary mt-3">Back to Products</a>

@@ -1,0 +1,39 @@
+﻿@model LoginViewModel
+@{
+    Layout = null; // login page shouldn't use the admin shell (no sidebar yet)
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+<body class="bg-light">
+    <div class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
+        <div class="card shadow-sm p-4" style="width:360px;">
+            <h4 class="mb-3 text-center">Eyewear Admin Portal</h4>
+            <form asp-action="Login" method="post">
+                <input type="hidden" asp-for="@ViewData["ReturnUrl"]" name="returnUrl" />
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="form-check mb-3">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    <label asp-for="RememberMe" class="form-check-label"></label>
+                </div>
+                <button type="submit" class="btn btn-dark w-100">Login</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+﻿@model CmsContentFormViewModel
+<h4>@(Model.Id == 0 ? "Create" : "Edit") CMS Content</h4>
+<form asp-action="Create" method="post" style="max-width:560px;">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Type" class="form-label"></label>
+        <select asp-for="Type" class="form-select" asp-items="Html.GetEnumSelectList<CmsPageType>()"></select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Slug" class="form-label"></label>
+        <input asp-for="Slug" class="form-control" placeholder="e.g. about-us" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Body" class="form-label">Body (used for Pages)</label>
+        <textarea asp-for="Body" class="form-control" rows="5"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">Upload Banner Image</label>
+        <input type="file" id="bannerFileInput" class="form-control" accept="image/*" />
+        <img id="bannerPreview" src="#" style="display:none;max-height:150px;margin-top:10px;" class="rounded" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ImageUrl" class="form-label">Image URL (used for Banners)</label>
+        <input asp-for="ImageUrl" id="bannerUrlInput" class="form-control" placeholder="Uploads fill this in automatically, or paste a URL" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="LinkUrl" class="form-label">Link URL (used for Banners)</label>
+        <input asp-for="LinkUrl" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="SortOrder" class="form-label"></label>
+        <input asp-for="SortOrder" class="form-control" />
+    </div>
+    <div class="mb-3 form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <button class="btn btn-dark">Save</button>
+</form>
+
+@section Scripts {
+    <form id="antiforgeryForm">@Html.AntiForgeryToken()</form>
+    <script>
+        const token = document.querySelector('#antiforgeryForm input[name="__RequestVerificationToken"]').value;
+        wireImageUpload('bannerFileInput', 'bannerUrlInput', 'bannerPreview', '@Url.Action("Image", "Upload", new { area = "Admin" })', token);
+    </script>
+}

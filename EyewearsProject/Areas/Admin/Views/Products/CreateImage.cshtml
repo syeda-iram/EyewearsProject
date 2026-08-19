@@ -1,0 +1,40 @@
+﻿@model ProductImageFormViewModel
+<h4>Add Image — @ViewBag.ProductName</h4>
+<form asp-action="CreateImage" method="post" style="max-width:420px;">
+    <input type="hidden" asp-for="ProductId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">Upload Image</label>
+        <input type="file" id="fileInput" class="form-control" accept="image/*" />
+        <img id="preview" src="#" style="display:none;max-height:150px;margin-top:10px;" class="rounded" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ImageUrl" class="form-label">Image URL</label>
+        <input asp-for="ImageUrl" id="urlInput" class="form-control" placeholder="Uploads fill this in automatically, or paste a URL" />
+        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="IsPrimary" class="form-check-input" />
+        <label asp-for="IsPrimary" class="form-check-label">Set as primary image</label>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ProductVariantId" class="form-label">Which color is this image for?</label>
+        <select asp-for="ProductVariantId" class="form-select" asp-items="ViewBag.Variants">
+            <option value="">-- General / not color-specific --</option>
+        </select>
+    </div>
+
+    <button class="btn btn-dark">Save</button>
+</form>
+
+@section Scripts {
+    <form id="antiforgeryForm">@Html.AntiForgeryToken()</form>
+    <script>
+        const token = document.querySelector('#antiforgeryForm input[name="__RequestVerificationToken"]').value;
+        wireImageUpload('fileInput', 'urlInput', 'preview', '@Url.Action("Image", "Upload", new { area = "Admin" })', token);
+    </script>
+}

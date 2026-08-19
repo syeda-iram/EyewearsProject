@@ -1,0 +1,16 @@
+﻿@model Category
+<h4>@(Model.Id == 0 ? "Create" : "Edit") Category</h4>
+<form asp-action="Create" method="post" style="max-width:420px;">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ParentCategoryId" class="form-label">Parent Category</label>
+        <select asp-for="ParentCategoryId" class="form-select" asp-items="ViewBag.ParentCategories">
+            <option value="">-- None --</option>
+        </select>
+    </div>
+    <button class="btn btn-dark">Save</button>
+</form>

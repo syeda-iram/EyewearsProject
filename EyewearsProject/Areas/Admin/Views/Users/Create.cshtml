@@ -1,0 +1,28 @@
+﻿@model UserCreateViewModel
+<h4>Create User</h4>
+<form asp-action="Create" method="post" style="max-width:480px;">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Role" class="form-label"></label>
+        <select asp-for="Role" class="form-select">
+            <option value="">-- Select role --</option>
+            @foreach (var r in (List<string?>)ViewBag.AllRoles)
+            {
+                <option value="@r">@r</option>
+            }
+        </select>
+    </div>
+    <button class="btn btn-dark">Create</button>
+</form>

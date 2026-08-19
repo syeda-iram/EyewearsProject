@@ -1,0 +1,35 @@
+﻿@model EyewearsProject.Models.ApplicationRole
+
+@{
+    Layout = "_AdminLayout";
+}
+
+<h1>Edit Role</h1>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" style="max-width:400px;">
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Role Name</label>
+        <input type="text" name="roleName" class="form-control" value="@Model.Name"
+        @(Model.Name == "SuperAdmin" ? "readonly" : "") required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <input type="text" name="description" class="form-control" value="@Model.Description" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>

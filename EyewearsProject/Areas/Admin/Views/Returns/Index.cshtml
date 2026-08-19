@@ -1,0 +1,66 @@
+﻿@model List<ReturnListItemViewModel>
+
+<div class="mb-4">
+    <h3 class="mb-1">Returns</h3>
+    <p class="text-muted mb-0">@ViewBag.PendingCount pending request(s).</p>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-4">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                @foreach (var s in (string[])ViewBag.AllStatuses)
+                {
+                    <option value="@s" selected="@(s == (string)ViewBag.CurrentStatus)">@s</option>
+                }
+            </select>
+        </div>
+    </form>
+</div>
+
+<table class="table table-bordered bg-white align-middle">
+    <thead>
+        <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Requested</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Refund</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.OrderNumber</td>
+                <td>@r.CustomerEmail</td>
+                <td>@r.ReturnRequestDate.ToString("dd MMM yyyy")</td>
+                <td>@r.Reason</td>
+                <td>
+                    @{
+                        var badge = r.Status switch
+                        {
+                            ReturnStatus.Approved => "bg-info text-dark",
+                            ReturnStatus.Refunded => "bg-success",
+                            ReturnStatus.Rejected => "bg-danger",
+                            _ => "bg-warning text-dark"
+                        };
+                    }
+                    <span class="badge @badge">@r.Status</span>
+                </td>
+                <td>@r.RefundAmount.ToString("C")</td>
+                <td>
+                    <a asp-action="Process" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">Review</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No return requests yet.</p>
+}

@@ -1,0 +1,14 @@
+﻿@model CmsContent
+@{
+    ViewData["Title"] = Model.Title;
+}
+<h1>@Model.Title</h1>
+
+@if (!string.IsNullOrEmpty(Model.ImageUrl))
+{
+    <img src="@Model.ImageUrl" class="img-fluid rounded mb-3" alt="@Model.Title" style="max-height:400px;object-fit:cover;width:100%;" />
+}
+
+<div>
+    @Html.Raw(Model.Body)
+</div>

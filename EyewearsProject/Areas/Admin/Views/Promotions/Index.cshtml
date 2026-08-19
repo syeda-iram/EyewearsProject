@@ -1,0 +1,66 @@
+﻿@using EyewearsProject.Extensions
+@model List<Promotion>
+
+<div class="d-flex justify-content-between mb-3">
+    <h4>Promotions</h4>
+    <a asp-action="Create" class="btn btn-dark">+ New Promotion</a>
+</div>
+
+<table class="table table-bordered bg-white align-middle">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Discount</th>
+            <th>Valid Period</th>
+            <th>Usage</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            var now = DateTime.UtcNow;
+            var expired = now > p.EndDate;
+            <tr>
+                <td>
+                    <div class="fw-semibold">@p.Code</div>
+                    <div class="text-muted small">@p.Description</div>
+                </td>
+                <td>
+                    @(p.DiscountType == DiscountType.Percentage ? $"{p.DiscountValue}%" : p.DiscountValue.ToPkr())
+                </td>
+                <td>@p.StartDate.ToString("dd MMM yyyy") - @p.EndDate.ToString("dd MMM yyyy")</td>
+                <td>@p.UsageCount@(p.UsageLimit.HasValue ? $" / {p.UsageLimit}" : "")</td>
+                <td>
+                    @if (expired)
+                    {
+                        <span class="badge bg-secondary">Expired</span>
+                    }
+                    else if (p.IsActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Inactive</span>
+                    }
+                </td>
+                <td class="d-flex gap-1">
+                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <form asp-action="ToggleActive" asp-route-id="@p.Id" method="post">
+                        <button class="btn btn-sm btn-outline-warning">@(p.IsActive ? "Deactivate" : "Activate")</button>
+                    </form>
+                    <form asp-action="Delete" asp-route-id="@p.Id" method="post" onsubmit="return confirm('Delete this promotion?');">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No promotions yet.</p>
+}

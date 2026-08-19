@@ -1,0 +1,32 @@
+﻿@{
+    Layout = "_AdminLayout";
+}
+
+<h1>Create New Role</h1>
+
+<form asp-action="Create" method="post" style="max-width:400px;">
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Role Name</label>
+        <input type="text" name="roleName" class="form-control" placeholder="e.g. WarehouseStaff" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description (optional)</label>
+        <input type="text" name="description" class="form-control" placeholder="What this role is for" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Role</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>

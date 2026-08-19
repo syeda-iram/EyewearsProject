@@ -1,0 +1,41 @@
+﻿@model ReturnProcessViewModel
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h3 class="mb-1">Return for Order @Model.OrderNumber</h3>
+        <p class="text-muted mb-0">Requested @Model.ReturnRequestDate.ToString("dd MMM yyyy") by @Model.CustomerEmail</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to Returns</a>
+</div>
+
+<div class="card p-3 mb-4" style="max-width:520px;">
+    <h6>Reason</h6>
+    <p>@Model.Reason</p>
+    <p class="text-muted small mb-0">Order total: @Model.OrderGrandTotal.ToString("C")</p>
+    <p>Current status: <span class="badge bg-secondary">@Model.Status</span></p>
+</div>
+
+@if (Model.Status == ReturnStatus.Requested)
+{
+    <div class="card p-3 mb-3" style="max-width:520px;">
+        <h6>Approve Return</h6>
+        <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+            <input type="number" step="0.01" name="refundAmount" class="form-control" value="@Model.OrderGrandTotal" style="max-width:160px;" />
+            <button class="btn btn-success">Approve</button>
+        </form>
+    </div>
+
+    <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+        <button class="btn btn-outline-danger" onclick="return confirm('Reject this return request?');">Reject</button>
+    </form>
+}
+else if (Model.Status == ReturnStatus.Approved)
+{
+    <form asp-action="MarkRefunded" asp-route-id="@Model.Id" method="post">
+        <button class="btn btn-dark">Mark as Refunded (@Model.RefundAmount.ToString("C"))</button>
+    </form>
+}
+else
+{
+    <p class="text-muted">This return has been @Model.Status.ToString().ToLower() — no further action needed.</p>
+}

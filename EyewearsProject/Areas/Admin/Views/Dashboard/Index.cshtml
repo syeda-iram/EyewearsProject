@@ -1,0 +1,123 @@
+﻿@using EyewearsProject.Extensions
+@model DashboardViewModel
+
+<div class="mb-4">
+    <h3 class="mb-1">Dashboard</h3>
+    <p class="text-muted mb-0">Welcome back, @User.Identity?.Name.</p>
+</div>
+
+@if (Model.PendingOrders > 0 || Model.LowStockVariants > 0 || Model.OutOfStockVariants > 0 || Model.PendingReturns > 0 || Model.PendingReviews > 0)
+{
+    <div class="alert alert-warning">
+        <strong>Needs attention:</strong>
+        @if (Model.PendingOrders > 0)
+        {
+            <span class="badge bg-dark me-1">@Model.PendingOrders pending order(s)</span>
+        }
+        @if (Model.OutOfStockVariants > 0)
+        {
+            <span class="badge bg-danger me-1">@Model.OutOfStockVariants out of stock</span>
+        }
+        @if (Model.LowStockVariants > 0)
+        {
+            <span class="badge bg-warning text-dark me-1">@Model.LowStockVariants low stock</span>
+        }
+        @if (Model.PendingReturns > 0)
+        {
+            <span class="badge bg-info text-dark me-1">@Model.PendingReturns return(s) pending</span>
+        }
+        @if (Model.PendingReviews > 0)
+        {
+            <span class="badge bg-secondary me-1">@Model.PendingReviews review(s) awaiting approval</span>
+        }
+    </div>
+}
+
+<h6 class="text-muted text-uppercase mb-2">Overview</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3"><small class="text-muted">Total Orders</small><h3>@Model.TotalOrders</h3></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3"><small class="text-muted">Revenue (Paid)</small><h3>@Model.TotalRevenue.ToPkr()</h3></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3"><small class="text-muted">Total Users</small><h3>@Model.TotalUsers</h3></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3"><small class="text-muted">Active Products</small><h3>@Model.ActiveProducts <span class="fs-6 text-muted">/ @Model.TotalProducts</span></h3></div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-7">
+        <h6 class="text-muted text-uppercase mb-2">Recent Orders</h6>
+        <table class="table table-bordered bg-white align-middle">
+            <thead><tr><th>Order #</th><th>Customer</th><th>Status</th><th>Total</th></tr></thead>
+            <tbody>
+                @if (Model.RecentOrders.Any())
+                {
+                    @foreach (var o in Model.RecentOrders)
+                    {
+                        <tr>
+                            <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">@o.OrderNumber</a></td>
+                            <td>@o.User.FullName</td>
+                            <td>
+                                @{
+                                    var badge = o.OrderStatus switch
+                                    {
+                                        OrderStatus.Delivered => "bg-success",
+                                        OrderStatus.Cancelled or OrderStatus.Returned => "bg-danger",
+                                        OrderStatus.Shipped => "bg-info text-dark",
+                                        OrderStatus.Processing => "bg-warning text-dark",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @badge">@o.OrderStatus</span>
+                            </td>
+                            <td>@o.GrandTotal.ToPkr()</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="4" class="text-muted">No orders yet.</td></tr>
+                }
+            </tbody>
+        </table>
+        <a asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all orders</a>
+    </div>
+
+    <div class="col-md-5">
+        <h6 class="text-muted text-uppercase mb-2">Recent Activity</h6>
+        <ul class="list-group">
+            @if (Model.RecentActivity.Any())
+            {
+                @foreach (var log in Model.RecentActivity)
+                {
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>@log.Action</strong> @log.EntityType</span>
+                            <small class="text-muted">@log.CreatedAt.ToString("dd MMM, HH:mm")</small>
+                        </div>
+                        <small class="text-muted">@log.UserEmail &middot; @log.Details</small>
+                    </li>
+                }
+            }
+            else
+            {
+                <li class="list-group-item text-muted">No activity yet.</li>
+            }
+        </ul>
+        <a asp-controller="AuditLogs" asp-action="Index" class="btn btn-sm btn-outline-secondary mt-2">View all activity</a>
+    </div>
+</div>
+
+<h6 class="text-muted text-uppercase mt-4 mb-2">Quick Actions</h6>
+<div class="d-flex gap-2 flex-wrap">
+    <a asp-controller="Products" asp-action="Create" class="btn btn-outline-dark btn-sm">+ New Product</a>
+    <a asp-controller="Promotions" asp-action="Create" class="btn btn-outline-dark btn-sm">+ New Coupon</a>
+    <a asp-controller="Cms" asp-action="Create" class="btn btn-outline-dark btn-sm">+ New Banner/Page</a>
+    <a asp-controller="Users" asp-action="Create" class="btn btn-outline-dark btn-sm">+ New Admin User</a>
+    <a asp-controller="Inventory" asp-action="Index" asp-route-stockFilter="low" class="btn btn-outline-warning btn-sm">View Low Stock</a>
+</div>

@@ -1,0 +1,23 @@
+﻿@model List<Category>
+<div class="d-flex justify-content-between mb-3">
+    <h4>Categories</h4>
+    <a asp-action="Create" class="btn btn-dark">+ New Category</a>
+</div>
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Name</th><th>Parent</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.Name</td>
+                <td>@(c.ParentCategory?.Name ?? "-")</td>
+                <td class="d-flex gap-1">
+                    <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <form asp-action="Delete" asp-route-id="@c.Id" method="post" onsubmit="return confirm('Delete this category?');">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
