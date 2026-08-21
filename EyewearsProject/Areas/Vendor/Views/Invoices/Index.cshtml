@@ -1,0 +1,32 @@
+﻿@using EyewearsProject.Extensions
+@model List<Invoice>
+<h4 class="mb-3">Invoices</h4>
+<table class="table table-bordered bg-white align-middle">
+    <thead><tr><th>Invoice #</th><th>PO #</th><th>Amount</th><th>Status</th><th>Due Date</th></tr></thead>
+    <tbody>
+        @foreach (var inv in Model)
+        {
+            <tr>
+                <td>@inv.InvoiceNumber</td>
+                <td>@inv.PurchaseOrder.PoNumber</td>
+                <td>@inv.Amount.ToPkr()</td>
+                <td>
+                    @if (inv.Status == InvoiceStatus.Paid)
+                    {
+                        <span class="badge bg-success">Paid</span>
+                    }
+                    else
+                    {
+
+                        <span class="badge bg-warning text-dark">@inv.Status</span>
+                    }
+                </td>
+                <td>@(inv.DueDate?.ToString("dd MMM yyyy") ?? "-")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (!Model.Any())
+{
+    <p class="text-muted">No invoices yet.</p>
+}

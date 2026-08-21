@@ -69,6 +69,13 @@
                     </li>
                 }
 
+                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("VendorManager"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Vendors" asp-action="Index">Vendors</a>
+                    </li>
+                }
+
                 @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("FinanceManager"))
                 {
                     <li class="nav-item">

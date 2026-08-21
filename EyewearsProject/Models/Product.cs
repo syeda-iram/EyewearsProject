@@ -15,5 +15,6 @@
         public bool IsActive { get; set; } = true;
         public List<ProductVariant> Variants { get; set; } = new();
         public List<ProductImage> Images { get; set; } = new();
+        public List<ProductSpecification> Specifications { get; set; } = new();
     }
 }

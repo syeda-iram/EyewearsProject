@@ -1,0 +1,53 @@
+﻿@model VendorFormViewModel
+<h4>Edit Vendor</h4>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" style="max-width:520px;">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="CompanyName" class="form-label"></label>
+        <input asp-for="CompanyName" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ContactName" class="form-label"></label>
+        <input asp-for="ContactName" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="ContactEmail" class="form-label"></label>
+            <input asp-for="ContactEmail" class="form-control" readonly />
+            <small class="text-muted">Login email can't be changed here.</small>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="ContactPhone" class="form-label"></label>
+            <input asp-for="ContactPhone" class="form-control" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Address" class="form-label"></label>
+        <textarea asp-for="Address" class="form-control"></textarea>
+    </div>
+    <div class="mb-3">
+        <label asp-for="VendorType" class="form-label"></label>
+        <select asp-for="VendorType" class="form-select">
+            <option>Supplier</option>
+            <option>Importer</option>
+            <option>Fitter</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label">Reset Login Password (optional)</label>
+        <input asp-for="Password" class="form-control" placeholder="Leave blank to keep current password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+    <div class="mb-3 form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <button class="btn btn-dark">Save</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

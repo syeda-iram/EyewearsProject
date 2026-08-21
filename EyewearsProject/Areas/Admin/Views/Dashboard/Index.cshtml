@@ -6,7 +6,7 @@
     <p class="text-muted mb-0">Welcome back, @User.Identity?.Name.</p>
 </div>
 
-@if (Model.PendingOrders > 0 || Model.LowStockVariants > 0 || Model.OutOfStockVariants > 0 || Model.PendingReturns > 0 || Model.PendingReviews > 0)
+@if (Model.PendingOrders > 0 || Model.LowStockCount > 0 || Model.TotalReturns > 0)
 {
     <div class="alert alert-warning">
         <strong>Needs attention:</strong>
@@ -14,110 +14,176 @@
         {
             <span class="badge bg-dark me-1">@Model.PendingOrders pending order(s)</span>
         }
-        @if (Model.OutOfStockVariants > 0)
+        @if (Model.LowStockCount > 0)
         {
-            <span class="badge bg-danger me-1">@Model.OutOfStockVariants out of stock</span>
+            <span class="badge bg-warning text-dark me-1">@Model.LowStockCount low/out of stock item(s)</span>
         }
-        @if (Model.LowStockVariants > 0)
+        @if (Model.TotalReturns > 0)
         {
-            <span class="badge bg-warning text-dark me-1">@Model.LowStockVariants low stock</span>
-        }
-        @if (Model.PendingReturns > 0)
-        {
-            <span class="badge bg-info text-dark me-1">@Model.PendingReturns return(s) pending</span>
-        }
-        @if (Model.PendingReviews > 0)
-        {
-            <span class="badge bg-secondary me-1">@Model.PendingReviews review(s) awaiting approval</span>
+            <span class="badge bg-info text-dark me-1">@Model.TotalReturns return(s)</span>
         }
     </div>
 }
 
-<h6 class="text-muted text-uppercase mb-2">Overview</h6>
+<h6 class="text-muted text-uppercase mb-2">Sales</h6>
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card p-3"><small class="text-muted">Total Orders</small><h3>@Model.TotalOrders</h3></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Sales</small><h3>@Model.TotalSales.ToPkr()</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Today's Sales</small><h3>@Model.TodaySales.ToPkr()</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Monthly Sales</small><h3>@Model.MonthlySales.ToPkr()</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Refunded</small><h3 class="text-danger">@Model.TotalRefunded.ToPkr()</h3></div></div>
+</div>
+
+<h6 class="text-muted text-uppercase mb-2">Orders</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Orders</small><h3>@Model.TotalOrders</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Pending</small><h3 class="text-warning">@Model.PendingOrders</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Delivered</small><h3 class="text-success">@Model.DeliveredOrders</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Cancelled</small><h3 class="text-danger">@Model.CancelledOrders</h3></div></div>
+</div>
+
+<h6 class="text-muted text-uppercase mb-2">Customers &amp; Inventory</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Customers</small><h3>@Model.TotalCustomers</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">New This Month</small><h3>@Model.NewCustomersThisMonth</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Low Stock Products</small><h3 class="text-warning">@Model.LowStockCount</h3></div></div>
+    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Returns</small><h3>@Model.TotalReturns</h3></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h6>Sales by Day (last 30 days)</h6>
+            <canvas id="salesByDayChart" height="90"></canvas>
+        </div>
     </div>
-    <div class="col-md-3">
-        <div class="card p-3"><small class="text-muted">Revenue (Paid)</small><h3>@Model.TotalRevenue.ToPkr()</h3></div>
-    </div>
-    <div class="col-md-3">
-        <div class="card p-3"><small class="text-muted">Total Users</small><h3>@Model.TotalUsers</h3></div>
-    </div>
-    <div class="col-md-3">
-        <div class="card p-3"><small class="text-muted">Active Products</small><h3>@Model.ActiveProducts <span class="fs-6 text-muted">/ @Model.TotalProducts</span></h3></div>
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h6>Sales by Month (last 12 months)</h6>
+            <canvas id="salesByMonthChart" height="90"></canvas>
+        </div>
     </div>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Sales by Category</h6>
+            <canvas id="salesByCategoryChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Sales by Brand</h6>
+            <canvas id="salesByBrandChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Orders by Status</h6>
+            <canvas id="ordersByStatusChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3 mb-4">
+    <h6>Customer Growth (last 12 months)</h6>
+    <canvas id="customerGrowthChart" height="80"></canvas>
+</div>
+
 <div class="row">
-    <div class="col-md-7">
-        <h6 class="text-muted text-uppercase mb-2">Recent Orders</h6>
-        <table class="table table-bordered bg-white align-middle">
-            <thead><tr><th>Order #</th><th>Customer</th><th>Status</th><th>Total</th></tr></thead>
+    <div class="col-md-6">
+        <h6 class="text-muted text-uppercase mb-2">Top Products</h6>
+        <table class="table table-bordered bg-white">
+            <thead><tr><th>Product</th><th>Units</th><th>Revenue</th></tr></thead>
             <tbody>
-                @if (Model.RecentOrders.Any())
+                @if (Model.TopProducts.Any())
                 {
-                    @foreach (var o in Model.RecentOrders)
+                    @foreach (var p in Model.TopProducts)
                     {
-                        <tr>
-                            <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">@o.OrderNumber</a></td>
-                            <td>@o.User.FullName</td>
-                            <td>
-                                @{
-                                    var badge = o.OrderStatus switch
-                                    {
-                                        OrderStatus.Delivered => "bg-success",
-                                        OrderStatus.Cancelled or OrderStatus.Returned => "bg-danger",
-                                        OrderStatus.Shipped => "bg-info text-dark",
-                                        OrderStatus.Processing => "bg-warning text-dark",
-                                        _ => "bg-secondary"
-                                    };
-                                }
-                                <span class="badge @badge">@o.OrderStatus</span>
-                            </td>
-                            <td>@o.GrandTotal.ToPkr()</td>
-                        </tr>
+                        <tr><td>@p.ProductName</td><td>@p.UnitsSold</td><td>@p.Revenue.ToPkr()</td></tr>
                     }
                 }
                 else
                 {
-                    <tr><td colspan="4" class="text-muted">No orders yet.</td></tr>
+                    <tr><td colspan="3" class="text-muted">No sales data yet.</td></tr>
                 }
             </tbody>
         </table>
-        <a asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all orders</a>
     </div>
-
-    <div class="col-md-5">
-        <h6 class="text-muted text-uppercase mb-2">Recent Activity</h6>
-        <ul class="list-group">
-            @if (Model.RecentActivity.Any())
-            {
-                @foreach (var log in Model.RecentActivity)
+    <div class="col-md-6">
+        <h6 class="text-muted text-uppercase mb-2">Top Brands</h6>
+        <table class="table table-bordered bg-white">
+            <thead><tr><th>Brand</th><th>Units</th><th>Revenue</th></tr></thead>
+            <tbody>
+                @if (Model.TopBrands.Any())
                 {
-                    <li class="list-group-item">
-                        <div class="d-flex justify-content-between">
-                            <span><strong>@log.Action</strong> @log.EntityType</span>
-                            <small class="text-muted">@log.CreatedAt.ToString("dd MMM, HH:mm")</small>
-                        </div>
-                        <small class="text-muted">@log.UserEmail &middot; @log.Details</small>
-                    </li>
+                    @foreach (var b in Model.TopBrands)
+                    {
+                        <tr><td>@b.BrandName</td><td>@b.UnitsSold</td><td>@b.Revenue.ToPkr()</td></tr>
+                    }
                 }
-            }
-            else
-            {
-                <li class="list-group-item text-muted">No activity yet.</li>
-            }
-        </ul>
-        <a asp-controller="AuditLogs" asp-action="Index" class="btn btn-sm btn-outline-secondary mt-2">View all activity</a>
+                else
+                {
+                    <tr><td colspan="3" class="text-muted">No sales data yet.</td></tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 
-<h6 class="text-muted text-uppercase mt-4 mb-2">Quick Actions</h6>
-<div class="d-flex gap-2 flex-wrap">
-    <a asp-controller="Products" asp-action="Create" class="btn btn-outline-dark btn-sm">+ New Product</a>
-    <a asp-controller="Promotions" asp-action="Create" class="btn btn-outline-dark btn-sm">+ New Coupon</a>
-    <a asp-controller="Cms" asp-action="Create" class="btn btn-outline-dark btn-sm">+ New Banner/Page</a>
-    <a asp-controller="Users" asp-action="Create" class="btn btn-outline-dark btn-sm">+ New Admin User</a>
-    <a asp-controller="Inventory" asp-action="Index" asp-route-stockFilter="low" class="btn btn-outline-warning btn-sm">View Low Stock</a>
-</div>
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script>
+        const pkr = (v) => 'Rs ' + Number(v).toLocaleString('en-PK', { maximumFractionDigits: 0 });
+
+        function lineChart(id, labels, data, label) {
+            new Chart(document.getElementById(id), {
+                type: 'line',
+                data: { labels, datasets: [{ label, data, borderColor: '#212529', backgroundColor: 'rgba(33,37,41,0.08)', fill: true, tension: 0.3 }] },
+                options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pkr(v) } } } }
+            });
+        }
+
+        function barChart(id, labels, data, label) {
+            new Chart(document.getElementById(id), {
+                type: 'bar',
+                data: { labels, datasets: [{ label, data, backgroundColor: '#495057' }] },
+                options: { plugins: { legend: { display: false } } }
+            });
+        }
+
+        function pieChart(id, labels, data) {
+            new Chart(document.getElementById(id), {
+                type: 'doughnut',
+                data: { labels, datasets: [{ data, backgroundColor: ['#212529', '#495057', '#6c757d', '#adb5bd', '#ced4da', '#dee2e6'] }] }
+            });
+        }
+
+        lineChart('salesByDayChart',
+                    @Html.Raw(Json.Serialize(Model.SalesByDay.Select(x => x.Label))),
+                    @Html.Raw(Json.Serialize(Model.SalesByDay.Select(x => x.Value))),
+            'Sales');
+
+        lineChart('salesByMonthChart',
+                    @Html.Raw(Json.Serialize(Model.SalesByMonth.Select(x => x.Label))),
+                    @Html.Raw(Json.Serialize(Model.SalesByMonth.Select(x => x.Value))),
+            'Sales');
+
+        pieChart('salesByCategoryChart',
+                    @Html.Raw(Json.Serialize(Model.SalesByCategory.Select(x => x.Label))),
+                    @Html.Raw(Json.Serialize(Model.SalesByCategory.Select(x => x.Value))));
+
+        pieChart('salesByBrandChart',
+                    @Html.Raw(Json.Serialize(Model.SalesByBrand.Select(x => x.Label))),
+                    @Html.Raw(Json.Serialize(Model.SalesByBrand.Select(x => x.Value))));
+
+        pieChart('ordersByStatusChart',
+                    @Html.Raw(Json.Serialize(Model.OrdersByStatus.Select(x => x.Label))),
+                    @Html.Raw(Json.Serialize(Model.OrdersByStatus.Select(x => x.Value))));
+
+        barChart('customerGrowthChart',
+                    @Html.Raw(Json.Serialize(Model.CustomerGrowth.Select(x => x.Label))),
+                    @Html.Raw(Json.Serialize(Model.CustomerGrowth.Select(x => x.Value))),
+            'Total Customers');
+    </script>
+}

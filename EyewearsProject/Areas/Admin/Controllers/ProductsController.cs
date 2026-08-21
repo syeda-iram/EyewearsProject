@@ -384,5 +384,119 @@ namespace EyewearsProject.Areas.Admin.Controllers
             TempData["Success"] = "Image deleted.";
             return RedirectToAction(nameof(Images), new { id = productId });
         }
+
+        // GET: /Admin/Products/Specifications/5
+        public async Task<IActionResult> Specifications(int id)
+        {
+            var product = await _context.Products.Include(p => p.Specifications).FirstOrDefaultAsync(p => p.Id == id);
+            if (product == null) return NotFound();
+
+            ViewBag.ProductName = product.Name;
+            ViewBag.ProductId = product.Id;
+            ViewData["Title"] = $"Specifications — {product.Name}";
+            return View(product.Specifications.OrderBy(s => s.SortOrder).ToList());
+        }
+
+        // GET: /Admin/Products/CreateSpecification?productId=5
+        public async Task<IActionResult> CreateSpecification(int productId)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null) return NotFound();
+
+            ViewBag.ProductName = product.Name;
+            return View(new ProductSpecificationFormViewModel { ProductId = productId });
+        }
+
+        // POST: /Admin/Products/CreateSpecification
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateSpecification(ProductSpecificationFormViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var product = await _context.Products.FindAsync(model.ProductId);
+                ViewBag.ProductName = product?.Name;
+                return View(model);
+            }
+
+            var spec = new ProductSpecification
+            {
+                ProductId = model.ProductId,
+                Name = model.Name,
+                Value = model.Value,
+                SortOrder = model.SortOrder
+            };
+
+            _context.ProductSpecifications.Add(spec);
+            await _context.SaveChangesAsync();
+
+            await _auditLogger.LogAsync("Create", "ProductSpecification", spec.Id.ToString(), $"Added spec '{spec.Name}: {spec.Value}' to product #{model.ProductId}");
+
+            TempData["Success"] = "Specification added.";
+            return RedirectToAction(nameof(Specifications), new { id = model.ProductId });
+        }
+
+        // GET: /Admin/Products/EditSpecification/5
+        public async Task<IActionResult> EditSpecification(int id)
+        {
+            var spec = await _context.ProductSpecifications.Include(s => s.Product).FirstOrDefaultAsync(s => s.Id == id);
+            if (spec == null) return NotFound();
+
+            ViewBag.ProductName = spec.Product.Name;
+            var model = new ProductSpecificationFormViewModel
+            {
+                Id = spec.Id,
+                ProductId = spec.ProductId,
+                Name = spec.Name,
+                Value = spec.Value,
+                SortOrder = spec.SortOrder
+            };
+            return View(model);
+        }
+
+        // POST: /Admin/Products/EditSpecification/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSpecification(int id, ProductSpecificationFormViewModel model)
+        {
+            if (id != model.Id) return NotFound();
+
+            var spec = await _context.ProductSpecifications.FindAsync(id);
+            if (spec == null) return NotFound();
+
+            if (!ModelState.IsValid)
+            {
+                var product = await _context.Products.FindAsync(model.ProductId);
+                ViewBag.ProductName = product?.Name;
+                return View(model);
+            }
+
+            spec.Name = model.Name;
+            spec.Value = model.Value;
+            spec.SortOrder = model.SortOrder;
+            await _context.SaveChangesAsync();
+
+            await _auditLogger.LogAsync("Update", "ProductSpecification", spec.Id.ToString(), $"Updated spec '{spec.Name}'");
+
+            TempData["Success"] = "Specification updated.";
+            return RedirectToAction(nameof(Specifications), new { id = model.ProductId });
+        }
+
+        // POST: /Admin/Products/DeleteSpecification/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteSpecification(int id, int productId)
+        {
+            var spec = await _context.ProductSpecifications.FindAsync(id);
+            if (spec == null) return NotFound();
+
+            await _auditLogger.LogAsync("Delete", "ProductSpecification", spec.Id.ToString(), spec.Name);
+
+            _context.ProductSpecifications.Remove(spec);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Specification deleted.";
+            return RedirectToAction(nameof(Specifications), new { id = productId });
+        }
     }
 }

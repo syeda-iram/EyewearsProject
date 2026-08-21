@@ -1,0 +1,22 @@
+﻿@using EyewearsProject.Extensions
+@model List<PurchaseOrder>
+<h4 class="mb-3">Purchase Orders</h4>
+<table class="table table-bordered bg-white align-middle">
+    <thead><tr><th>PO #</th><th>Date</th><th>Status</th><th>Total</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var po in Model)
+        {
+            <tr>
+                <td>@po.PoNumber</td>
+                <td>@po.OrderDate.ToString("dd MMM yyyy")</td>
+                <td><span class="badge bg-secondary">@po.Status</span></td>
+                <td>@po.TotalAmount.ToPkr()</td>
+                <td><a asp-action="Details" asp-route-id="@po.Id" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (!Model.Any())
+{
+    <p class="text-muted">No purchase orders yet.</p>
+}

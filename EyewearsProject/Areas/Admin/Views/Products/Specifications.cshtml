@@ -1,0 +1,32 @@
+﻿@model List<ProductSpecification>
+<div class="d-flex justify-content-between mb-3">
+    <h4>Specifications — @ViewBag.ProductName</h4>
+    <a asp-action="CreateSpecification" asp-route-productId="@ViewBag.ProductId" class="btn btn-dark">+ Add Specification</a>
+</div>
+
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Name</th><th>Value</th><th>Order</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td>@s.Name</td>
+                <td>@s.Value</td>
+                <td>@s.SortOrder</td>
+                <td class="d-flex gap-1">
+                    <a asp-action="EditSpecification" asp-route-id="@s.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <form asp-action="DeleteSpecification" asp-route-id="@s.Id" asp-route-productId="@ViewBag.ProductId" method="post" onsubmit="return confirm('Delete this specification?');">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No specifications yet — e.g. Frame Material, Lens Type, Weight.</p>
+}
+
+<a asp-action="Index" class="btn btn-outline-secondary mt-2">Back to Products</a>

@@ -1,0 +1,71 @@
+﻿@model PurchaseOrderFormViewModel
+<h4>New Purchase Order</h4>
+<form asp-action="Create" method="post" style="max-width:700px;">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="VendorId" class="form-label">Vendor</label>
+        <select asp-for="VendorId" class="form-select" asp-items="ViewBag.Vendors">
+            <option value="">-- Select vendor --</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ExpectedDeliveryDate" class="form-label"></label>
+        <input asp-for="ExpectedDeliveryDate" class="form-control" style="max-width:220px;" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control"></textarea>
+    </div>
+
+    <h6 class="mt-4">Items</h6>
+    <table class="table" id="itemsTable">
+        <thead><tr><th>Description</th><th style="width:100px;">Qty</th><th style="width:140px;">Unit Cost</th><th></th></tr></thead>
+        <tbody>
+            @for (int i = 0; i < Model.Items.Count; i++)
+            {
+                <tr>
+                    <td><input name="Items[@i].ItemDescription" class="form-control" value="@Model.Items[i].ItemDescription" /></td>
+                    <td><input name="Items[@i].Quantity" type="number" min="1" class="form-control" value="@Model.Items[i].Quantity" /></td>
+                    <td><input name="Items[@i].UnitCost" type="number" step="0.01" class="form-control" value="@Model.Items[i].UnitCost" /></td>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">Remove</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button type="button" id="addRow" class="btn btn-sm btn-outline-secondary mb-3">+ Add Item</button>
+
+    <div>
+        <button class="btn btn-dark">Create Purchase Order</button>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        let rowIndex = @Model.Items.Count;
+
+        document.getElementById('addRow').addEventListener('click', function() {
+            const tbody = document.querySelector('#itemsTable tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                        <td><input name="Items[${rowIndex}].ItemDescription" class="form-control" /></td>
+                        <td><input name="Items[${rowIndex}].Quantity" type="number" min="1" value="1" class="form-control" /></td>
+                        <td><input name="Items[${rowIndex}].UnitCost" type="number" step="0.01" class="form-control" /></td>
+                        <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">Remove</button></td>
+                    `;
+            tbody.appendChild(row);
+            rowIndex++;
+        });
+
+        document.querySelector('#itemsTable').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-row')) {
+                e.target.closest('tr').remove();
+            }
+        });
+    </script>
+}

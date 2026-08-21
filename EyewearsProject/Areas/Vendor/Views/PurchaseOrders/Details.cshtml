@@ -1,0 +1,22 @@
+﻿@using EyewearsProject.Extensions
+@model PurchaseOrder
+<h4 class="mb-1">@Model.PoNumber</h4>
+<p class="text-muted">Status: <span class="badge bg-secondary">@Model.Status</span></p>
+
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Item</th><th>Qty</th><th>Unit Cost</th><th>Total</th></tr></thead>
+    <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.ItemDescription</td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitCost.ToPkr()</td>
+                <td>@item.TotalCost.ToPkr()</td>
+            </tr>
+        }
+    </tbody>
+    <tfoot><tr class="fw-bold"><td colspan="3" class="text-end">Total</td><td>@Model.TotalAmount.ToPkr()</td></tr></tfoot>
+</table>
+
+<a asp-action="Index" class="btn btn-outline-secondary">Back to Purchase Orders</a>

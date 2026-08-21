@@ -1,0 +1,85 @@
+﻿@using EyewearsProject.Extensions
+@model PurchaseOrder
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h3 class="mb-1">@Model.PoNumber</h3>
+        <p class="text-muted mb-0">@Model.Vendor.CompanyName &middot; Placed @Model.OrderDate.ToString("dd MMM yyyy")</p>
+    </div>
+    <a asp-action="Index" asp-route-vendorId="@Model.VendorId" class="btn btn-outline-secondary">Back</a>
+</div>
+
+<div class="card p-3 mb-4" style="max-width:500px;">
+    <h6>Update Status</h6>
+    <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+        <select name="newStatus" class="form-select">
+            @foreach (var s in (string[])ViewBag.AllStatuses)
+            {
+                <option value="@s" selected="@(s == Model.Status.ToString())">@s</option>
+            }
+        </select>
+        <button class="btn btn-dark">Update</button>
+    </form>
+</div>
+
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Item</th><th>Qty</th><th>Unit Cost</th><th>Total</th></tr></thead>
+    <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.ItemDescription</td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitCost.ToPkr()</td>
+                <td>@item.TotalCost.ToPkr()</td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr class="fw-bold"><td colspan="3" class="text-end">Total</td><td>@Model.TotalAmount.ToPkr()</td></tr>
+    </tfoot>
+</table>
+
+@if (!string.IsNullOrEmpty(Model.Notes))
+{
+    <p><strong>Notes:</strong> @Model.Notes</p>
+}
+
+<h5 class="mt-4">Invoice</h5>
+@if (Model.Invoice == null)
+{
+    <form asp-action="CreateInvoice" asp-route-id="@Model.Id" method="post" class="d-flex gap-2 align-items-center">
+        <label class="me-2">Due date:</label>
+        <input type="date" name="dueDate" class="form-control" style="max-width:200px;" />
+        <button class="btn btn-outline-dark">Generate Invoice</button>
+    </form>
+}
+else
+{
+    <div class="card p-3" style="max-width:500px;">
+        <p class="mb-1"><strong>@Model.Invoice.InvoiceNumber</strong></p>
+        <p class="mb-1">Amount: @Model.Invoice.Amount.ToPkr()</p>
+        <p class="mb-1">Issued: @Model.Invoice.IssuedDate.ToString("dd MMM yyyy")</p>
+        @if (Model.Invoice.DueDate.HasValue)
+        {
+            <p class="mb-1">Due: @Model.Invoice.DueDate.Value.ToString("dd MMM yyyy")</p>
+        }
+        <p class="mb-2">
+            Status:
+            @if (Model.Invoice.Status == InvoiceStatus.Paid)
+            {
+                <span class="badge bg-success">Paid</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark">@Model.Invoice.Status</span>
+            }
+        </p>
+        @if (Model.Invoice.Status != InvoiceStatus.Paid)
+        {
+            <form asp-action="MarkInvoicePaid" asp-route-id="@Model.Id" method="post">
+                <button class="btn btn-sm btn-outline-success">Mark as Paid</button>
+            </form>
+        }
+    </div>
+}
