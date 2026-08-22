@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using EyewearsProject.Models;
 using EyewearsProject.Extensions;
 using EyewearsProject.ViewModels;
+using EyewearsProject.Services;
 using Microsoft.AspNetCore.Identity;
 
 namespace EyewearsProject.Controllers
@@ -11,12 +12,14 @@ namespace EyewearsProject.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IInventoryService _inventoryService;
         private const string CartSessionKey = "Cart";
 
-        public CartController(AppDbContext context, UserManager<ApplicationUser> userManager)
+        public CartController(AppDbContext context, UserManager<ApplicationUser> userManager, IInventoryService inventoryService)
         {
             _context = context;
             _userManager = userManager;
+            _inventoryService = inventoryService;
         }
 
         private List<CartItem> GetCart()
@@ -218,7 +221,8 @@ namespace EyewearsProject.Controllers
             foreach (var item in cart)
             {
                 var variant = await _context.ProductVariants.FindAsync(item.ProductVariantId);
-                if (variant == null || variant.StockQuantity < item.Quantity)
+                var available = variant != null ? await _inventoryService.GetAvailableQuantityAsync(item.ProductVariantId) : 0;
+                if (variant == null || available < item.Quantity)
                 {
                     ModelState.AddModelError(string.Empty, $"{item.ProductName} ({item.Color}) no longer has enough stock.");
                     ViewBag.SavedAddresses = await _context.Addresses
@@ -269,9 +273,6 @@ namespace EyewearsProject.Controllers
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice
                 });
-
-                var variant = await _context.ProductVariants.FindAsync(item.ProductVariantId);
-                if (variant != null) variant.StockQuantity -= item.Quantity;
             }
 
             _context.Orders.Add(order);
@@ -279,7 +280,18 @@ namespace EyewearsProject.Controllers
             if (promo != null)
                 promo.UsageCount += 1;
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // saved here so order.Id exists for the inventory transaction reference
+
+            foreach (var item in cart)
+            {
+                await _inventoryService.RecordTransactionAsync(
+                    item.ProductVariantId,
+                    InventoryTransactionType.Sale,
+                    item.Quantity,
+                    referenceType: "Order",
+                    referenceId: order.Id.ToString(),
+                    reason: $"Sold via order {order.OrderNumber}");
+            }
 
             var payment = new Payment
             {

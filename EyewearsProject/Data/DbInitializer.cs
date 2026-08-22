@@ -59,6 +59,20 @@ namespace EyewearsProject.Data
 
             context.Products.AddRange(product1, product2);
             context.SaveChanges();
+
+            // Seed matching Inventory rows so the new inventory system has real data from day one
+            foreach (var variant in product1.Variants.Concat(product2.Variants))
+            {
+                context.Inventories.Add(new Inventory
+                {
+                    ProductVariantId = variant.Id,
+                    QuantityOnHand = variant.StockQuantity,
+                    ReservedQuantity = 0,
+                    ReorderLevel = 10,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+            context.SaveChanges();
         }
     }
 }

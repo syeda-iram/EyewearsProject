@@ -1,0 +1,37 @@
+﻿@model List<InventoryTransaction>
+
+<div class="mb-4">
+    <h3 class="mb-1">Stock History — @ViewBag.ProductName</h3>
+    <p class="text-muted mb-0">@ViewBag.VariantLabel</p>
+</div>
+
+<table class="table table-bordered bg-white align-middle">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Quantity</th>
+            <th>Reference</th>
+            <th>Reason</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in Model)
+        {
+            <tr>
+                <td>@t.CreatedAt.ToString("dd MMM yyyy, HH:mm")</td>
+                <td><span class="badge bg-secondary">@t.TransactionType</span></td>
+                <td class="@(t.Quantity < 0 ? "text-danger" : "text-success")">@(t.Quantity > 0 ? "+" : "")@t.Quantity</td>
+                <td class="text-muted small">@t.ReferenceType @(t.ReferenceId != null ? $"#{t.ReferenceId}" : "")</td>
+                <td class="text-muted small">@t.Reason</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No stock movements recorded yet for this variant.</p>
+}
+
+<a asp-action="Index" class="btn btn-outline-secondary mt-2">Back to Inventory</a>
