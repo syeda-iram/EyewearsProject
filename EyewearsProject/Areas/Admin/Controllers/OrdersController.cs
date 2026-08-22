@@ -13,11 +13,13 @@ namespace EyewearsProject.Areas.Admin.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IAuditLogger _auditLogger;
+        private readonly IInventoryService _inventoryService;
 
-        public OrdersController(AppDbContext context, IAuditLogger auditLogger)
+        public OrdersController(AppDbContext context, IAuditLogger auditLogger, IInventoryService inventoryService)
         {
             _context = context;
             _auditLogger = auditLogger;
+            _inventoryService = inventoryService;
         }
 
         // GET: /Admin/Orders
@@ -114,18 +116,87 @@ namespace EyewearsProject.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, OrderStatus newStatus)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
             if (order == null) return NotFound();
 
             var oldStatus = order.OrderStatus;
+
+            if (newStatus == OrderStatus.Delivered && oldStatus == OrderStatus.Cancelled)
+            {
+                TempData["Error"] = "A cancelled order cannot be marked as delivered.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             order.OrderStatus = newStatus;
             order.UpdatedAt = DateTime.UtcNow;
+
+            // Cancelling releases the stock back — only once, guarded so re-saving the same status twice can't double-restore
+            if (newStatus == OrderStatus.Cancelled && oldStatus != OrderStatus.Cancelled)
+            {
+                foreach (var item in order.Items)
+                {
+                    await _inventoryService.RecordTransactionAsync(
+                        item.ProductVariantId,
+                        InventoryTransactionType.Return,
+                        item.Quantity,
+                        referenceType: "Order",
+                        referenceId: order.Id.ToString(),
+                        reason: $"Order {order.OrderNumber} cancelled — stock restored");
+                }
+            }
+
             await _context.SaveChangesAsync();
 
             await _auditLogger.LogAsync("Update", "Order", order.Id.ToString(),
                 $"Order {order.OrderNumber} status changed from {oldStatus} to {newStatus}");
 
             TempData["Success"] = $"Order {order.OrderNumber} updated to {newStatus}.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // POST: /Admin/Orders/Cancel/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Cancel(int id, string? reason)
+        {
+            var order = await _context.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
+            if (order == null) return NotFound();
+
+            if (order.OrderStatus == OrderStatus.Delivered)
+            {
+                TempData["Error"] = "A delivered order cannot be cancelled.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (order.OrderStatus == OrderStatus.Cancelled)
+            {
+                TempData["Error"] = "This order is already cancelled.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var oldStatus = order.OrderStatus;
+            order.OrderStatus = OrderStatus.Cancelled;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            foreach (var item in order.Items)
+            {
+                await _inventoryService.RecordTransactionAsync(
+                    item.ProductVariantId,
+                    InventoryTransactionType.Return,
+                    item.Quantity,
+                    referenceType: "Order",
+                    referenceId: order.Id.ToString(),
+                    reason: string.IsNullOrWhiteSpace(reason)
+                        ? $"Order {order.OrderNumber} cancelled by admin — stock restored"
+                        : $"Order {order.OrderNumber} cancelled: {reason}");
+            }
+
+            await _context.SaveChangesAsync();
+
+            await _auditLogger.LogAsync("Update", "Order", order.Id.ToString(),
+                $"Order {order.OrderNumber} cancelled (was {oldStatus}). Reason: {reason}");
+
+            TempData["Success"] = $"Order {order.OrderNumber} cancelled and stock restored.";
             return RedirectToAction(nameof(Details), new { id });
         }
     }

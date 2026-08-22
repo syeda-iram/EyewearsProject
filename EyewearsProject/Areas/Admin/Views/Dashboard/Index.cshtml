@@ -1,133 +1,314 @@
 ﻿@using EyewearsProject.Extensions
 @model DashboardViewModel
 
+<style>
+    .stat-card {
+        border: none;
+        border-radius: 12px;
+        padding: 20px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        border-left: 4px solid transparent;
+    }
+
+        .stat-card .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 12.5px;
+            color: #8a8f98;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            font-weight: 600;
+        }
+
+        .stat-card .stat-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1f2430;
+            margin-top: 2px;
+        }
+
+    .section-title {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #6b7280;
+        margin: 28px 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .chart-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        height: 100%;
+    }
+
+        .chart-card h6 {
+            font-weight: 700;
+            color: #1f2430;
+            margin-bottom: 16px;
+            font-size: 14.5px;
+        }
+
+    .data-table thead th {
+        background: #f8f9fb;
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        color: #6b7280;
+        border-bottom: 1px solid #edeef1;
+        font-weight: 700;
+    }
+
+    .data-table td, .data-table th {
+        border-color: #f0f1f3;
+        vertical-align: middle;
+    }
+
+    .donut-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+        .donut-legend .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+</style>
+
 <div class="mb-4">
-    <h3 class="mb-1">Dashboard</h3>
+    <h3 class="mb-1 fw-bold">Dashboard</h3>
     <p class="text-muted mb-0">Welcome back, @User.Identity?.Name.</p>
 </div>
 
 @if (Model.PendingOrders > 0 || Model.LowStockCount > 0 || Model.TotalReturns > 0)
 {
-    <div class="alert alert-warning">
-        <strong>Needs attention:</strong>
+    <div class="d-flex align-items-center gap-2 flex-wrap p-3 mb-4" style="background:#fff7e6; border:1px solid #ffe8b3; border-radius:12px;">
+        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+        <strong class="me-1">Needs attention:</strong>
         @if (Model.PendingOrders > 0)
         {
-            <span class="badge bg-dark me-1">@Model.PendingOrders pending order(s)</span>
+            <span class="badge rounded-pill" style="background:#1f2430;">@Model.PendingOrders pending order(s)</span>
         }
         @if (Model.LowStockCount > 0)
         {
-            <span class="badge bg-warning text-dark me-1">@Model.LowStockCount low/out of stock item(s)</span>
+            <span class="badge rounded-pill text-dark" style="background:#ffd43b;">@Model.LowStockCount low/out of stock item(s)</span>
         }
         @if (Model.TotalReturns > 0)
         {
-            <span class="badge bg-info text-dark me-1">@Model.TotalReturns return(s)</span>
+            <span class="badge rounded-pill text-dark" style="background:#a5d8ff;">@Model.TotalReturns return(s)</span>
         }
     </div>
 }
 
-<h6 class="text-muted text-uppercase mb-2">Sales</h6>
-<div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Sales</small><h3>@Model.TotalSales.ToPkr()</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Today's Sales</small><h3>@Model.TodaySales.ToPkr()</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Monthly Sales</small><h3>@Model.MonthlySales.ToPkr()</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Refunded</small><h3 class="text-danger">@Model.TotalRefunded.ToPkr()</h3></div></div>
+<div class="section-title"><i class="bi bi-cash-coin"></i> Sales</div>
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#4c6ef5;">
+            <div class="stat-icon" style="background:#edf1ff; color:#4c6ef5;"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="stat-label">Total Sales</div>
+            <div class="stat-value">@Model.TotalSales.ToPkr()</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#12b886;">
+            <div class="stat-icon" style="background:#e6fcf5; color:#12b886;"><i class="bi bi-calendar-day"></i></div>
+            <div class="stat-label">Today's Sales</div>
+            <div class="stat-value">@Model.TodaySales.ToPkr()</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#f59f00;">
+            <div class="stat-icon" style="background:#fff9db; color:#f59f00;"><i class="bi bi-calendar3"></i></div>
+            <div class="stat-label">Monthly Sales</div>
+            <div class="stat-value">@Model.MonthlySales.ToPkr()</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#fa5252;">
+            <div class="stat-icon" style="background:#fff0f0; color:#fa5252;"><i class="bi bi-arrow-counterclockwise"></i></div>
+            <div class="stat-label">Total Refunded</div>
+            <div class="stat-value text-danger">@Model.TotalRefunded.ToPkr()</div>
+        </div>
+    </div>
 </div>
 
-<h6 class="text-muted text-uppercase mb-2">Orders</h6>
-<div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Orders</small><h3>@Model.TotalOrders</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Pending</small><h3 class="text-warning">@Model.PendingOrders</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Delivered</small><h3 class="text-success">@Model.DeliveredOrders</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Cancelled</small><h3 class="text-danger">@Model.CancelledOrders</h3></div></div>
+<div class="section-title"><i class="bi bi-box-seam"></i> Orders</div>
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#1f2430;">
+            <div class="stat-icon" style="background:#eef0f2; color:#1f2430;"><i class="bi bi-receipt"></i></div>
+            <div class="stat-label">Total Orders</div>
+            <div class="stat-value">@Model.TotalOrders</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#f59f00;">
+            <div class="stat-icon" style="background:#fff9db; color:#f59f00;"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-label">Pending</div>
+            <div class="stat-value text-warning">@Model.PendingOrders</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#12b886;">
+            <div class="stat-icon" style="background:#e6fcf5; color:#12b886;"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-label">Delivered</div>
+            <div class="stat-value text-success">@Model.DeliveredOrders</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#fa5252;">
+            <div class="stat-icon" style="background:#fff0f0; color:#fa5252;"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-label">Cancelled</div>
+            <div class="stat-value text-danger">@Model.CancelledOrders</div>
+        </div>
+    </div>
 </div>
 
-<h6 class="text-muted text-uppercase mb-2">Customers &amp; Inventory</h6>
-<div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Customers</small><h3>@Model.TotalCustomers</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">New This Month</small><h3>@Model.NewCustomersThisMonth</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Low Stock Products</small><h3 class="text-warning">@Model.LowStockCount</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><small class="text-muted">Total Returns</small><h3>@Model.TotalReturns</h3></div></div>
+<div class="section-title"><i class="bi bi-people"></i> Customers &amp; Inventory</div>
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#4c6ef5;">
+            <div class="stat-icon" style="background:#edf1ff; color:#4c6ef5;"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-label">Total Customers</div>
+            <div class="stat-value">@Model.TotalCustomers</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#12b886;">
+            <div class="stat-icon" style="background:#e6fcf5; color:#12b886;"><i class="bi bi-person-plus"></i></div>
+            <div class="stat-label">New This Month</div>
+            <div class="stat-value">@Model.NewCustomersThisMonth</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#f59f00;">
+            <div class="stat-icon" style="background:#fff9db; color:#f59f00;"><i class="bi bi-box"></i></div>
+            <div class="stat-label">Low Stock Products</div>
+            <div class="stat-value text-warning">@Model.LowStockCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color:#868e96;">
+            <div class="stat-icon" style="background:#f1f3f5; color:#868e96;"><i class="bi bi-arrow-return-left"></i></div>
+            <div class="stat-label">Total Returns</div>
+            <div class="stat-value">@Model.TotalReturns</div>
+        </div>
+    </div>
 </div>
 
-<div class="row g-3 mb-4">
+<div class="section-title"><i class="bi bi-bar-chart-line"></i> Trends</div>
+<div class="row g-3">
     <div class="col-md-6">
-        <div class="card p-3">
+        <div class="chart-card">
             <h6>Sales by Day (last 30 days)</h6>
             <canvas id="salesByDayChart" height="90"></canvas>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="card p-3">
+        <div class="chart-card">
             <h6>Sales by Month (last 12 months)</h6>
             <canvas id="salesByMonthChart" height="90"></canvas>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
+<div class="row g-3 mt-1">
     <div class="col-md-4">
-        <div class="card p-3">
+        <div class="chart-card">
             <h6>Sales by Category</h6>
-            <canvas id="salesByCategoryChart"></canvas>
+            <div style="height:160px;">
+                <canvas id="salesByCategoryChart"></canvas>
+            </div>
+            <div class="donut-legend" id="salesByCategoryLegend"></div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card p-3">
+        <div class="chart-card">
             <h6>Sales by Brand</h6>
-            <canvas id="salesByBrandChart"></canvas>
+            <div style="height:160px;">
+                <canvas id="salesByBrandChart"></canvas>
+            </div>
+            <div class="donut-legend" id="salesByBrandLegend"></div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card p-3">
+        <div class="chart-card">
             <h6>Orders by Status</h6>
-            <canvas id="ordersByStatusChart"></canvas>
+            <div style="height:160px;">
+                <canvas id="ordersByStatusChart"></canvas>
+            </div>
+            <div class="donut-legend" id="ordersByStatusLegend"></div>
         </div>
     </div>
 </div>
 
-<div class="card p-3 mb-4">
+<div class="chart-card mt-3">
     <h6>Customer Growth (last 12 months)</h6>
     <canvas id="customerGrowthChart" height="80"></canvas>
 </div>
 
-<div class="row">
+<div class="row g-3 mt-1 mb-4">
     <div class="col-md-6">
-        <h6 class="text-muted text-uppercase mb-2">Top Products</h6>
-        <table class="table table-bordered bg-white">
-            <thead><tr><th>Product</th><th>Units</th><th>Revenue</th></tr></thead>
-            <tbody>
-                @if (Model.TopProducts.Any())
-                {
-                    @foreach (var p in Model.TopProducts)
+        <div class="chart-card">
+            <h6 class="mb-3"><i class="bi bi-award me-1"></i> Top Products</h6>
+            <table class="table data-table mb-0">
+                <thead><tr><th>Product</th><th>Units</th><th>Revenue</th></tr></thead>
+                <tbody>
+                    @if (Model.TopProducts.Any())
                     {
-                        <tr><td>@p.ProductName</td><td>@p.UnitsSold</td><td>@p.Revenue.ToPkr()</td></tr>
+                        @foreach (var p in Model.TopProducts)
+                        {
+                            <tr><td>@p.ProductName</td><td>@p.UnitsSold</td><td>@p.Revenue.ToPkr()</td></tr>
+                        }
                     }
-                }
-                else
-                {
-                    <tr><td colspan="3" class="text-muted">No sales data yet.</td></tr>
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        <tr><td colspan="3" class="text-muted text-center py-3">No sales data yet.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
     <div class="col-md-6">
-        <h6 class="text-muted text-uppercase mb-2">Top Brands</h6>
-        <table class="table table-bordered bg-white">
-            <thead><tr><th>Brand</th><th>Units</th><th>Revenue</th></tr></thead>
-            <tbody>
-                @if (Model.TopBrands.Any())
-                {
-                    @foreach (var b in Model.TopBrands)
+        <div class="chart-card">
+            <h6 class="mb-3"><i class="bi bi-tags me-1"></i> Top Brands</h6>
+            <table class="table data-table mb-0">
+                <thead><tr><th>Brand</th><th>Units</th><th>Revenue</th></tr></thead>
+                <tbody>
+                    @if (Model.TopBrands.Any())
                     {
-                        <tr><td>@b.BrandName</td><td>@b.UnitsSold</td><td>@b.Revenue.ToPkr()</td></tr>
+                        @foreach (var b in Model.TopBrands)
+                        {
+                            <tr><td>@b.BrandName</td><td>@b.UnitsSold</td><td>@b.Revenue.ToPkr()</td></tr>
+                        }
                     }
-                }
-                else
-                {
-                    <tr><td colspan="3" class="text-muted">No sales data yet.</td></tr>
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        <tr><td colspan="3" class="text-muted text-center py-3">No sales data yet.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -135,55 +316,72 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script>
         const pkr = (v) => 'Rs ' + Number(v).toLocaleString('en-PK', { maximumFractionDigits: 0 });
+        const palette = ['#4c6ef5', '#12b886', '#f59f00', '#fa5252', '#845ef7', '#868e96'];
 
         function lineChart(id, labels, data, label) {
             new Chart(document.getElementById(id), {
                 type: 'line',
-                data: { labels, datasets: [{ label, data, borderColor: '#212529', backgroundColor: 'rgba(33,37,41,0.08)', fill: true, tension: 0.3 }] },
-                options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pkr(v) } } } }
+                data: { labels, datasets: [{ label, data, borderColor: '#4c6ef5', backgroundColor: 'rgba(76,110,245,0.08)', fill: true, tension: 0.35, pointRadius: 0 }] },
+                options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pkr(v) } }, x: { grid: { display: false } } } }
             });
         }
 
         function barChart(id, labels, data, label) {
             new Chart(document.getElementById(id), {
                 type: 'bar',
-                data: { labels, datasets: [{ label, data, backgroundColor: '#495057' }] },
-                options: { plugins: { legend: { display: false } } }
+                data: { labels, datasets: [{ label, data, backgroundColor: '#4c6ef5', borderRadius: 4 }] },
+                options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } } } }
             });
         }
 
-        function pieChart(id, labels, data) {
+        function pieChart(id, labels, data, legendElId) {
             new Chart(document.getElementById(id), {
                 type: 'doughnut',
-                data: { labels, datasets: [{ data, backgroundColor: ['#212529', '#495057', '#6c757d', '#adb5bd', '#ced4da', '#dee2e6'] }] }
+                data: { labels, datasets: [{ data, backgroundColor: palette, borderWidth: 2, borderColor: '#fff' }] },
+                options: { maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false } } }
             });
+
+            const legendEl = document.getElementById(legendElId);
+            if (legendEl) {
+                const total = data.reduce((a, b) => a + b, 0) || 1;
+                legendEl.innerHTML = labels.map((l, i) => {
+                    const pct = Math.round((data[i] / total) * 100);
+                    return `<div class="d-flex justify-content-between small">
+                                        <span><span class="dot" style="background:${palette[i % palette.length]}"></span>${l}</span>
+                                        <span class="text-muted">${pct}%</span>
+                                    </div>`;
+                }).join('');
+            }
         }
 
         lineChart('salesByDayChart',
-                    @Html.Raw(Json.Serialize(Model.SalesByDay.Select(x => x.Label))),
-                    @Html.Raw(Json.Serialize(Model.SalesByDay.Select(x => x.Value))),
+                            @Html.Raw(Json.Serialize(Model.SalesByDay.Select(x => x.Label))),
+                            @Html.Raw(Json.Serialize(Model.SalesByDay.Select(x => x.Value))),
             'Sales');
 
         lineChart('salesByMonthChart',
-                    @Html.Raw(Json.Serialize(Model.SalesByMonth.Select(x => x.Label))),
-                    @Html.Raw(Json.Serialize(Model.SalesByMonth.Select(x => x.Value))),
+                            @Html.Raw(Json.Serialize(Model.SalesByMonth.Select(x => x.Label))),
+                            @Html.Raw(Json.Serialize(Model.SalesByMonth.Select(x => x.Value))),
             'Sales');
 
         pieChart('salesByCategoryChart',
-                    @Html.Raw(Json.Serialize(Model.SalesByCategory.Select(x => x.Label))),
-                    @Html.Raw(Json.Serialize(Model.SalesByCategory.Select(x => x.Value))));
+                            @Html.Raw(Json.Serialize(Model.SalesByCategory.Select(x => x.Label))),
+                            @Html.Raw(Json.Serialize(Model.SalesByCategory.Select(x => x.Value))),
+            'salesByCategoryLegend');
 
         pieChart('salesByBrandChart',
-                    @Html.Raw(Json.Serialize(Model.SalesByBrand.Select(x => x.Label))),
-                    @Html.Raw(Json.Serialize(Model.SalesByBrand.Select(x => x.Value))));
+                            @Html.Raw(Json.Serialize(Model.SalesByBrand.Select(x => x.Label))),
+                            @Html.Raw(Json.Serialize(Model.SalesByBrand.Select(x => x.Value))),
+            'salesByBrandLegend');
 
         pieChart('ordersByStatusChart',
-                    @Html.Raw(Json.Serialize(Model.OrdersByStatus.Select(x => x.Label))),
-                    @Html.Raw(Json.Serialize(Model.OrdersByStatus.Select(x => x.Value))));
+                            @Html.Raw(Json.Serialize(Model.OrdersByStatus.Select(x => x.Label))),
+                            @Html.Raw(Json.Serialize(Model.OrdersByStatus.Select(x => x.Value))),
+            'ordersByStatusLegend');
 
         barChart('customerGrowthChart',
-                    @Html.Raw(Json.Serialize(Model.CustomerGrowth.Select(x => x.Label))),
-                    @Html.Raw(Json.Serialize(Model.CustomerGrowth.Select(x => x.Value))),
+                            @Html.Raw(Json.Serialize(Model.CustomerGrowth.Select(x => x.Label))),
+                            @Html.Raw(Json.Serialize(Model.CustomerGrowth.Select(x => x.Value))),
             'Total Customers');
     </script>
 }

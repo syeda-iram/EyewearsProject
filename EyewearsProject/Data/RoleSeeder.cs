@@ -12,6 +12,7 @@ namespace EyewearsProject.Data
             "Admin",
             "OrderManager",
             "ProductManager",
+            "InventoryManager",
             "VendorManager",
             "FinanceManager",
             "MarketingManager",

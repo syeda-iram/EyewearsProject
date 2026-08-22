@@ -10,13 +10,14 @@
 
         // Everyone who can log into the Admin portal at all
         public const string AllAdmins =
-            "SuperAdmin,Admin,ProductManager,OrderManager,MarketingManager,FinanceManager,CustomerSupport,VendorManager";
+            "SuperAdmin,Admin,ProductManager,InventoryManager,OrderManager,MarketingManager,FinanceManager,CustomerSupport,VendorManager";
 
         // Only SuperAdmin and Admin may manage user accounts at all
         public const string UserManagers = "SuperAdmin,Admin";
 
         // Module-scoped roles (each includes FullAccess since SuperAdmin/Admin see everything)
         public const string ProductsModule = "SuperAdmin,Admin,ProductManager";
+        public const string InventoryModule = "SuperAdmin,Admin,ProductManager,InventoryManager";
         public const string OrdersModule = "SuperAdmin,Admin,OrderManager";
         public const string MarketingModule = "SuperAdmin,Admin,MarketingManager";
         public const string FinanceModule = "SuperAdmin,Admin,FinanceManager";

@@ -53,6 +53,7 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<EyewearsProject.Services.IAuditLogger, EyewearsProject.Services.AuditLogger>();
+builder.Services.AddScoped<EyewearsProject.Services.IInventoryService, EyewearsProject.Services.InventoryService>();
 
 var app = builder.Build();
 

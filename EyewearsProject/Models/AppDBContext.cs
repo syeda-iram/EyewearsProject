@@ -25,5 +25,7 @@ namespace EyewearsProject.Models
         public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; } = null!;
         public DbSet<Invoice> Invoices { get; set; } = null!;
         public DbSet<ProductSpecification> ProductSpecifications { get; set; } = null!;
+        public DbSet<Inventory> Inventories { get; set; } = null!;
+        public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
     }
 }
