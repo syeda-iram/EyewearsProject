@@ -1,4 +1,5 @@
 ﻿@using EyewearsProject.Extensions
+@using EyewearsProject.Models
 @model EyewearsProject.Models.Product
 
 @{
@@ -57,8 +58,97 @@
             <button type="submit" class="btn btn-primary btn-lg mt-2">Add to Cart</button>
         </form>
 
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form asp-controller="Wishlist" asp-action="Add" method="post" class="mt-2">
+                <input type="hidden" name="productId" value="@Model.Id" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                <button type="submit" class="btn btn-outline-danger">&hearts; Add to Wishlist</button>
+            </form>
+        }
+
         <div class="mt-4">
             <a asp-controller="Products" asp-action="Index">&larr; Back to Shop</a>
         </div>
+    </div>
+</div>
+
+<hr class="my-5" />
+
+<div class="row">
+    <div class="col-md-8">
+        <h3>
+            Reviews
+            @if (ViewBag.AverageRating != null)
+            {
+                <span class="text-muted fs-6">(@(((double)ViewBag.AverageRating).ToString("0.0")) / 5 average)</span>
+            }
+        </h3>
+
+        @if (TempData["ReviewSubmitted"] != null)
+        {
+            <div class="alert alert-success">@TempData["ReviewSubmitted"]</div>
+        }
+
+        @{
+            var reviews = (List<Review>)ViewBag.ApprovedReviews;
+        }
+
+        @if (!reviews.Any())
+        {
+            <p class="text-muted">No reviews yet. Be the first to review this product.</p>
+        }
+        else
+        {
+            foreach (var review in reviews)
+            {
+                var filledStars = new string('*', review.Rating);
+                var emptyStars = new string('-', 5 - review.Rating);
+
+                <div class="border-bottom pb-3 mb-3">
+                    <strong>@review.User.FullName</strong>
+                    <span class="text-warning ms-2">@(filledStars)@(emptyStars)</span>
+                    <p class="mb-0 mt-1">@review.Comment</p>
+                    <small class="text-muted">@review.CreatedAt.ToString("dd MMM yyyy")</small>
+                </div>
+            }
+        }
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            @if (ViewBag.UserAlreadyReviewed == true)
+            {
+                <p class="text-muted">You've already reviewed this product.</p>
+            }
+            else
+            {
+                <h5 class="mt-4">Write a Review</h5>
+                <form asp-controller="Products" asp-action="SubmitReview" method="post">
+                    <input type="hidden" name="productId" value="@Model.Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Rating</label>
+                        <select name="rating" class="form-select" style="max-width:150px;" required>
+                            <option value="5">5 - Excellent</option>
+                            <option value="4">4 - Good</option>
+                            <option value="3">3 - Average</option>
+                            <option value="2">2 - Poor</option>
+                            <option value="1">1 - Terrible</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Comment</label>
+                        <textarea name="comment" class="form-control" rows="3" maxlength="1000"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </form>
+            }
+        }
+        else
+        {
+            <p class="text-muted mt-4"><a asp-controller="Account" asp-action="Login">Log in</a> to leave a review.</p>
+        }
     </div>
 </div>

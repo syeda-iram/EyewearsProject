@@ -117,13 +117,28 @@ namespace EyewearsProject.Controllers
             var user = await _userManager.GetUserAsync(User);
             var subtotal = cart.Sum(i => i.TotalPrice);
 
+            var savedAddresses = await _context.Addresses
+                .Where(a => a.UserId == user!.Id)
+                .OrderByDescending(a => a.IsDefault)
+                .ThenByDescending(a => a.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.SavedAddresses = savedAddresses;
+
+            var defaultAddress = savedAddresses.FirstOrDefault(a => a.IsDefault) ?? savedAddresses.FirstOrDefault();
+
             var model = new CheckoutViewModel
             {
                 Items = cart,
                 Subtotal = subtotal,
                 GrandTotal = subtotal + 200,
-                FullName = user?.FullName ?? "",
-                Email = user?.Email ?? ""
+                FullName = defaultAddress?.FullName ?? user?.FullName ?? "",
+                Email = user?.Email ?? "",
+                Phone = defaultAddress?.Phone ?? "",
+                ShippingAddressLine = defaultAddress?.AddressLine ?? "",
+                ShippingCity = defaultAddress?.City ?? "",
+                ShippingPostalCode = defaultAddress?.PostalCode ?? "",
+                ShippingCountry = defaultAddress?.Country ?? "Pakistan"
             };
 
             return View(model);
@@ -186,7 +201,16 @@ namespace EyewearsProject.Controllers
                     ModelState.AddModelError(nameof(model.BillingCountry), "Billing country is required.");
             }
 
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                var user2 = await _userManager.GetUserAsync(User);
+                ViewBag.SavedAddresses = await _context.Addresses
+                    .Where(a => a.UserId == user2!.Id)
+                    .OrderByDescending(a => a.IsDefault)
+                    .ThenByDescending(a => a.CreatedAt)
+                    .ToListAsync();
+                return View(model);
+            }
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
@@ -197,6 +221,11 @@ namespace EyewearsProject.Controllers
                 if (variant == null || variant.StockQuantity < item.Quantity)
                 {
                     ModelState.AddModelError(string.Empty, $"{item.ProductName} ({item.Color}) no longer has enough stock.");
+                    ViewBag.SavedAddresses = await _context.Addresses
+                        .Where(a => a.UserId == user.Id)
+                        .OrderByDescending(a => a.IsDefault)
+                        .ThenByDescending(a => a.CreatedAt)
+                        .ToListAsync();
                     return View(model);
                 }
             }
@@ -248,7 +277,7 @@ namespace EyewearsProject.Controllers
             _context.Orders.Add(order);
 
             if (promo != null)
-                promo.UsageCount += 1; // only increment once the order is actually confirmed
+                promo.UsageCount += 1;
 
             await _context.SaveChangesAsync();
 
@@ -300,7 +329,7 @@ namespace EyewearsProject.Controllers
             if (promo.MaxDiscountAmount.HasValue && discount > promo.MaxDiscountAmount.Value)
                 discount = promo.MaxDiscountAmount.Value;
 
-            if (discount > subtotal) discount = subtotal; // never discount below zero
+            if (discount > subtotal) discount = subtotal;
 
             return Json(new
             {
