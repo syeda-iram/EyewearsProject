@@ -1,0 +1,62 @@
+﻿@model Prescription
+
+@{
+    ViewData["Title"] = "Prescription Details";
+}
+
+<h1>@Model.PatientName's Prescription</h1>
+
+@if (!string.IsNullOrEmpty(Model.PrescribedBy))
+{
+    <p class="text-muted">Prescribed by @Model.PrescribedBy</p>
+}
+
+<div class="row">
+    @if (Model.IssuedDate.HasValue)
+    {
+        <div class="col-auto"><strong>Issued:</strong> @Model.IssuedDate.Value.ToString("dd MMM yyyy")</div>
+    }
+    @if (Model.ExpiryDate.HasValue)
+    {
+        <div class="col-auto"><strong>Expires:</strong> @Model.ExpiryDate.Value.ToString("dd MMM yyyy")</div>
+    }
+</div>
+
+<table class="table mt-4" style="max-width:700px;">
+    <thead>
+        <tr>
+            <th>Eye</th>
+            <th>SPH</th>
+            <th>CYL</th>
+            <th>Axis</th>
+            <th>Add</th>
+            <th>PD</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Right (OD)</td>
+            <td>@Model.RightSphere</td>
+            <td>@Model.RightCylinder</td>
+            <td>@Model.RightAxis</td>
+            <td>@Model.RightAdd</td>
+            <td>@Model.RightPd</td>
+        </tr>
+        <tr>
+            <td>Left (OS)</td>
+            <td>@Model.LeftSphere</td>
+            <td>@Model.LeftCylinder</td>
+            <td>@Model.LeftAxis</td>
+            <td>@Model.LeftAdd</td>
+            <td>@Model.LeftPd</td>
+        </tr>
+    </tbody>
+</table>
+
+@if (!string.IsNullOrEmpty(Model.Notes))
+{
+    <p><strong>Notes:</strong> @Model.Notes</p>
+}
+
+<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
+<a asp-action="Index" class="btn btn-secondary">Back to My Prescriptions</a>

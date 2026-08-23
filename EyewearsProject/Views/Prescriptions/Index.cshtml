@@ -1,0 +1,62 @@
+﻿@model List<Prescription>
+
+@{
+    ViewData["Title"] = "My Prescriptions";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Prescriptions</h1>
+    <a class="btn btn-primary" asp-action="Create">+ Add New Prescription</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">You haven't added any prescriptions yet.</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        @foreach (var rx in Model)
+        {
+            var isExpired = rx.ExpiryDate.HasValue && rx.ExpiryDate.Value < DateTime.UtcNow;
+
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="card-title">@rx.PatientName</h5>
+                            @if (isExpired)
+                            {
+                                <span class="badge bg-danger align-self-start">Expired</span>
+                            }
+                            else if (rx.ExpiryDate.HasValue)
+                            {
+                                <span class="badge bg-success align-self-start">Valid</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(rx.PrescribedBy))
+                        {
+                            <p class="text-muted mb-1">@rx.PrescribedBy</p>
+                        }
+                        @if (rx.IssuedDate.HasValue)
+                        {
+                            <p class="mb-0 small text-muted">Issued: @rx.IssuedDate.Value.ToString("dd MMM yyyy")</p>
+                        }
+                        @if (rx.ExpiryDate.HasValue)
+                        {
+                            <p class="mb-0 small text-muted">Expires: @rx.ExpiryDate.Value.ToString("dd MMM yyyy")</p>
+                        }
+                    </div>
+                    <div class="card-footer bg-white d-flex gap-2">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@rx.Id">View</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@rx.Id">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@rx.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('Delete this prescription?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

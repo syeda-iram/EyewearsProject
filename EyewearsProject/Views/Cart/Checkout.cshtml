@@ -1,7 +1,9 @@
 ﻿@using EyewearsProject.Extensions
+@using EyewearsProject.Models
 @model CheckoutViewModel
 @{
     ViewData["Title"] = "Checkout";
+    var savedAddresses = (List<Address>)(ViewBag.SavedAddresses ?? new List<Address>());
 }
 
 <h1 class="mb-4">Checkout</h1>
@@ -31,6 +33,30 @@
             </div>
 
             <h5 class="mt-4">Shipping Address</h5>
+
+            @if (savedAddresses.Any())
+            {
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Use a saved address</label>
+                    <select id="savedAddressSelect" class="form-select">
+                        <option value="">-- Enter address manually --</option>
+                        @foreach (var addr in savedAddresses)
+                        {
+                            <option value="@addr.Id"
+                                    data-fullname="@addr.FullName"
+                                    data-phone="@addr.Phone"
+                                    data-line="@addr.AddressLine"
+                                    data-city="@addr.City"
+                                    data-postal="@addr.PostalCode"
+                                    data-country="@addr.Country"
+                                    selected="@(addr.IsDefault ? "selected" : null)">
+                                @addr.Label — @addr.AddressLine, @addr.City @(addr.IsDefault ? "(Default)" : "")
+                            </option>
+                        }
+                    </select>
+                </div>
+            }
+
             <div class="mb-3">
                 <label asp-for="ShippingAddressLine" class="form-label"></label>
                 <input asp-for="ShippingAddressLine" class="form-control" placeholder="House #, Street, Area" />
@@ -111,8 +137,14 @@
             <h5>Order Summary</h5>
             @foreach (var item in Model.Items)
             {
-                <div class="d-flex justify-content-between">
-                    <span>@item.ProductName (@item.Color) x@item.Quantity</span>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>
+                        @item.ProductName (@item.Color) x@(item.Quantity)
+                        @if (!string.IsNullOrEmpty(item.LensType))
+                        {
+                            <br /><small class="text-muted">@item.LensType@(item.Coating != "None" && !string.IsNullOrEmpty(item.Coating) ? " + " + item.Coating : "")</small>
+                        }
+                    </span>
                     <span>@item.TotalPrice.ToPkr()</span>
                 </div>
             }
@@ -140,7 +172,26 @@
         }
 
         checkbox.addEventListener('change', toggleBilling);
-        toggleBilling(); // set correct state on page load
+        toggleBilling();
+
+        const savedAddressSelect = document.getElementById('savedAddressSelect');
+        if (savedAddressSelect) {
+            function applySelectedAddress() {
+                const opt = savedAddressSelect.options[savedAddressSelect.selectedIndex];
+                if (!opt.value) return; // "Enter manually" chosen — leave fields as-is
+
+                document.querySelector('[name="FullName"]').value = opt.dataset.fullname || '';
+                document.querySelector('[name="Phone"]').value = opt.dataset.phone || '';
+                document.querySelector('[name="ShippingAddressLine"]').value = opt.dataset.line || '';
+                document.querySelector('[name="ShippingCity"]').value = opt.dataset.city || '';
+                document.querySelector('[name="ShippingPostalCode"]').value = opt.dataset.postal || '';
+                document.querySelector('[name="ShippingCountry"]').value = opt.dataset.country || '';
+            }
+
+            savedAddressSelect.addEventListener('change', applySelectedAddress);
+            // Auto-fill from the default address on first page load too.
+            applySelectedAddress();
+        }
 
         const subtotal = @Model.Subtotal;
         const shipping = @Model.ShippingAmount;

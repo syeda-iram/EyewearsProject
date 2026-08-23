@@ -1,0 +1,100 @@
+@using EyewearsProject.Extensions
+@model Order
+
+@{
+    ViewData["Title"] = $"Order {Model.OrderNumber}";
+}
+
+<h1>Order @Model.OrderNumber</h1>
+<p class="text-muted">Placed on @Model.OrderDate.ToString("dd MMM yyyy, h:mm tt")</p>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">Items</div>
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Variant</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                @{
+                                    var thumb = item.Product?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
+                                                ?? item.Product?.Images?.FirstOrDefault()?.ImageUrl;
+                                }
+                                @if (!string.IsNullOrEmpty(thumb))
+                                {
+                                    <img src="@thumb" alt="@item.ProductName" style="width:40px;height:40px;object-fit:cover;" class="me-2 rounded" />
+                                }
+                                @item.ProductName
+                            </td>
+                            <td>@(item.ProductVariant?.Color ?? "-")</td>
+                            <td>@item.Quantity</td>
+                            <td>@item.UnitPrice.ToPkr()</td>
+                            <td>@item.TotalPrice.ToPkr()</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Shipping Address</div>
+            <div class="card-body">
+                <p class="mb-1">@Model.RecipientName</p>
+                <p class="mb-1">@Model.ShippingAddressLine</p>
+                <p class="mb-1">@Model.ShippingCity, @Model.ShippingPostalCode</p>
+                <p class="mb-0">@Model.ShippingCountry</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">Order Summary</div>
+            <div class="card-body">
+                <p class="d-flex justify-content-between">
+                    <span>Status</span>
+                    <strong>@Model.OrderStatus</strong>
+                </p>
+                <p class="d-flex justify-content-between">
+                    <span>Payment</span>
+                    <strong>@Model.PaymentStatus (@Model.PaymentMethod)</strong>
+                </p>
+                <hr />
+                <p class="d-flex justify-content-between">
+                    <span>Subtotal</span>
+                    <span>@((Model.GrandTotal - Model.ShippingAmount + Model.DiscountAmount - Model.TaxAmount).ToPkr())</span>
+                </p>
+                <p class="d-flex justify-content-between">
+                    <span>Discount</span>
+                    <span>-@Model.DiscountAmount.ToPkr()</span>
+                </p>
+                <p class="d-flex justify-content-between">
+                    <span>Shipping</span>
+                    <span>@Model.ShippingAmount.ToPkr()</span>
+                </p>
+                <p class="d-flex justify-content-between">
+                    <span>Tax</span>
+                    <span>@Model.TaxAmount.ToPkr()</span>
+                </p>
+                <hr />
+                <p class="d-flex justify-content-between fw-bold fs-5">
+                    <span>Total</span>
+                    <span>@Model.GrandTotal.ToPkr()</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-secondary">Back to My Orders</a>

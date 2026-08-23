@@ -135,7 +135,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
             {
                 foreach (var item in order.Items)
                 {
-                    if (!item.ProductVariantId.HasValue) continue;
+                    if (item.ProductVariantId == null) continue; // nothing to restock without a specific variant
 
                     await _inventoryService.RecordTransactionAsync(
                         item.ProductVariantId.Value,
@@ -182,7 +182,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
             foreach (var item in order.Items)
             {
-                if (!item.ProductVariantId.HasValue) continue;
+                if (item.ProductVariantId == null) continue;
 
                 await _inventoryService.RecordTransactionAsync(
                     item.ProductVariantId.Value,

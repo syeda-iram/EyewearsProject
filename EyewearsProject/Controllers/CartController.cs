@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using EyewearsProject.Models;
 using EyewearsProject.Extensions;
 using EyewearsProject.ViewModels;
-using EyewearsProject.Services;
 using Microsoft.AspNetCore.Identity;
 
 namespace EyewearsProject.Controllers
@@ -12,14 +11,12 @@ namespace EyewearsProject.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IInventoryService _inventoryService;
         private const string CartSessionKey = "Cart";
 
-        public CartController(AppDbContext context, UserManager<ApplicationUser> userManager, IInventoryService inventoryService)
+        public CartController(AppDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _inventoryService = inventoryService;
         }
 
         private List<CartItem> GetCart()
@@ -39,7 +36,7 @@ namespace EyewearsProject.Controllers
             return View(cart);
         }
 
-        // POST: /Cart/Add
+        // POST: /Cart/Add  (plain add, no lens customization)
         [HttpPost]
         public async Task<IActionResult> Add(int productId, int variantId, int quantity = 1)
         {
@@ -54,7 +51,12 @@ namespace EyewearsProject.Controllers
             if (variant == null) return NotFound();
 
             var cart = GetCart();
-            var existing = cart.FirstOrDefault(c => c.ProductVariantId == variantId);
+
+            // Only merge with an existing line if it's the same variant AND
+            // has no lens customization on either side — a plain add should
+            // never silently merge into a lens-customized line.
+            var existing = cart.FirstOrDefault(c =>
+                c.ProductVariantId == variantId && c.LensType == null && c.Coating == null);
 
             if (existing != null)
             {
@@ -81,10 +83,10 @@ namespace EyewearsProject.Controllers
 
         // POST: /Cart/UpdateQuantity
         [HttpPost]
-        public IActionResult UpdateQuantity(int variantId, int quantity)
+        public IActionResult UpdateQuantity(string lineId, int quantity)
         {
             var cart = GetCart();
-            var item = cart.FirstOrDefault(c => c.ProductVariantId == variantId);
+            var item = cart.FirstOrDefault(c => c.LineId == lineId);
 
             if (item != null)
             {
@@ -100,10 +102,10 @@ namespace EyewearsProject.Controllers
 
         // POST: /Cart/Remove
         [HttpPost]
-        public IActionResult Remove(int variantId)
+        public IActionResult Remove(string lineId)
         {
             var cart = GetCart();
-            cart.RemoveAll(c => c.ProductVariantId == variantId);
+            cart.RemoveAll(c => c.LineId == lineId);
             SaveCart(cart);
             return RedirectToAction("Index");
         }
@@ -120,13 +122,28 @@ namespace EyewearsProject.Controllers
             var user = await _userManager.GetUserAsync(User);
             var subtotal = cart.Sum(i => i.TotalPrice);
 
+            var savedAddresses = await _context.Addresses
+                .Where(a => a.UserId == user!.Id)
+                .OrderByDescending(a => a.IsDefault)
+                .ThenByDescending(a => a.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.SavedAddresses = savedAddresses;
+
+            var defaultAddress = savedAddresses.FirstOrDefault(a => a.IsDefault) ?? savedAddresses.FirstOrDefault();
+
             var model = new CheckoutViewModel
             {
                 Items = cart,
                 Subtotal = subtotal,
                 GrandTotal = subtotal + 200,
-                FullName = user?.FullName ?? "",
-                Email = user?.Email ?? ""
+                FullName = defaultAddress?.FullName ?? user?.FullName ?? "",
+                Email = user?.Email ?? "",
+                Phone = defaultAddress?.Phone ?? "",
+                ShippingAddressLine = defaultAddress?.AddressLine ?? "",
+                ShippingCity = defaultAddress?.City ?? "",
+                ShippingPostalCode = defaultAddress?.PostalCode ?? "",
+                ShippingCountry = defaultAddress?.Country ?? "Pakistan"
             };
 
             return View(model);
@@ -147,7 +164,6 @@ namespace EyewearsProject.Controllers
             model.Items = cart;
             model.Subtotal = subtotal;
 
-            // Re-validate and recompute the discount server-side — never trust the posted DiscountAmount
             Promotion? promo = null;
             decimal discount = 0;
 
@@ -189,7 +205,16 @@ namespace EyewearsProject.Controllers
                     ModelState.AddModelError(nameof(model.BillingCountry), "Billing country is required.");
             }
 
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                var user2 = await _userManager.GetUserAsync(User);
+                ViewBag.SavedAddresses = await _context.Addresses
+                    .Where(a => a.UserId == user2!.Id)
+                    .OrderByDescending(a => a.IsDefault)
+                    .ThenByDescending(a => a.CreatedAt)
+                    .ToListAsync();
+                return View(model);
+            }
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
@@ -197,10 +222,14 @@ namespace EyewearsProject.Controllers
             foreach (var item in cart)
             {
                 var variant = await _context.ProductVariants.FindAsync(item.ProductVariantId);
-                var available = variant != null ? await _inventoryService.GetAvailableQuantityAsync(item.ProductVariantId) : 0;
-                if (variant == null || available < item.Quantity)
+                if (variant == null || variant.StockQuantity < item.Quantity)
                 {
                     ModelState.AddModelError(string.Empty, $"{item.ProductName} ({item.Color}) no longer has enough stock.");
+                    ViewBag.SavedAddresses = await _context.Addresses
+                        .Where(a => a.UserId == user.Id)
+                        .OrderByDescending(a => a.IsDefault)
+                        .ThenByDescending(a => a.CreatedAt)
+                        .ToListAsync();
                     return View(model);
                 }
             }
@@ -242,27 +271,22 @@ namespace EyewearsProject.Controllers
                     ProductVariantId = item.ProductVariantId,
                     ProductName = item.ProductName,
                     Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice
+                    UnitPrice = item.UnitPrice,
+                    LensType = item.LensType,
+                    Coating = item.Coating,
+                    PrescriptionId = item.PrescriptionId
                 });
+
+                var variant = await _context.ProductVariants.FindAsync(item.ProductVariantId);
+                if (variant != null) variant.StockQuantity -= item.Quantity;
             }
 
             _context.Orders.Add(order);
 
             if (promo != null)
-                promo.UsageCount += 1; // only increment once the order is actually confirmed
+                promo.UsageCount += 1;
 
-            await _context.SaveChangesAsync(); // saved here so order.Id exists for the inventory transaction reference
-
-            foreach (var item in cart)
-            {
-                await _inventoryService.RecordTransactionAsync(
-                    item.ProductVariantId,
-                    InventoryTransactionType.Sale,
-                    item.Quantity,
-                    referenceType: "Order",
-                    referenceId: order.Id.ToString(),
-                    reason: $"Sold via order {order.OrderNumber}");
-            }
+            await _context.SaveChangesAsync();
 
             var payment = new Payment
             {
@@ -312,7 +336,7 @@ namespace EyewearsProject.Controllers
             if (promo.MaxDiscountAmount.HasValue && discount > promo.MaxDiscountAmount.Value)
                 discount = promo.MaxDiscountAmount.Value;
 
-            if (discount > subtotal) discount = subtotal; // never discount below zero
+            if (discount > subtotal) discount = subtotal;
 
             return Json(new
             {
