@@ -14,11 +14,13 @@ namespace EyewearsProject.Areas.Admin.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IAuditLogger _auditLogger;
+        private readonly IInventoryService _inventoryService;
 
-        public ProductsController(AppDbContext context, IAuditLogger auditLogger)
+        public ProductsController(AppDbContext context, IAuditLogger auditLogger, IInventoryService inventoryService)
         {
             _context = context;
             _auditLogger = auditLogger;
+            _inventoryService = inventoryService;
         }
 
         private async Task PopulateDropdownsAsync()
@@ -209,14 +211,25 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 Color = model.Color,
                 Size = model.Size,
                 Sku = model.Sku,
-                StockQuantity = model.StockQuantity
+                StockQuantity = 0
             };
 
             _context.ProductVariants.Add(variant);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // save pehle karna zaroori hai taake variant.Id mil jaye
+
+            // Agar form mein initial stock diya gaya hai, to use ek "Purchase" transaction ke through record karo —
+            // direct StockQuantity set nahi karna, warna Inventory table se history/consistency toot jayegi
+            if (model.StockQuantity > 0)
+            {
+                await _inventoryService.RecordTransactionAsync(
+                    variant.Id,
+                    InventoryTransactionType.Purchase,
+                    model.StockQuantity,
+                    referenceType: "ProductVariantCreate",
+                    reason: $"Initial stock set while creating variant {variant.Color}");
+            }
 
             await _auditLogger.LogAsync("Create", "ProductVariant", variant.Id.ToString(), $"Added variant {variant.Color} to product #{model.ProductId}");
-
             TempData["Success"] = "Variant added.";
             return RedirectToAction(nameof(Variants), new { id = model.ProductId });
         }
@@ -260,9 +273,16 @@ namespace EyewearsProject.Areas.Admin.Controllers
             variant.Color = model.Color;
             variant.Size = model.Size;
             variant.Sku = model.Sku;
-            variant.StockQuantity = model.StockQuantity;
+            // StockQuantity yahan set NAHI karna — InventoryService hi is field ka malik hai
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // Color/Size/Sku save karo pehle
+
+            // Stock quantity ka farak InventoryService se adjust karwao — ye khud delta calculate karke
+            // Adjustment transaction bhi bana dega, aur variant.StockQuantity ko sync bhi kar dega
+            await _inventoryService.AdjustToQuantityAsync(
+                variant.Id,
+                model.StockQuantity,
+                reason: $"Stock updated via product variant edit form ({variant.Color})");
 
             await _auditLogger.LogAsync("Update", "ProductVariant", variant.Id.ToString(), $"Updated variant {variant.Color}");
 

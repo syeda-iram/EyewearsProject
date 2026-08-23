@@ -1,135 +1,128 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    bool IsActive(string c) => currentController == c;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Admin | EyewearsProject</title>
+    <title>@ViewData["Title"] · Eyewear Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <style>
-            body {
-                background-color: #f4f5f7;
-            }
-
-            .card {
-                border: 1px solid #ececef;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-            }
-    </style>
+    <link rel="stylesheet" href="~/css/admin-theme.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="d-flex" style="min-height:100vh;">
-        <nav class="bg-dark text-white p-3" style="width:230px; min-width:230px; position:sticky; top:0; height:100vh; overflow-y:auto;">
-            <h5 class="mb-4">Eyewear Admin</h5>
-            <ul class="nav nav-pills flex-column gap-1">
-                <li class="nav-item">
-                    <a class="nav-link text-white" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
-                </li>
+    <div class="admin-shell">
 
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Users" asp-action="Index">Users</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Roles" asp-action="Index">Roles</a>
-                    </li>
-                }
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-brand">
+                <div class="admin-brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="17" height="17"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                </div>
+                <span class="admin-brand-name">Eyewear Admin</span>
+            </div>
 
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("ProductManager"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Products" asp-action="Index">Products</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Categories" asp-action="Index">Categories</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Brands" asp-action="Index">Brands</a>
-                    </li>
-                }
+            <div class="admin-profile-card">
+                <div class="admin-profile-avatar">@(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "A")</div>
+                <div>
+                    <div class="admin-profile-name">@(User.Identity?.Name ?? "Admin User")</div>
+                    <div class="admin-profile-role">@(User.Claims.FirstOrDefault(c => c.Type.EndsWith("/role"))?.Value ?? "Staff")</div>
+                </div>
+            </div>
 
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("ProductManager") || User.IsInRole("InventoryManager"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Inventory" asp-action="Index">Inventory</a>
-                    </li>
-                }
+            <nav class="admin-nav">
+                <a class="admin-nav-link @(IsActive("Dashboard") ? "active" : "")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
+                    Dashboard
+                </a>
+                <a class="admin-nav-link @(IsActive("Users") ? "active" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                    User Management
+                </a>
+                <a class="admin-nav-link @(IsActive("Roles") ? "active" : "")" asp-area="Admin" asp-controller="Roles" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /></svg>
+                    Role Permissions
+                </a>
+                <a class="admin-nav-link @(IsActive("Products") ? "active" : "")" asp-area="Admin" asp-controller="Products" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m20.5 7.3-8.5 5-8.5-5" /><path d="M12 22V12" /><path d="m3.5 7.3 8.5-5 8.5 5-8.5 5-8.5-5Z" /></svg>
+                    Products
+                </a>
+                <a class="admin-nav-link @(IsActive("Categories") ? "active" : "")" asp-area="Admin" asp-controller="Categories" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg>
+                    Categories
+                </a>
+                <a class="admin-nav-link @(IsActive("Brands") ? "active" : "")" asp-area="Admin" asp-controller="Brands" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.6 12.6 12 21.2a2 2 0 0 1-2.8 0L2.8 14.8a2 2 0 0 1 0-2.8L11.4 3.4a2 2 0 0 1 1.4-.6H19a2 2 0 0 1 2 2v6.4a2 2 0 0 1-.4 1.4Z" /><circle cx="16" cy="8" r="1.3" /></svg>
+                    Brands
+                </a>
+                <a class="admin-nav-link @(IsActive("Inventory") ? "active" : "")" asp-area="Admin" asp-controller="Inventory" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2" /><path d="M3 8h18l-1.4 11.2A2 2 0 0 1 17.6 21H6.4a2 2 0 0 1-2-1.8L3 8Z" /><path d="M9 12h6" /></svg>
+                    Inventory
+                </a>
+                <a class="admin-nav-link @(IsActive("Orders") ? "active" : "")" asp-area="Admin" asp-controller="Orders" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6" /></svg>
+                    Orders
+                </a>
+                <a class="admin-nav-link @(IsActive("Returns") ? "active" : "")" asp-area="Admin" asp-controller="Returns" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 3v5h5" /></svg>
+                    Returns
+                </a>
+                <a class="admin-nav-link @(IsActive("Promotions") ? "active" : "")" asp-area="Admin" asp-controller="Promotions" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></svg>
+                    Promotions
+                </a>
+                <a class="admin-nav-link @(IsActive("Reviews") ? "active" : "")" asp-area="Admin" asp-controller="Reviews" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15 9 22 9.3 17 14 18.5 21 12 17.3 5.5 21 7 14 2 9.3 9 9" /></svg>
+                    Reviews
+                </a>
+                <a class="admin-nav-link @(IsActive("Vendors") ? "active" : "")" asp-area="Admin" asp-controller="Vendors" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="7" width="15" height="10" rx="1.5" /><path d="M16 10h4l3 3v4h-7" /><circle cx="6" cy="19" r="1.7" /><circle cx="18.5" cy="19" r="1.7" /></svg>
+                    Vendors
+                </a>
+                <a class="admin-nav-link @(IsActive("PurchaseOrders") ? "active" : "")" asp-area="Admin" asp-controller="PurchaseOrders" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 3v3h6V3" /><path d="M8 12h8M8 16h5" /></svg>
+                    Purchase Orders
+                </a>
+                <a class="admin-nav-link @(IsActive("Cms") ? "active" : "")" asp-area="Admin" asp-controller="Cms" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6" /></svg>
+                    CMS
+                </a>
+                <a class="admin-nav-link @(IsActive("AuditLogs") ? "active" : "")" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+                    Audit Logs
+                </a>
+                <a class="admin-nav-link @(IsActive("Reports") ? "active" : "")" asp-area="Admin" asp-controller="Reports" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
+                    Reports
+                </a>
+            </nav>
 
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("OrderManager"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Orders" asp-action="Index">Orders</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Returns" asp-action="Index">Returns</a>
-                    </li>
-                }
+            <form asp-area="Admin" asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
+                <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Logout</button>
+            </form>
+        </aside>
 
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("MarketingManager"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Promotions" asp-action="Index">Promotions</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Cms" asp-action="Index">CMS</a>
-                    </li>
-                }
-
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("CustomerSupport"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Reviews" asp-action="Index">Reviews</a>
-                    </li>
-                }
-
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("VendorManager"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Vendors" asp-action="Index">Vendors</a>
-                    </li>
-                }
-
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("FinanceManager"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="Reports" asp-action="Index">Reports</a>
-                    </li>
-                }
-
-                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-white" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">Audit Logs</a>
-                    </li>
-                }
-            </ul>
-        </nav>
-
-        <div class="flex-fill" style="min-width:0; overflow-x:auto;">
-            <header class="bg-white border-bottom px-4 py-2 d-flex justify-content-between align-items-center">
-                <span>@ViewData["Title"]</span>
-                <div class="d-flex align-items-center gap-3">
-                    <a href="/" target="_blank" class="btn btn-sm btn-outline-primary">
-                        View Live Site
-                    </a>
-                    <form asp-area="Admin" asp-controller="Account" asp-action="Logout" method="post" class="m-0 d-flex align-items-center gap-2">
-                        <span>@User.Identity?.Name</span>
-                        <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
-                    </form>
+        <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+            <header class="admin-topbar">
+                <button class="btn btn-sm btn-outline-secondary d-md-none" onclick="document.getElementById('adminSidebar').classList.toggle('open')">☰</button>
+                <div class="admin-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                    <input type="text" placeholder="Search users, roles..." />
+                </div>
+                <div class="admin-topbar-icons">
+                    <div class="admin-icon-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+                        <span class="dot"></span>
+                    </div>
+                    <div class="admin-icon-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10" /><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4" /><line x1="12" y1="17" x2="12" y2="17" /></svg>
+                    </div>
                 </div>
             </header>
 
-            <main class="p-4" style="background-color:#f4f5f7;">
-                @if (TempData["Success"] != null)
-                {
-                    <div class="alert alert-success">@TempData["Success"]</div>
-                }
-                @if (TempData["Error"] != null)
-                {
-                    <div class="alert alert-danger">@TempData["Error"]</div>
-                }
+            <main class="admin-content">
                 @RenderBody()
             </main>
         </div>

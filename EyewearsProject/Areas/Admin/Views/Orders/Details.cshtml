@@ -1,70 +1,141 @@
-﻿@using EyewearsProject.Extensions
-@model OrderDetailsViewModel
+﻿@model EyewearsProject.Areas.Admin.Models.OrderDetailsViewModel
 
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
         <h3 class="mb-1">Order @Model.OrderNumber</h3>
-        <p class="text-muted mb-0">Placed @Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</p>
+        <p class="text-muted mb-0">Placed on @Model.OrderDate.ToString("dd MMM yyyy, HH:mm")</p>
     </div>
-    <a asp-action="Index" class="btn btn-outline-secondary">Back to Orders</a>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card p-3">
-            <h6>Customer</h6>
-            <p class="mb-0">@Model.CustomerName</p>
-            <p class="text-muted small">@Model.CustomerEmail</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card p-3">
-            <h6>Shipping Address</h6>
-            <p class="mb-0">@Model.RecipientName</p>
-            <p class="mb-0">@Model.RecipientPhone &middot; @Model.RecipientEmail</p>
-            <p class="mb-0">@Model.ShippingAddressLine, @Model.ShippingCity, @Model.ShippingPostalCode, @Model.ShippingCountry</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card p-3">
-            <h6>Payment</h6>
-            <p class="mb-0">@(Model.PaymentMethod ?? "-")</p>
-            <span class="badge @(Model.PaymentStatus == PaymentStatus.Paid ? "bg-success" : "bg-warning text-dark")">@Model.PaymentStatus</span>
-        </div>
+    <div class="text-end">
+        <span class="badge bg-secondary fs-6">@Model.OrderStatus</span>
+        <span class="badge @(Model.PaymentStatus == PaymentStatus.Paid ? "bg-success" : "bg-warning text-dark") fs-6">@Model.PaymentStatus</span>
     </div>
 </div>
 
-<div class="card p-3 mb-4">
-    <h6>Update Order Status</h6>
-    <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
-        <select name="newStatus" class="form-select" style="max-width:220px;">
-            @foreach (var s in (string[])ViewBag.AllStatuses)
-            {
-                <option value="@s" selected="@(s == Model.OrderStatus.ToString())">@s</option>
-            }
-        </select>
-        <button class="btn btn-dark">Update</button>
-    </form>
-</div>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
 
-<table class="table table-bordered bg-white">
-    <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
-    <tbody>
-        @foreach (var item in Model.Items)
+<div class="row g-3">
+    <div class="col-md-8">
+
+        <div class="card p-3 mb-3">
+            <h5 class="mb-3">Items</h5>
+            <table class="table table-borderless align-middle mb-0">
+                <thead class="border-bottom">
+                    <tr>
+                        <th>Product</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.ProductName</td>
+                            <td class="text-center">@item.Quantity</td>
+                            <td class="text-end">@item.UnitPrice.ToPkr()</td>
+                            <td class="text-end">@((item.UnitPrice * item.Quantity).ToPkr())</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card p-3 h-100">
+                    <h6 class="text-muted text-uppercase small mb-2">Shipping Address</h6>
+                    <p class="mb-1 fw-semibold">@Model.RecipientName</p>
+                    <p class="mb-1 text-muted small">@Model.RecipientEmail · @Model.RecipientPhone</p>
+                    <p class="mb-0">
+                        @Model.ShippingAddressLine<br />
+                        @Model.ShippingCity, @Model.ShippingPostalCode<br />
+                        @Model.ShippingCountry
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card p-3 h-100">
+                    <h6 class="text-muted text-uppercase small mb-2">Billing Address</h6>
+                    <p class="mb-0">
+                        @Model.BillingAddressLine<br />
+                        @Model.BillingCity, @Model.BillingPostalCode<br />
+                        @Model.BillingCountry
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card p-3 mb-3">
+            <h6 class="text-muted text-uppercase small mb-2">Customer</h6>
+            <p class="mb-1 fw-semibold">@Model.CustomerName</p>
+            <p class="mb-0 text-muted small">@Model.CustomerEmail</p>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h6 class="text-muted text-uppercase small mb-3">Payment Summary</h6>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Subtotal</span>
+                <span>@Model.TotalAmount.ToPkr()</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Discount</span>
+                <span class="text-danger">-@Model.DiscountAmount.ToPkr()</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Shipping</span>
+                <span>@Model.ShippingAmount.ToPkr()</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Tax</span>
+                <span>@Model.TaxAmount.ToPkr()</span>
+            </div>
+            <hr />
+            <div class="d-flex justify-content-between fw-bold fs-5">
+                <span>Total</span>
+                <span>@Model.GrandTotal.ToPkr()</span>
+            </div>
+            <p class="text-muted small mt-2 mb-0">Paid via @Model.PaymentMethod</p>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h6 class="text-muted text-uppercase small mb-2">Update Status</h6>
+            <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post">
+                <div class="input-group">
+                    <select name="newStatus" class="form-select">
+                        @foreach (var status in (string[])ViewBag.AllStatuses)
+                        {
+                            <option value="@status" selected="@(status == Model.OrderStatus.ToString())">@status</option>
+                        }
+                    </select>
+                    <button class="btn btn-dark">Update</button>
+                </div>
+            </form>
+        </div>
+
+        @if (Model.OrderStatus != OrderStatus.Delivered && Model.OrderStatus != OrderStatus.Cancelled)
         {
-            <tr>
-                <td>@item.ProductName</td>
-                <td>@item.Quantity</td>
-                <td>@item.UnitPrice.ToPkr()</td>
-                <td>@item.TotalPrice.ToPkr()</td>
-            </tr>
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Order cancel karna hai? Stock wapas restore ho jayega.');">
+                <div class="mb-2">
+                    <input type="text" name="reason" class="form-control form-control-sm" placeholder="Cancellation reason (optional)" />
+                </div>
+                <button class="btn btn-outline-danger w-100">Cancel Order</button>
+            </form>
         }
-    </tbody>
-    <tfoot>
-        <tr><td colspan="3" class="text-end">Subtotal</td><td>@Model.TotalAmount.ToPkr()</td></tr>
-        <tr><td colspan="3" class="text-end">Discount</td><td>-@Model.DiscountAmount.ToPkr()</td></tr>
-        <tr><td colspan="3" class="text-end">Shipping</td><td>@Model.ShippingAmount.ToPkr()</td></tr>
-        <tr><td colspan="3" class="text-end">Tax</td><td>@Model.TaxAmount.ToPkr()</td></tr>
-        <tr class="fw-bold"><td colspan="3" class="text-end">Grand Total</td><td>@Model.GrandTotal.ToPkr()</td></tr>
-    </tfoot>
-</table>
+
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-outline-secondary mt-3">Back to Orders</a>
