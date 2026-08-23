@@ -1,0 +1,140 @@
+﻿@using EyewearsProject.Extensions
+@using EyewearsProject.Models
+@{
+    var product = (Product)ViewBag.Product;
+    var variant = (ProductVariant)ViewBag.Variant;
+    var lensTypes = (Dictionary<string, decimal>)ViewBag.LensTypes;
+    var coatings = (Dictionary<string, decimal>)ViewBag.Coatings;
+    var savedPrescriptions = (List<Prescription>)ViewBag.SavedPrescriptions;
+    var primaryImage = product.Images.FirstOrDefault(i => i.IsPrimary) ?? product.Images.FirstOrDefault();
+
+    ViewData["Title"] = "Customize your lenses";
+}
+
+<h1>Customize your lenses</h1>
+<p class="text-muted">For @product.Name — @variant.Color</p>
+
+<form asp-controller="Lens" asp-action="AddToCart" method="post" id="lensForm">
+    <input type="hidden" name="productId" value="@product.Id" />
+    <input type="hidden" name="variantId" value="@variant.Id" />
+    <input type="hidden" name="quantity" value="1" />
+
+    <div class="row">
+        <div class="col-md-7">
+            <h5>1. Lens Type</h5>
+            <div class="list-group mb-4">
+                @{
+                    bool firstLens = true;
+                }
+                @foreach (var lt in lensTypes)
+                {
+                    <label class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <input type="radio" name="lensType" value="@lt.Key" class="form-check-input me-2 lens-radio"
+                                   data-price="@lt.Value" checked="@(firstLens ? "checked" : null)" />
+                            @lt.Key
+                        </span>
+                        <span>@(lt.Value == 0 ? "Included" : "+" + lt.Value.ToPkr())</span>
+                    </label>
+                    firstLens = false;
+                }
+            </div>
+
+            <h5>2. Coating</h5>
+            <div class="list-group mb-4">
+                @{
+                    bool firstCoat = true;
+                }
+                @foreach (var ct in coatings)
+                {
+                    <label class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <input type="radio" name="coating" value="@ct.Key" class="form-check-input me-2 coating-radio"
+                                   data-price="@ct.Value" checked="@(firstCoat ? "checked" : null)" />
+                            @ct.Key
+                        </span>
+                        <span>@(ct.Value == 0 ? "None" : "+" + ct.Value.ToPkr())</span>
+                    </label>
+                    firstCoat = false;
+                }
+            </div>
+
+            <h5>3. Prescription</h5>
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <p class="text-muted">
+                    <a asp-controller="Account" asp-action="Login">Log in</a> to attach a saved prescription, or continue without one and add it later.
+                </p>
+            }
+            else if (!savedPrescriptions.Any())
+            {
+                <p class="text-muted">
+                    You don't have any saved prescriptions yet.
+                    <a asp-controller="Prescriptions" asp-action="Create">Add one</a>, or continue without one and add it later.
+                </p>
+            }
+            else
+            {
+                <div class="mb-4">
+                    <select name="prescriptionId" class="form-select" style="max-width:400px;">
+                        <option value="">No prescription — I'll add it later</option>
+                        @foreach (var rx in savedPrescriptions)
+                        {
+                            <option value="@rx.Id">@rx.PatientName — @rx.CreatedAt.ToString("dd MMM yyyy")</option>
+                        }
+                    </select>
+                    <a asp-controller="Prescriptions" asp-action="Create" class="d-inline-block mt-2">+ Add a new prescription</a>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-5">
+            <div class="card p-3" style="position:sticky; top:1rem;">
+                @if (primaryImage != null)
+                {
+                    <img src="@primaryImage.ImageUrl" class="img-fluid rounded mb-3" alt="@product.Name" />
+                }
+                <div class="d-flex justify-content-between">
+                    <span>Frame</span>
+                    <span>@((product.DiscountPrice ?? product.Price).ToPkr())</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Lenses</span>
+                    <span id="lensAddOnDisplay">Rs 0</span>
+                </div>
+                <hr />
+                <div class="d-flex justify-content-between fw-bold fs-5">
+                    <span>Total</span>
+                    <span id="totalDisplay">@((product.DiscountPrice ?? product.Price)).ToPkr()</span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg mt-3">Add to Cart</button>
+                <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-secondary mt-2">Back to Product</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        const basePrice = @((product.DiscountPrice ?? product.Price));
+
+        function recalcTotal() {
+            const lensRadio = document.querySelector('.lens-radio:checked');
+            const coatingRadio = document.querySelector('.coating-radio:checked');
+
+            const lensPrice = lensRadio ? parseFloat(lensRadio.dataset.price) : 0;
+            const coatingPrice = coatingRadio ? parseFloat(coatingRadio.dataset.price) : 0;
+            const addOn = lensPrice + coatingPrice;
+            const total = basePrice + addOn;
+
+            document.getElementById('lensAddOnDisplay').textContent = 'Rs ' + addOn.toLocaleString('en-PK', { maximumFractionDigits: 0 });
+            document.getElementById('totalDisplay').textContent = 'Rs ' + total.toLocaleString('en-PK', { maximumFractionDigits: 0 });
+        }
+
+        document.querySelectorAll('.lens-radio, .coating-radio').forEach(el => {
+            el.addEventListener('change', recalcTotal);
+        });
+
+        recalcTotal();
+    </script>
+}

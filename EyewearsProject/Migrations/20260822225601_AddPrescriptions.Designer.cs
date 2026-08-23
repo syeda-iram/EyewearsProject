@@ -4,6 +4,7 @@ using EyewearsProject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EyewearsProject.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260822225601_AddPrescriptions")]
+    partial class AddPrescriptions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -525,16 +528,7 @@ namespace EyewearsProject.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Coating")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LensType")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("PrescriptionId")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductId")

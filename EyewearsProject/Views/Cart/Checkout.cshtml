@@ -137,8 +137,14 @@
             <h5>Order Summary</h5>
             @foreach (var item in Model.Items)
             {
-                <div class="d-flex justify-content-between">
-                    <span>@item.ProductName (@item.Color) x(@item.Quantity)</span>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>
+                        @item.ProductName (@item.Color) x@(item.Quantity)
+                        @if (!string.IsNullOrEmpty(item.LensType))
+                        {
+                            <br /><small class="text-muted">@item.LensType@(item.Coating != "None" && !string.IsNullOrEmpty(item.Coating) ? " + " + item.Coating : "")</small>
+                        }
+                    </span>
                     <span>@item.TotalPrice.ToPkr()</span>
                 </div>
             }

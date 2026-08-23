@@ -58,6 +58,10 @@
             <button type="submit" class="btn btn-primary btn-lg mt-2">Add to Cart</button>
         </form>
 
+        <div class="mt-2">
+            <a class="btn btn-outline-primary btn-lg" id="selectLensesBtn" href="#">Select Lenses</a>
+        </div>
+
         @if (User.Identity?.IsAuthenticated == true)
         {
             <form asp-controller="Wishlist" asp-action="Add" method="post" class="mt-2">
@@ -152,3 +156,14 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.getElementById('selectLensesBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const variantSelect = document.querySelector('select[name="variantId"]');
+            const variantId = variantSelect ? variantSelect.value : '@(Model.Variants.FirstOrDefault()?.Id ?? 0)';
+            window.location.href = '@Url.Action("Customize", "Lens")?productId=@Model.Id&variantId=' + variantId;
+        });
+    </script>
+}

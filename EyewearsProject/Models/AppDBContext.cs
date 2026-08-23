@@ -31,5 +31,6 @@ namespace EyewearsProject.Models
 
         public DbSet<Inventory> Inventories { get; set; } = null!;
         public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
+        public DbSet<Prescription> Prescriptions { get; set; } = null!;
     }
 }
