@@ -63,6 +63,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     FullName = u.FullName,
                     Email = u.Email ?? "",
                     IsActive = u.IsActive,
+                    IsDeleted = u.IsDeleted,
                     Roles = roles.ToList(),
                     CreatedAt = u.CreatedAt
                 });
@@ -314,9 +315,12 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            user.IsDeleted = true;
+            user.IsActive = false;
+            await _userManager.UpdateAsync(user);
+
             await _auditLogger.LogAsync("Delete", "User", user.Id, user.Email);
 
-            await _userManager.DeleteAsync(user);
             TempData["Success"] = "User deleted.";
             return RedirectToAction(nameof(Index));
         }

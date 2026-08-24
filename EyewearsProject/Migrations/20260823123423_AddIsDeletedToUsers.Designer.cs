@@ -4,6 +4,7 @@ using EyewearsProject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EyewearsProject.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260823123423_AddIsDeletedToUsers")]
+    partial class AddIsDeletedToUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -918,9 +921,6 @@ namespace EyewearsProject.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ProductVariantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("PurchaseOrderId")
                         .HasColumnType("int");
 
@@ -931,8 +931,6 @@ namespace EyewearsProject.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ProductVariantId");
 
                     b.HasIndex("PurchaseOrderId");
 
@@ -1405,17 +1403,11 @@ namespace EyewearsProject.Migrations
 
             modelBuilder.Entity("EyewearsProject.Models.PurchaseOrderItem", b =>
                 {
-                    b.HasOne("EyewearsProject.Models.ProductVariant", "ProductVariant")
-                        .WithMany()
-                        .HasForeignKey("ProductVariantId");
-
                     b.HasOne("EyewearsProject.Models.PurchaseOrder", "PurchaseOrder")
                         .WithMany("Items")
                         .HasForeignKey("PurchaseOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("ProductVariant");
 
                     b.Navigation("PurchaseOrder");
                 });

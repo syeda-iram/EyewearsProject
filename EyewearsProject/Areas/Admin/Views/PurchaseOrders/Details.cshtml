@@ -20,6 +20,10 @@
         </select>
         <button class="btn btn-dark">Update</button>
     </form>
+    @if (Model.Status != PurchaseOrderStatus.Received)
+    {
+        <small class="text-muted mt-2">Marking as <strong>Received</strong> will automatically add tracked items to inventory.</small>
+    }
 </div>
 
 <table class="table table-bordered bg-white">
@@ -28,7 +32,13 @@
         @foreach (var item in Model.Items)
         {
             <tr>
-                <td>@item.ItemDescription</td>
+                <td>
+                    @item.ItemDescription
+                    @if (item.ProductVariantId.HasValue)
+                    {
+                        <span class="badge bg-info text-dark ms-1">Tracked</span>
+                    }
+                </td>
                 <td>@item.Quantity</td>
                 <td>@item.UnitCost.ToPkr()</td>
                 <td>@item.TotalCost.ToPkr()</td>

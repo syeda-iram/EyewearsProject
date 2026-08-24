@@ -34,7 +34,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null || !user.IsActive)
+            if (user == null || !user.IsActive || user.IsDeleted)
             {
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return View(model);

@@ -4,26 +4,26 @@
 <style>
     .stat-card {
         border: none;
-        border-radius: 12px;
-        padding: 20px;
+        border-radius: 10px;
+        padding: 14px 16px;
         background: #fff;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        border-left: 4px solid transparent;
+        border-left: 3px solid transparent;
     }
 
         .stat-card .stat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-size: 15px;
+            margin-bottom: 8px;
         }
 
         .stat-card .stat-label {
-            font-size: 12.5px;
+            font-size: 11px;
             color: #8a8f98;
             text-transform: uppercase;
             letter-spacing: .04em;
@@ -31,67 +31,83 @@
         }
 
         .stat-card .stat-value {
-            font-size: 26px;
+            font-size: 20px;
             font-weight: 700;
             color: #1f2430;
             margin-top: 2px;
         }
 
     .section-title {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: .05em;
         color: #6b7280;
-        margin: 28px 0 12px;
+        margin: 18px 0 10px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
 
     .chart-card {
         background: #fff;
-        border-radius: 12px;
-        padding: 20px;
+        border-radius: 10px;
+        padding: 14px 16px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         height: 100%;
     }
 
-        .chart-card h6 {
-            font-weight: 700;
-            color: #1f2430;
-            margin-bottom: 16px;
-            font-size: 14.5px;
-        }
+    /* Standalone charts (not paired in a row) must NOT stretch to fill leftover space */
+    .chart-card-solo {
+        background: #fff;
+        border-radius: 10px;
+        padding: 14px 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        height: auto;
+    }
+
+    .chart-canvas-wrap {
+        position: relative; /* required so Chart.js measures a stable size, not a growing one */
+    }
+
+    .chart-card h6, .chart-card-solo h6 {
+        font-weight: 700;
+        color: #1f2430;
+        margin-bottom: 10px;
+        font-size: 13px;
+    }
 
     .data-table thead th {
         background: #f8f9fb;
-        font-size: 12.5px;
+        font-size: 11px;
         text-transform: uppercase;
         letter-spacing: .03em;
         color: #6b7280;
         border-bottom: 1px solid #edeef1;
         font-weight: 700;
+        padding: 8px 10px;
     }
 
     .data-table td, .data-table th {
         border-color: #f0f1f3;
         vertical-align: middle;
+        font-size: 13px;
+        padding: 8px 10px;
     }
 
     .donut-legend {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin-top: 16px;
+        gap: 5px;
+        margin-top: 10px;
     }
 
         .donut-legend .dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 8px;
+            margin-right: 6px;
         }
 </style>
 
@@ -236,7 +252,7 @@
     <div class="col-md-4">
         <div class="chart-card">
             <h6>Sales by Category</h6>
-            <div style="height:160px;">
+            <div class="chart-canvas-wrap" style="height:130px;">
                 <canvas id="salesByCategoryChart"></canvas>
             </div>
             <div class="donut-legend" id="salesByCategoryLegend"></div>
@@ -245,7 +261,7 @@
     <div class="col-md-4">
         <div class="chart-card">
             <h6>Sales by Brand</h6>
-            <div style="height:160px;">
+            <div class="chart-canvas-wrap" style="height:130px;">
                 <canvas id="salesByBrandChart"></canvas>
             </div>
             <div class="donut-legend" id="salesByBrandLegend"></div>
@@ -254,7 +270,7 @@
     <div class="col-md-4">
         <div class="chart-card">
             <h6>Orders by Status</h6>
-            <div style="height:160px;">
+            <div class="chart-canvas-wrap" style="height:130px;">
                 <canvas id="ordersByStatusChart"></canvas>
             </div>
             <div class="donut-legend" id="ordersByStatusLegend"></div>
@@ -262,9 +278,11 @@
     </div>
 </div>
 
-<div class="chart-card mt-3">
+<div class="chart-card-solo mt-3">
     <h6>Customer Growth (last 12 months)</h6>
-    <canvas id="customerGrowthChart" height="80"></canvas>
+    <div class="chart-canvas-wrap" style="height:180px;">
+        <canvas id="customerGrowthChart"></canvas>
+    </div>
 </div>
 
 <div class="row g-3 mt-1 mb-4">
@@ -330,7 +348,14 @@
             new Chart(document.getElementById(id), {
                 type: 'bar',
                 data: { labels, datasets: [{ label, data, backgroundColor: '#4c6ef5', borderRadius: 4 }] },
-                options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } } } }
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { beginAtZero: true, title: { display: true, text: label } }
+                    }
+                }
             });
         }
 

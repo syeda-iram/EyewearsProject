@@ -111,6 +111,60 @@ namespace EyewearsProject.Areas.Admin.Controllers
             return View(model);
         }
 
+        // Checks the actual transaction ledger — not just order status — so a double-click
+        // or repeated status save can never create a duplicate Sale/Release for the same order+variant.
+        private async Task<bool> HasTransactionAsync(int orderId, int variantId, InventoryTransactionType type)
+        {
+            return await _context.InventoryTransactions.AnyAsync(t =>
+                t.ReferenceType == "Order" &&
+                t.ReferenceId == orderId.ToString() &&
+                t.ProductVariantId == variantId &&
+                t.TransactionType == type);
+        }
+
+        // Converts a reserved order into a finalized sale (stock actually leaves the shelf).
+        // Safe to call more than once — skips items that already have a Sale transaction.
+        private async Task ConvertReservationToSaleAsync(Order order)
+        {
+            foreach (var item in order.Items)
+            {
+                if (item.ProductVariantId == null) continue;
+
+                if (await HasTransactionAsync(order.Id, item.ProductVariantId.Value, InventoryTransactionType.Sale))
+                    continue; // already converted — don't double-deduct
+
+                await _inventoryService.RecordTransactionAsync(
+                    item.ProductVariantId.Value,
+                    InventoryTransactionType.Sale,
+                    item.Quantity,
+                    referenceType: "Order",
+                    referenceId: order.Id.ToString(),
+                    reason: $"Order {order.OrderNumber} shipped — reservation converted to sale");
+            }
+        }
+
+        // Releases a reservation without touching QuantityOnHand — used for cancellation
+        // BEFORE the order has shipped. If it already shipped, stock was already sold and
+        // must be restored via Return instead (handled separately, not by this method).
+        private async Task ReleaseReservationAsync(Order order, string reason)
+        {
+            foreach (var item in order.Items)
+            {
+                if (item.ProductVariantId == null) continue;
+
+                if (await HasTransactionAsync(order.Id, item.ProductVariantId.Value, InventoryTransactionType.Release))
+                    continue; // already released — don't double-release
+
+                await _inventoryService.RecordTransactionAsync(
+                    item.ProductVariantId.Value,
+                    InventoryTransactionType.Release,
+                    item.Quantity,
+                    referenceType: "Order",
+                    referenceId: order.Id.ToString(),
+                    reason: reason);
+            }
+        }
+
         // POST: /Admin/Orders/UpdateStatus/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -127,26 +181,42 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            order.OrderStatus = newStatus;
-            order.UpdatedAt = DateTime.UtcNow;
+            // Pending -> Processing: no inventory movement, reservation already exists from checkout.
 
-            // Cancelling releases the stock back — only once, guarded so re-saving the same status twice can't double-restore
+            // Processing -> Shipped: reservation converts into a real sale (stock actually leaves the shelf).
+            if (newStatus == OrderStatus.Shipped && oldStatus != OrderStatus.Shipped)
+            {
+                await ConvertReservationToSaleAsync(order);
+            }
+
+            // -> Cancelled: release the reservation. If it already shipped (already sold),
+            // that's a real return of physical stock instead — handled by the dedicated Cancel action's check.
             if (newStatus == OrderStatus.Cancelled && oldStatus != OrderStatus.Cancelled)
             {
-                foreach (var item in order.Items)
+                if (oldStatus == OrderStatus.Shipped || oldStatus == OrderStatus.Delivered)
                 {
-                    if (item.ProductVariantId == null) continue; // nothing to restock without a specific variant
-
-                    await _inventoryService.RecordTransactionAsync(
-                        item.ProductVariantId.Value,
-                        InventoryTransactionType.Return,
-                        item.Quantity,
-                        referenceType: "Order",
-                        referenceId: order.Id.ToString(),
-                        reason: $"Order {order.OrderNumber} cancelled — stock restored");
+                    foreach (var item in order.Items)
+                    {
+                        if (item.ProductVariantId == null) continue;
+                        await _inventoryService.RecordTransactionAsync(
+                            item.ProductVariantId.Value,
+                            InventoryTransactionType.Return,
+                            item.Quantity,
+                            referenceType: "Order",
+                            referenceId: order.Id.ToString(),
+                            reason: $"Order {order.OrderNumber} cancelled after shipping — stock returned");
+                    }
+                }
+                else
+                {
+                    await ReleaseReservationAsync(order, $"Order {order.OrderNumber} cancelled — reservation released");
                 }
             }
 
+            // Delivered: no new stock transaction — stock was already finalized at Shipped.
+
+            order.OrderStatus = newStatus;
+            order.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             await _auditLogger.LogAsync("Update", "Order", order.Id.ToString(),
@@ -177,30 +247,41 @@ namespace EyewearsProject.Areas.Admin.Controllers
             }
 
             var oldStatus = order.OrderStatus;
-            order.OrderStatus = OrderStatus.Cancelled;
-            order.UpdatedAt = DateTime.UtcNow;
 
-            foreach (var item in order.Items)
+            if (oldStatus == OrderStatus.Shipped)
             {
-                if (item.ProductVariantId == null) continue;
-
-                await _inventoryService.RecordTransactionAsync(
-                    item.ProductVariantId.Value,
-                    InventoryTransactionType.Return,
-                    item.Quantity,
-                    referenceType: "Order",
-                    referenceId: order.Id.ToString(),
-                    reason: string.IsNullOrWhiteSpace(reason)
-                        ? $"Order {order.OrderNumber} cancelled by admin — stock restored"
+                // Stock already left the shelf at Shipped — cancelling now is a real physical return.
+                foreach (var item in order.Items)
+                {
+                    if (item.ProductVariantId == null) continue;
+                    await _inventoryService.RecordTransactionAsync(
+                        item.ProductVariantId.Value,
+                        InventoryTransactionType.Return,
+                        item.Quantity,
+                        referenceType: "Order",
+                        referenceId: order.Id.ToString(),
+                        reason: string.IsNullOrWhiteSpace(reason)
+                            ? $"Order {order.OrderNumber} cancelled after shipping — stock returned"
+                            : $"Order {order.OrderNumber} cancelled after shipping: {reason}");
+                }
+            }
+            else
+            {
+                // Still Pending/Processing — nothing was ever removed from the shelf, just release the hold.
+                await ReleaseReservationAsync(order,
+                    string.IsNullOrWhiteSpace(reason)
+                        ? $"Order {order.OrderNumber} cancelled by admin — reservation released"
                         : $"Order {order.OrderNumber} cancelled: {reason}");
             }
 
+            order.OrderStatus = OrderStatus.Cancelled;
+            order.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             await _auditLogger.LogAsync("Update", "Order", order.Id.ToString(),
                 $"Order {order.OrderNumber} cancelled (was {oldStatus}). Reason: {reason}");
 
-            TempData["Success"] = $"Order {order.OrderNumber} cancelled and stock restored.";
+            TempData["Success"] = $"Order {order.OrderNumber} cancelled and inventory adjusted.";
             return RedirectToAction(nameof(Details), new { id });
         }
     }

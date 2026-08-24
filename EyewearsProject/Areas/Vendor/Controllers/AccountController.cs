@@ -32,7 +32,7 @@ namespace EyewearsProject.Areas.Vendor.Controllers
             ViewData["ReturnUrl"] = returnUrl;
 
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null || !user.IsActive)
+            if (user == null || !user.IsActive || user.IsDeleted)
             {
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return View();

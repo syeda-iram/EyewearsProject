@@ -13,5 +13,25 @@
         public int ReservedQuantity { get; set; }
         public int AvailableQuantity { get; set; }
         public int ReorderLevel { get; set; }
+        public string CategoryName { get; set; } = "";
+        public string BrandName { get; set; } = "";
+        public decimal UnitPrice { get; set; }
+
+        public decimal StockValue =>
+            QuantityOnHand * UnitPrice;
+
+        public string StockStatus
+        {
+            get
+            {
+                if (AvailableQuantity <= 0)
+                    return "Out of Stock";
+
+                if (AvailableQuantity <= ReorderLevel)
+                    return "Low Stock";
+
+                return "In Stock";
+            }
+        }
     }
 }

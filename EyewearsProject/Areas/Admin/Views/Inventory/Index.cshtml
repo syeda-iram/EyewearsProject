@@ -1,101 +1,686 @@
 ﻿@model List<InventoryItemViewModel>
 
-<div class="mb-4">
-    <h3 class="mb-1">Inventory</h3>
-    <p class="text-muted mb-0">Stock levels across all product variants. On-hand, reserved (held by unconfirmed orders), and available (what's actually sellable).</p>
+@{
+    var categories = ViewBag.Categories as List<Category> ?? new();
+    var brands = ViewBag.Brands as List<Brand> ?? new();
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalItems = ViewBag.TotalItems ?? 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-1">Inventory Management</h3>
+        <p class="text-muted mb-0">
+            Monitor stock levels, availability and inventory movements.
+        </p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a asp-action="ExportCsv"
+           asp-route-search="@ViewBag.CurrentSearch"
+           asp-route-categoryId="@ViewBag.CurrentCategory"
+           asp-route-brandId="@ViewBag.CurrentBrand"
+           asp-route-stockStatus="@ViewBag.CurrentStockStatus"
+           class="btn btn-outline-secondary">
+            ↓ Export CSV
+        </a>
+
+        <button type="button"
+                class="btn btn-dark"
+                onclick="document.getElementById('inventoryTable').scrollIntoView()">
+            + Adjust Stock
+        </button>
+    </div>
 </div>
 
-<div class="row g-3 mb-3">
+
+<!-- ================= DASHBOARD CARDS ================= -->
+
+<div class="row g-3 mb-4">
+
     <div class="col-md-3">
-        <div class="card p-3">
-            <small class="text-muted text-uppercase">Out of Stock</small>
-            <h2 class="mb-0 text-danger">@ViewBag.TotalOutOfStock</h2>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <small class="text-muted text-uppercase">
+                    Total SKUs
+                </small>
+
+                <h2 class="mb-1">
+                    @ViewBag.TotalSKUs
+                </h2>
+
+                <small class="text-muted">
+                    Product variants
+                </small>
+            </div>
         </div>
     </div>
+
+
     <div class="col-md-3">
-        <div class="card p-3">
-            <small class="text-muted text-uppercase">Low Stock (&le; reorder level)</small>
-            <h2 class="mb-0 text-warning">@ViewBag.TotalLowStock</h2>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <small class="text-muted text-uppercase">
+                    Stock Value
+                </small>
+
+                <h2 class="mb-1">
+                    @(((decimal)ViewBag.TotalStockValue).ToString("N0"))
+                </h2>
+
+                <small class="text-muted">
+                    Based on current product price
+                </small>
+            </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card p-3 h-100">
-            <form method="get" class="row g-2 align-items-center h-100">
-                <div class="col-md-6">
-                    <input type="text" name="search" class="form-control" placeholder="Search product or SKU..." value="@ViewBag.CurrentSearch" />
+
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <small class="text-muted text-uppercase">
+                    Out of Stock
+                </small>
+
+                <h2 class="mb-1 text-danger">
+                    @ViewBag.TotalOutOfStock
+                </h2>
+
+                <a asp-action="Index"
+                   asp-route-stockStatus="out"
+                   class="small text-danger">
+                    View items
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <small class="text-muted text-uppercase">
+                    Low Stock Alerts
+                </small>
+
+                <h2 class="mb-1 text-warning">
+                    @ViewBag.TotalLowStock
+                </h2>
+
+                <a asp-action="Index"
+                   asp-route-stockStatus="low"
+                   class="small text-warning">
+                    Items below threshold
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ================= FILTERS ================= -->
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+
+        <form method="get"
+              asp-action="Index"
+              class="row g-2">
+
+            <!-- Search -->
+
+            <div class="col-lg-4">
+                <input type="text"
+                       name="search"
+                       value="@ViewBag.CurrentSearch"
+                       class="form-control"
+                       placeholder="Search SKU, product name..." />
+            </div>
+
+
+            <!-- Category -->
+
+            <div class="col-lg-2">
+                <select name="categoryId"
+                        class="form-select">
+
+                    <option value="">
+                        All Categories
+                    </option>
+
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.Id"
+                                selected="@(ViewBag.CurrentCategory == category.Id)">
+                            @category.Name
+                        </option>
+                    }
+
+                </select>
+            </div>
+
+
+            <!-- Brand -->
+
+            <div class="col-lg-2">
+                <select name="brandId"
+                        class="form-select">
+
+                    <option value="">
+                        All Brands
+                    </option>
+
+                    @foreach (var brand in brands)
+                    {
+                        <option value="@brand.Id"
+                                selected="@(ViewBag.CurrentBrand == brand.Id)">
+                            @brand.Name
+                        </option>
+                    }
+
+                </select>
+            </div>
+
+
+            <!-- Stock Status -->
+
+            <div class="col-lg-2">
+                <select name="stockStatus"
+                        class="form-select">
+
+                    <option value="">
+                        Stock Status
+                    </option>
+
+                    <option value="in"
+                            selected="@(ViewBag.CurrentStockStatus == "in")">
+                        In Stock
+                    </option>
+
+                    <option value="low"
+                            selected="@(ViewBag.CurrentStockStatus == "low")">
+                        Low Stock
+                    </option>
+
+                    <option value="out"
+                            selected="@(ViewBag.CurrentStockStatus == "out")">
+                        Out of Stock
+                    </option>
+
+                </select>
+            </div>
+
+
+            <div class="col-lg-2">
+                <button class="btn btn-outline-dark w-100">
+                    Apply Filters
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+<!-- ================= TABLE ================= -->
+
+<div class="card border-0 shadow-sm">
+
+    <div class="table-responsive">
+
+        <table class="table table-hover align-middle mb-0"
+               id="inventoryTable">
+
+            <thead class="table-light">
+
+                <tr>
+
+                    <th>Product</th>
+
+                    <th>SKU</th>
+
+                    <th>Category</th>
+
+                    <th>Variant</th>
+
+                    <th class="text-center">
+                        Qty<br />
+                        <small>(Hand)</small>
+                    </th>
+
+                    <th class="text-center">
+                        Reserved
+                    </th>
+
+                    <th class="text-center">
+                        Available
+                    </th>
+
+                    <th class="text-center">
+                        Reorder Level
+                    </th>
+
+                    <th class="text-center">
+                        Status
+                    </th>
+
+                    <th class="text-end">
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                @foreach (var item in Model)
+                {
+                    <tr>
+
+                        <!-- Product -->
+
+                        <td>
+                            <div class="fw-semibold">
+                                @item.ProductName
+                            </div>
+
+                            <small class="text-muted">
+                                @item.BrandName
+                            </small>
+                        </td>
+
+
+                        <!-- SKU -->
+
+                        <td>
+                            <code>
+                                @item.Sku
+                            </code>
+                        </td>
+
+
+                        <!-- Category -->
+
+                        <td>
+                            @item.CategoryName
+                        </td>
+
+
+                        <!-- Variant -->
+
+                        <td>
+                            @item.Color
+
+                            @if (!string.IsNullOrWhiteSpace(item.Size))
+                            {
+                                <span class="text-muted">
+                                    / @item.Size
+                                </span>
+                            }
+                        </td>
+
+
+                        <!-- On Hand -->
+
+                        <td class="text-center fw-semibold">
+                            @item.QuantityOnHand
+                        </td>
+
+
+                        <!-- Reserved -->
+
+                        <td class="text-center">
+                            @item.ReservedQuantity
+                        </td>
+
+
+                        <!-- Available -->
+
+                        <td class="text-center fw-semibold">
+                            @item.AvailableQuantity
+                        </td>
+
+
+                        <!-- Reorder -->
+
+                        <td class="text-center">
+                            @item.ReorderLevel
+                        </td>
+
+
+                        <!-- Status -->
+
+                        <td class="text-center">
+
+                            @if (item.StockStatus == "Out of Stock")
+                            {
+                                <span class="badge rounded-pill bg-danger">
+                                    ● Out of Stock
+                                </span>
+                            }
+                            else if (item.StockStatus == "Low Stock")
+                            {
+                                <span class="badge rounded-pill bg-warning text-dark">
+                                    ● Low Stock
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge rounded-pill bg-success">
+                                    ● In Stock
+                                </span>
+                            }
+
+                        </td>
+
+
+                        <!-- Actions -->
+
+                        <td class="text-end">
+
+                            <div class="d-flex justify-content-end gap-1">
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#adjustModal"
+                                        data-variant-id="@item.VariantId"
+                                        data-product="@item.ProductName"
+                                        data-variant="@item.Color @(item.Size ?? "")"
+                                        data-current="@item.QuantityOnHand">
+
+                                    Adjust
+                                </button>
+
+
+                                <a asp-action="History"
+                                   asp-route-variantId="@item.VariantId"
+                                   class="btn btn-sm btn-outline-secondary">
+
+                                    History
+                                </a>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    @if (!Model.Any())
+    {
+        <div class="p-5 text-center text-muted">
+            No inventory items match your filters.
+        </div>
+    }
+
+
+    <!-- ================= PAGINATION ================= -->
+    @if (totalPages > 1)
+    {
+        <div class="card-footer bg-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <small class="text-muted">
+                    Showing
+                    @(((currentPage - 1) * 10) + 1)
+                    -
+                    @(Math.Min(currentPage * 10, totalItems))
+                    of
+                    @totalItems
+                    items
+                </small>
+
+
+                <nav>
+
+                    <ul class="pagination mb-0">
+
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(currentPage - 1)"
+                               asp-route-search="@ViewBag.CurrentSearch"
+                               asp-route-categoryId="@ViewBag.CurrentCategory"
+                               asp-route-brandId="@ViewBag.CurrentBrand"
+                               asp-route-stockStatus="@ViewBag.CurrentStockStatus">
+
+                                Prev
+
+                            </a>
+
+                        </li>
+
+
+                        @for (int p = 1; p <= totalPages; p++)
+                        {
+                            <li class="page-item @(p == currentPage ? "active" : "")">
+
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@p"
+                                   asp-route-search="@ViewBag.CurrentSearch"
+                                   asp-route-categoryId="@ViewBag.CurrentCategory"
+                                   asp-route-brandId="@ViewBag.CurrentBrand"
+                                   asp-route-stockStatus="@ViewBag.CurrentStockStatus">
+
+                                    @p
+
+                                </a>
+
+                            </li>
+                        }
+
+
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(currentPage + 1)"
+                               asp-route-search="@ViewBag.CurrentSearch"
+                               asp-route-categoryId="@ViewBag.CurrentCategory"
+                               asp-route-brandId="@ViewBag.CurrentBrand"
+                               asp-route-stockStatus="@ViewBag.CurrentStockStatus">
+
+                                Next
+
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+
+<!-- ================= ADJUST MODAL ================= -->
+
+<div class="modal fade"
+     id="adjustModal"
+     tabindex="-1">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <form asp-action="AdjustStock"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        Adjust Stock
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
                 </div>
-                <div class="col-md-4">
-                    <select name="stockFilter" class="form-select" onchange="this.form.submit()">
-                        <option value="">All Stock</option>
-                        <option value="low" selected="@("low" == (string)ViewBag.CurrentFilter)">Low Stock</option>
-                        <option value="out" selected="@("out" == (string)ViewBag.CurrentFilter)">Out of Stock</option>
-                    </select>
+
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           name="variantId"
+                           id="adjustVariantId" />
+
+                    <input type="hidden"
+                           name="search"
+                           value="@ViewBag.CurrentSearch" />
+
+                    <input type="hidden"
+                           name="categoryId"
+                           value="@ViewBag.CurrentCategory" />
+
+                    <input type="hidden"
+                           name="brandId"
+                           value="@ViewBag.CurrentBrand" />
+
+                    <input type="hidden"
+                           name="stockStatus"
+                           value="@ViewBag.CurrentStockStatus" />
+
+                    <input type="hidden"
+                           name="page"
+                           value="@currentPage" />
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-semibold">
+                            Product
+                        </label>
+
+                        <input type="text"
+                               id="adjustProduct"
+                               class="form-control"
+                               readonly />
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-semibold">
+                            Variant
+                        </label>
+
+                        <input type="text"
+                               id="adjustVariant"
+                               class="form-control"
+                               readonly />
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            New Quantity
+                        </label>
+
+                        <input type="number"
+                               name="newQuantityOnHand"
+                               id="adjustQuantity"
+                               min="0"
+                               class="form-control"
+                               required />
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Reason
+                        </label>
+
+                        <textarea name="reason"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="e.g. Physical stock count correction"></textarea>
+
+                    </div>
+
                 </div>
-                <div class="col-md-2">
-                    <button class="btn btn-outline-secondary w-100">Go</button>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-dark">
+                        Save Adjustment
+                    </button>
+
                 </div>
+
             </form>
+
         </div>
+
     </div>
+
 </div>
 
-<table class="table table-bordered bg-white align-middle">
-    <thead>
-        <tr>
-            <th>Product</th>
-            <th>SKU</th>
-            <th>Color</th>
-            <th>Size</th>
-            <th>On Hand</th>
-            <th>Reserved</th>
-            <th>Available</th>
-            <th style="width:260px;">Adjust</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var v in Model)
-        {
-            <tr>
-                <td>@v.ProductName</td>
-                <td>@v.Sku</td>
-                <td>@v.Color</td>
-                <td>@(v.Size ?? "-")</td>
-                <td>@v.QuantityOnHand</td>
-                <td>@v.ReservedQuantity</td>
-                <td>
-                    @if (v.AvailableQuantity <= 0)
-                    {
-                        <span class="badge bg-danger">Out of stock</span>
-                    }
-                    else if (v.AvailableQuantity <= v.ReorderLevel)
-                    {
-                        <span class="badge bg-warning text-dark">@v.AvailableQuantity left</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-success">@v.AvailableQuantity available</span>
-                    }
-                </td>
-                <td>
-                    <form asp-action="AdjustStock" method="post" class="d-flex gap-1">
-                        <input type="hidden" name="variantId" value="@v.VariantId" />
-                        <input type="hidden" name="stockFilter" value="@ViewBag.CurrentFilter" />
-                        <input type="hidden" name="search" value="@ViewBag.CurrentSearch" />
-                        <input type="number" name="newQuantityOnHand" value="@v.QuantityOnHand" min="0" class="form-control form-control-sm" style="width:80px;" />
-                        <input type="text" name="reason" placeholder="reason" class="form-control form-control-sm" style="width:100px;" />
-                        <button class="btn btn-sm btn-outline-primary">Update</button>
-                    </form>
-                </td>
-                <td>
-                    <a asp-action="History" asp-route-variantId="@v.VariantId" class="btn btn-sm btn-outline-secondary">History</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
 
-@if (!Model.Any())
-{
-    <p class="text-muted">No variants match this filter.</p>
+@section Scripts {
+
+    <script>
+
+        const adjustModal =
+            document.getElementById('adjustModal');
+
+        adjustModal.addEventListener('show.bs.modal', function(event) {
+
+            const button = event.relatedTarget;
+
+            document.getElementById('adjustVariantId').value =
+                button.getAttribute('data-variant-id');
+
+            document.getElementById('adjustProduct').value =
+                button.getAttribute('data-product');
+
+            document.getElementById('adjustVariant').value =
+                button.getAttribute('data-variant');
+
+            document.getElementById('adjustQuantity').value =
+                button.getAttribute('data-current');
+
+        });
+
+    </script>
+
 }

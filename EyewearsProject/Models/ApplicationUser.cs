@@ -7,5 +7,6 @@ namespace EyewearsProject.Models
         public string FullName { get; set; } = "";
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; } = false;
     }
 }

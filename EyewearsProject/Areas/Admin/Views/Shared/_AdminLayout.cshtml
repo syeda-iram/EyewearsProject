@@ -26,8 +26,10 @@
 
             <div class="admin-profile-card">
                 <div class="admin-profile-avatar">@(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "A")</div>
-                <div>
-                    <div class="admin-profile-name">@(User.Identity?.Name ?? "Admin User")</div>
+                <div style="min-width:0; overflow:hidden;">
+                    <div class="admin-profile-name text-truncate" title="@(User.Identity?.Name ?? "Admin User")">
+                        @(User.Identity?.Name ?? "Admin User")
+                    </div>
                     <div class="admin-profile-role">@(User.Claims.FirstOrDefault(c => c.Type.EndsWith("/role"))?.Value ?? "Staff")</div>
                 </div>
             </div>

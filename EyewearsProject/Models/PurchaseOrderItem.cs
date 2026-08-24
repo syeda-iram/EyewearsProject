@@ -11,5 +11,7 @@
         public int Quantity { get; set; }
         public decimal UnitCost { get; set; }
         public decimal TotalCost => UnitCost * Quantity;
+        public int? ProductVariantId { get; set; }
+        public ProductVariant? ProductVariant { get; set; }
     }
 }

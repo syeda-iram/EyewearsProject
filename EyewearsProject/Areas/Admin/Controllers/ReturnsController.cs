@@ -13,11 +13,13 @@ namespace EyewearsProject.Areas.Admin.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IAuditLogger _auditLogger;
+        private readonly IInventoryService _inventoryService;
 
-        public ReturnsController(AppDbContext context, IAuditLogger auditLogger)
+        public ReturnsController(AppDbContext context, IAuditLogger auditLogger, IInventoryService inventoryService)
         {
             _context = context;
             _auditLogger = auditLogger;
+            _inventoryService = inventoryService;
         }
 
         // GET: /Admin/Returns
@@ -82,7 +84,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(int id, decimal refundAmount)
         {
-            var ret = await _context.Returns.Include(r => r.Order).FirstOrDefaultAsync(r => r.Id == id);
+            var ret = await _context.Returns
+                .Include(r => r.Order)
+                    .ThenInclude(o => o.Items)
+                .FirstOrDefaultAsync(r => r.Id == id);
             if (ret == null) return NotFound();
 
             ret.Status = ReturnStatus.Approved;
@@ -91,6 +96,18 @@ namespace EyewearsProject.Areas.Admin.Controllers
             ret.Order.OrderStatus = OrderStatus.Returned;
 
             await _context.SaveChangesAsync();
+
+            // Credit stock back for every item in the returned order
+            foreach (var item in ret.Order.Items.Where(i => i.ProductVariantId.HasValue))
+            {
+                await _inventoryService.RecordTransactionAsync(
+                    item.ProductVariantId!.Value,
+                    InventoryTransactionType.Return,
+                    item.Quantity,
+                    referenceType: "Return",
+                    referenceId: ret.Id.ToString(),
+                    reason: $"Returned via order {ret.Order.OrderNumber}");
+            }
 
             await _auditLogger.LogAsync("Update", "Return", ret.Id.ToString(),
                 $"Approved return for order {ret.Order.OrderNumber}, refund {refundAmount:C}");

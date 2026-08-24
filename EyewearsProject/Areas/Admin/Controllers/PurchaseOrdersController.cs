@@ -14,11 +14,13 @@ namespace EyewearsProject.Areas.Admin.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IAuditLogger _auditLogger;
+        private readonly IInventoryService _inventoryService;
 
-        public PurchaseOrdersController(AppDbContext context, IAuditLogger auditLogger)
+        public PurchaseOrdersController(AppDbContext context, IAuditLogger auditLogger, IInventoryService inventoryService)
         {
             _context = context;
             _auditLogger = auditLogger;
+            _inventoryService = inventoryService;
         }
 
         private async Task PopulateVendorsAsync()
@@ -26,6 +28,18 @@ namespace EyewearsProject.Areas.Admin.Controllers
             ViewBag.Vendors = new SelectList(
                 await _context.Vendors.Where(v => v.IsActive).OrderBy(v => v.CompanyName).ToListAsync(),
                 "Id", "CompanyName");
+        }
+
+        private async Task PopulateVariantsAsync()
+        {
+            var variants = await _context.ProductVariants
+                .Include(v => v.Product)
+                .OrderBy(v => v.Product.Name).ThenBy(v => v.Color)
+                .ToListAsync();
+
+            ViewBag.Variants = new SelectList(
+                variants.Select(v => new { v.Id, Label = $"{v.Product.Name} — {v.Color}{(v.Size != null ? " / " + v.Size : "")}" }),
+                "Id", "Label");
         }
 
         // GET: /Admin/PurchaseOrders?vendorId=5
@@ -51,6 +65,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
         public async Task<IActionResult> Create(int? vendorId)
         {
             await PopulateVendorsAsync();
+            await PopulateVariantsAsync();
             var model = new PurchaseOrderFormViewModel();
             if (vendorId.HasValue) model.VendorId = vendorId.Value;
             return View(model);
@@ -71,6 +86,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
             if (!ModelState.IsValid)
             {
                 await PopulateVendorsAsync();
+                await PopulateVariantsAsync();
                 return View(model);
             }
 
@@ -88,6 +104,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
             {
                 po.Items.Add(new PurchaseOrderItem
                 {
+                    ProductVariantId = item.ProductVariantId,
                     ItemDescription = item.ItemDescription,
                     Quantity = item.Quantity,
                     UnitCost = item.UnitCost
@@ -126,10 +143,29 @@ namespace EyewearsProject.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, PurchaseOrderStatus newStatus)
         {
-            var po = await _context.PurchaseOrders.FindAsync(id);
+            var po = await _context.PurchaseOrders
+                .Include(p => p.Items)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (po == null) return NotFound();
 
             var oldStatus = po.Status;
+
+            // Only credit inventory the FIRST time a PO transitions into Received —
+            // re-saving the same status (or moving through it twice somehow) must never double-credit stock.
+            if (newStatus == PurchaseOrderStatus.Received && oldStatus != PurchaseOrderStatus.Received)
+            {
+                foreach (var item in po.Items.Where(i => i.ProductVariantId.HasValue))
+                {
+                    await _inventoryService.RecordTransactionAsync(
+                        item.ProductVariantId!.Value,
+                        InventoryTransactionType.Purchase,
+                        item.Quantity,
+                        referenceType: "PurchaseOrder",
+                        referenceId: po.Id.ToString(),
+                        reason: $"Received via {po.PoNumber} ({item.ItemDescription})");
+                }
+            }
+
             po.Status = newStatus;
             po.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();

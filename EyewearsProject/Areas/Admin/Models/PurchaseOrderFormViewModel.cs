@@ -20,6 +20,7 @@ namespace EyewearsProject.Areas.Admin.Models
 
     public class PurchaseOrderItemInput
     {
+        public int? ProductVariantId { get; set; }
         public string ItemDescription { get; set; } = "";
         public int Quantity { get; set; } = 1;
         public decimal UnitCost { get; set; }

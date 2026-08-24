@@ -93,8 +93,13 @@
             @foreach (var u in Model)
             {
                 var initials = string.Join("", u.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0])));
-                <tr>
-                    <td><input type="checkbox" class="row-check" name="selectedIds" value="@u.Id" /></td>
+                <tr class="@(u.IsDeleted ? "text-decoration-line-through" : "")" style="@(u.IsDeleted ? "background:#f1f1f1; color:#8a8f98;" : "")">
+                    <td>
+                        @if (!u.IsDeleted)
+                        {
+                            <input type="checkbox" class="row-check" name="selectedIds" value="@u.Id" />
+                        }
+                    </td>
                     <td>
                         <div class="d-flex align-items-center gap-2">
                             <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
@@ -108,32 +113,45 @@
                         </div>
                     </td>
                     <td>
-                        @foreach (var r in u.Roles)
+                        @if (u.Roles.Any())
                         {
-                            <span class="badge bg-primary">@r</span>
+                            @foreach (var r in u.Roles)
+                            {
+                                <span class="badge bg-primary">@r</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Customer</span>
                         }
                     </td>
                     <td>
-                        @if (u.IsActive)
+                        @if (u.IsDeleted)
+                        {
+                            <span class="badge" style="background:#1f2430;">Deleted</span>
+                        }
+                        else if (u.IsActive)
                         {
                             <span class="badge bg-success">Active</span>
                         }
                         else
                         {
-
-                            <span class="badge bg-secondary">Blocked</span>
+                            <span class="badge bg-warning text-dark">Inactive</span>
                         }
                     </td>
                     <td>@u.CreatedAt.ToString("dd MMM yyyy")</td>
                     <td class="d-flex gap-1">
-                        <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Edit</a>
-                        <button type="submit" formaction="@Url.Action("ToggleActive", new { id = u.Id })" class="btn btn-sm btn-outline-warning">
-                            @(u.IsActive ? "Deactivate" : "Activate")
-                        </button>
-                        <button type="submit" formaction="@Url.Action("Delete", new { id = u.Id })" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Delete this user?');">
-                            Delete
-                        </button>
+                        @if (!u.IsDeleted)
+                        {
+                            <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <button type="submit" formaction="@Url.Action("ToggleActive", new { id = u.Id })" class="btn btn-sm btn-outline-warning">
+                                @(u.IsActive ? "Deactivate" : "Activate")
+                            </button>
+                            <button type="submit" formaction="@Url.Action("Delete", new { id = u.Id })" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this user?');">
+                                Delete
+                            </button>
+                        }
                     </td>
                 </tr>
             }
