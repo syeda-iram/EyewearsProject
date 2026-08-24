@@ -2,187 +2,1364 @@
 @using Microsoft.EntityFrameworkCore
 @using EyewearsProject.Models
 @using EyewearsProject.Extensions
+
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject AppDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
 
 @{
-    var categories = await DbContext.Categories.OrderBy(c => c.Name).ToListAsync();
+    var categories = await DbContext.Categories
+        .OrderBy(c => c.Name)
+        .ToListAsync();
+
     ApplicationUser? currentUser = null;
+
     if (User.Identity?.IsAuthenticated == true)
     {
         currentUser = await UserManager.GetUserAsync(User);
     }
 
-    var cartItems = HttpContextAccessor.HttpContext?.Session.GetObject<List<CartItem>>("Cart") ?? new List<CartItem>();
+    var cartItems = HttpContextAccessor.HttpContext?.Session
+        .GetObject<List<CartItem>>("Cart")
+        ?? new List<CartItem>();
+
     var cartCount = cartItems.Sum(i => i.Quantity);
 
     int wishlistCount = 0;
+
     if (currentUser != null)
     {
         wishlistCount = await DbContext.WishlistItems
             .Where(wi => wi.Wishlist.UserId == currentUser.Id)
             .CountAsync();
     }
+
+    var currentController =
+        ViewContext.RouteData.Values["controller"]?.ToString();
+
+    var currentAction =
+        ViewContext.RouteData.Values["action"]?.ToString();
 }
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - EyewearsProject</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - EyeCraft</title>
+
     <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/EyewearsProject.styles.css" asp-append-version="true" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Main site CSS -->
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <!-- Project generated CSS -->
+    <link rel="stylesheet"
+          href="~/EyewearsProject.styles.css"
+          asp-append-version="true" />
+
+    <!-- Fonts -->
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap"
+          rel="stylesheet">
+
+
+    <style>
+
+            /* =========================================================
+                       EYECraft HEADER
+                       ========================================================= */
+
+            :root {
+                --evw-ink: #14213D;
+                --evw-ink-hover: #1D2E52;
+                --evw-cream: #FAF6EF;
+                --evw-border: #E4DFD5;
+                --evw-muted: #6F7682;
+                --evw-search: #F4F5F7;
+            }
+
+
+            /* ---------- Header ---------- */
+
+            .site-topbar {
+                background: #FFFFFF !important;
+                border-bottom: 1px solid #E8E6E1;
+                padding: 12px 0;
+                box-shadow: none;
+            }
+
+
+            /*
+                       Three-part desktop header:
+
+                       LEFT   = Logo
+                       CENTER = Search
+                       RIGHT  = Navigation
+                    */
+
+            .evw-header {
+                width: 100%;
+                display: grid;
+                grid-template-columns: auto minmax(360px, 1fr) auto;
+                align-items: center;
+                column-gap: 28px;
+            }
+
+
+            /* =========================================================
+                       LOGO / BRAND
+                       ========================================================= */
+
+            .evw-logo-btn {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: none;
+                border: none;
+                padding: 0;
+                margin: 0;
+                flex-shrink: 0;
+                text-align: left;
+            }
+
+            .evw-logo-icon {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                background: var(--evw-ink);
+                color: #FFFFFF;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+                .evw-logo-icon svg {
+                    width: 17px;
+                    height: 17px;
+                }
+
+
+            /* Brand text wrapper */
+
+            .evw-brand {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: center;
+                min-width: 150px;
+                line-height: 1;
+            }
+
+
+            /* EyeCraft */
+
+            .evw-logo-text {
+                font-family: "Fraunces", serif;
+                font-weight: 700;
+                font-size: 20px;
+                color: var(--evw-ink);
+                letter-spacing: 0.01em;
+                line-height: 1.05;
+                white-space: nowrap;
+            }
+
+
+            /* Crafted for Your Vision */
+
+            .evw-tagline {
+                display: block;
+                margin-top: 5px;
+                font-family: "Inter", sans-serif;
+                font-size: 10px;
+                font-weight: 400;
+                line-height: 1;
+                letter-spacing: 0.02em;
+                color: var(--evw-muted);
+                white-space: nowrap;
+            }
+
+
+            /* =========================================================
+                       SEARCH BAR
+                       ========================================================= */
+
+            .evw-search-form {
+                width: 100%;
+                min-width: 0;
+                display: flex;
+                justify-content: center;
+                margin: 0;
+            }
+
+
+                .evw-search-form .input-group {
+                    width: min(100%, 650px);
+                    min-height: 50px;
+                    background: var(--evw-search);
+                    border-radius: 999px;
+                    padding: 5px 7px 5px 20px;
+                    display: flex;
+                    align-items: center;
+                    border: 1px solid transparent;
+                    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+                }
+
+
+                    .evw-search-form .input-group:focus-within {
+                        background: #FFFFFF;
+                        border-color: #D9DDE5;
+                        box-shadow: 0 2px 12px rgba(20, 33, 61, 0.06);
+                    }
+
+
+                .evw-search-form input {
+                    flex: 1;
+                    min-width: 0;
+                    border: none !important;
+                    outline: none !important;
+                    background: transparent !important;
+                    box-shadow: none !important;
+                    padding: 8px 4px;
+                    font-family: "Inter", sans-serif;
+                    font-size: 14px;
+                    color: var(--evw-ink);
+                }
+
+
+                    .evw-search-form input::placeholder {
+                        color: #8A8F98;
+                        opacity: 1;
+                    }
+
+
+                .evw-search-form button {
+                    width: 40px;
+                    height: 40px;
+                    flex-shrink: 0;
+                    border: none;
+                    background: transparent;
+                    color: #7A808A;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                    transition: background-color .15s ease, color .15s ease;
+                }
+
+
+                    .evw-search-form button:hover {
+                        background: #E9EBEF;
+                        color: var(--evw-ink);
+                    }
+
+
+            /* =========================================================
+                       NAVIGATION
+                       ========================================================= */
+
+            .topbar-links {
+                flex-shrink: 0;
+                margin: 0 !important;
+                padding: 0;
+            }
+
+
+                .topbar-links .navbar-nav {
+                    display: flex;
+                    align-items: center;
+                    gap: 2px;
+                }
+
+
+            .evw-nav-link {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--evw-ink) !important;
+                font-family: "Inter", sans-serif;
+                font-size: 14px;
+                font-weight: 500;
+                text-decoration: none !important;
+                padding: 8px 13px;
+                border-radius: 999px;
+                transition: background-color .15s ease, color .15s ease;
+            }
+
+
+                .evw-nav-link:hover {
+                    background: #F4F5F7;
+                    color: var(--evw-ink) !important;
+                }
+
+
+                .evw-nav-link.active {
+                    background: #E7ECFB;
+                    color: #2B4EDB !important;
+                }
+
+
+            /* =========================================================
+                       HEADER ICONS
+                       ========================================================= */
+
+            .evw-icon-btn {
+                width: 38px;
+                height: 38px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--evw-ink) !important;
+                position: relative;
+                text-decoration: none !important;
+                transition: background-color .15s ease, color .15s ease;
+            }
+
+
+                .evw-icon-btn:hover {
+                    background: #F4F5F7;
+                    color: var(--evw-ink) !important;
+                }
+
+
+            .icon-badge {
+                position: absolute;
+                top: 1px;
+                right: 0;
+                background: var(--evw-ink);
+                color: #FFFFFF;
+                font-family: "Inter", sans-serif;
+                font-size: 9px;
+                font-weight: 600;
+                min-width: 16px;
+                height: 16px;
+                padding: 0 3px;
+                border-radius: 999px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+
+            /* =========================================================
+                       SIDEBAR
+                       ========================================================= */
+
+            /*
+                       Bootstrap normally gives the offcanvas a fairly large
+                       width. !important ensures our narrower width wins.
+                    */
+
+            .offcanvas.offcanvas-start {
+                width: 280px !important;
+                max-width: 280px !important;
+                background: #FFFFFF;
+                border-right: 1px solid var(--evw-border);
+                box-shadow: 8px 0 30px rgba(20, 33, 61, 0.08);
+            }
+
+
+            .offcanvas-header {
+                padding: 22px 18px 16px;
+                border-bottom: 1px solid #EFEDE8;
+            }
+
+
+            .offcanvas-body {
+                padding: 18px;
+            }
+
+
+            .sidebar-username {
+                font-family: "Poppins", sans-serif;
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--evw-ink);
+                margin-bottom: 2px;
+            }
+
+
+            .sidebar-usermail {
+                font-family: "Inter", sans-serif;
+                font-size: 12px;
+                color: var(--evw-muted);
+            }
+
+
+            .sidebar-section-label {
+                font-family: "Inter", sans-serif;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .06em;
+                color: var(--evw-muted);
+                margin-bottom: 8px;
+            }
+
+
+            .sidebar-nav {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+
+                .sidebar-nav li {
+                    margin-bottom: 2px;
+                }
+
+
+                    .sidebar-nav li a {
+                        display: block;
+                        padding: 9px 12px;
+                        border-radius: 9px;
+                        color: var(--brand-text);
+                        font-family: "Inter", sans-serif;
+                        font-size: 14px;
+                        font-weight: 500;
+                        text-decoration: none;
+                    }
+
+
+                        .sidebar-nav li a:hover {
+                            background: var(--evw-cream);
+                            color: var(--evw-ink);
+                            text-decoration: none;
+                        }
+
+
+            .offcanvas hr {
+                margin: 16px 0;
+                border-color: #E9E6DF;
+                opacity: 1;
+            }
+
+
+            .offcanvas .btn {
+                border-radius: 9px;
+            }
+
+
+            /* =========================================================
+                       FOOTER
+                       ========================================================= */
+
+            .evw-footer {
+                background: var(--evw-ink);
+                color: #C9CEDA;
+                margin-top: 64px;
+                padding: 48px 0 24px;
+            }
+
+
+                .evw-footer h6 {
+                    font-family: "Fraunces", serif;
+                    color: #FFFFFF;
+                    font-weight: 600;
+                    margin-bottom: 14px;
+                }
+
+
+                .evw-footer a {
+                    display: block;
+                    color: #C9CEDA;
+                    text-decoration: none;
+                    margin-bottom: 8px;
+                    font-size: 14px;
+                }
+
+
+                    .evw-footer a:hover {
+                        color: #FFFFFF;
+                        text-decoration: none;
+                    }
+
+
+                .evw-footer .evw-footer-bottom {
+                    border-top: 1px solid rgba(255,255,255,.12);
+                    margin-top: 32px;
+                    padding-top: 20px;
+                    font-size: 13px;
+                    color: #8891A8;
+                }
+
+
+            /* =========================================================
+                       RESPONSIVE HEADER
+                       ========================================================= */
+
+            @@media (max-width: 1200px) {
+
+                .evw-header {
+                    column-gap: 18px;
+                }
+
+                .evw-search-form .input-group {
+                    width: min(100%, 560px);
+                }
+
+                .evw-nav-link {
+                    padding-left: 9px;
+                    padding-right: 9px;
+                }
+            }
+
+
+            @@media (max-width: 1050px) {
+
+                .evw-header {
+                    grid-template-columns: auto minmax(280px, 1fr) auto;
+                    column-gap: 14px;
+                }
+
+                .evw-search-form .input-group {
+                    width: 100%;
+                }
+
+                .evw-logo-text {
+                    font-size: 18px;
+                }
+
+                .evw-tagline {
+                    font-size: 9px;
+                }
+            }
+
+
+            @@media (max-width: 900px) {
+
+                .evw-header {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    gap: 14px;
+                }
+
+                .evw-logo-btn {
+                    flex-shrink: 0;
+                }
+
+                .evw-search-form {
+                    flex: 1;
+                }
+
+                    .evw-search-form .input-group {
+                        min-height: 46px;
+                    }
+
+                .evw-nav-link {
+                    padding-left: 7px;
+                    padding-right: 7px;
+                }
+
+                .evw-tagline {
+                    display: none;
+                }
+
+                .evw-brand {
+                    min-width: auto;
+                }
+            }
+
+
+            @@media (max-width: 767px) {
+
+                .site-topbar {
+                    padding: 10px 0;
+                }
+
+                .evw-header {
+                    gap: 10px;
+                }
+
+                .evw-search-form {
+                    display: none;
+                }
+
+                .evw-logo-icon {
+                    width: 34px;
+                    height: 34px;
+                }
+
+                .evw-logo-text {
+                    font-size: 18px;
+                }
+
+                .topbar-links {
+                    display: none !important;
+                }
+
+                .navbar-toggler {
+                    margin-left: auto !important;
+                }
+
+                .offcanvas.offcanvas-start {
+                    width: 280px !important;
+                    max-width: 280px !important;
+                }
+            }
+
+    </style>
+
 </head>
+
+
 <body>
+
+
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
+
     <header>
+
         <nav class="navbar navbar-expand-sm site-topbar">
-            <div class="container-fluid">
-                <button class="btn btn-icon-only" type="button" data-bs-toggle="offcanvas" data-bs-target="#siteSidebar" aria-controls="siteSidebar">
-                    <span class="navbar-brand mb-0">EyewearsProject</span>
+
+            <div class="container-fluid evw-header">
+
+
+                <!-- =================================================
+                     LOGO
+                     ================================================= -->
+
+                <button class="evw-logo-btn"
+                        type="button"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#siteSidebar"
+                        aria-controls="siteSidebar">
+
+                    <span class="evw-logo-icon">
+
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             width="17"
+                             height="17"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2">
+
+                            <circle cx="6"
+                                    cy="12"
+                                    r="4" />
+
+                            <circle cx="18"
+                                    cy="12"
+                                    r="4" />
+
+                            <path d="M10 12h4M2 12h0M22 12h0" />
+
+                        </svg>
+
+                    </span>
+
+
+                    <div class="evw-brand">
+
+                        <span class="evw-logo-text">
+                            EyeCraft
+                        </span>
+
+                        <span class="evw-tagline">
+                            Crafted for Your Vision
+                        </span>
+
+                    </div>
+
                 </button>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".topbar-links" aria-controls="topbarLinks"
-                        aria-expanded="false" aria-label="Toggle navigation">
+
+                <!-- =================================================
+                     SEARCH
+                     ================================================= -->
+
+                <form class="evw-search-form"
+                      asp-controller="Products"
+                      asp-action="Index"
+                      method="get">
+
+                    <div class="input-group">
+
+                        <input type="text"
+                               name="search"
+                               class="form-control"
+                               placeholder="Search frames, brands, lenses"
+                               autocomplete="off" />
+
+
+                        <button type="submit"
+                                aria-label="Search">
+
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 width="18"
+                                 height="18"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2">
+
+                                <circle cx="11"
+                                        cy="11"
+                                        r="8" />
+
+                                <line x1="21"
+                                      y1="21"
+                                      x2="16.65"
+                                      y2="16.65" />
+
+                            </svg>
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+
+                <!-- =================================================
+                     MOBILE TOGGLE
+                     ================================================= -->
+
+                <button class="navbar-toggler ms-auto d-sm-none"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target=".topbar-links"
+                        aria-controls="topbarLinks"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+
                     <span class="navbar-toggler-icon"></span>
+
                 </button>
 
-                <div class="collapse navbar-collapse topbar-links justify-content-end">
-                    <ul class="navbar-nav align-items-center gap-1">
+
+                <!-- =================================================
+                     DESKTOP NAVIGATION
+                     ================================================= -->
+
+                <div class="collapse navbar-collapse topbar-links flex-grow-0">
+
+                    <ul class="navbar-nav align-items-center flex-row">
+
+
+                        <!-- SHOP -->
+
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Products" asp-action="Index">Shop</a>
+
+                            <a class="evw-nav-link @(currentController == "Products" ? "active" : "")"
+                               asp-controller="Products"
+                               asp-action="Index">
+
+                                Shop
+
+                            </a>
+
                         </li>
+
+
+                        <!-- TRY ON -->
+
                         <li class="nav-item">
-                            <a class="nav-link" href="#" title="Virtual Try-On — coming soon">Try-On</a>
+
+                            <a class="evw-nav-link"
+                               href="#"
+                               title="Virtual Try-On">
+
+                                Try-On
+
+                            </a>
+
                         </li>
+
+
+                        <!-- PRESCRIPTION -->
+
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Prescriptions" asp-action="Index">Prescription</a>
+
+                            <a class="evw-nav-link @(currentController == "Prescriptions" ? "active" : "")"
+                               asp-controller="Prescriptions"
+                               asp-action="Index">
+
+                                Prescription
+
+                            </a>
+
                         </li>
+
+
+                        <!-- WISHLIST -->
+
                         <li class="nav-item">
-                            <a class="nav-link icon-link" asp-controller="Wishlist" asp-action="Index" title="Wishlist">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
+
+                            <a class="evw-icon-btn"
+                               asp-controller="Wishlist"
+                               asp-action="Index"
+                               title="Wishlist">
+
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     width="19"
+                                     height="19"
+                                     viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="2">
+
+                                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z">
+                                    </path>
+
                                 </svg>
+
+
                                 @if (wishlistCount > 0)
                                 {
-                                    <span class="icon-badge">@wishlistCount</span>
+                                    <span class="icon-badge">
+                                        @wishlistCount
+                                    </span>
                                 }
+
                             </a>
+
                         </li>
+
+
+                        <!-- CART -->
+
                         <li class="nav-item">
-                            <a class="nav-link icon-link" asp-controller="Cart" asp-action="Index" title="Cart">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="9" cy="21" r="1"></circle>
-                                    <circle cx="20" cy="21" r="1"></circle>
-                                    <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path>
+
+                            <a class="evw-icon-btn"
+                               asp-controller="Cart"
+                               asp-action="Index"
+                               title="Cart">
+
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     width="19"
+                                     height="19"
+                                     viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="2">
+
+                                    <circle cx="9"
+                                            cy="21"
+                                            r="1">
+                                    </circle>
+
+                                    <circle cx="20"
+                                            cy="21"
+                                            r="1">
+                                    </circle>
+
+                                    <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6">
+                                    </path>
+
                                 </svg>
+
+
                                 @if (cartCount > 0)
                                 {
-                                    <span class="icon-badge">@cartCount</span>
+                                    <span class="icon-badge">
+                                        @cartCount
+                                    </span>
                                 }
+
                             </a>
+
                         </li>
+
+
+                        <!-- USER -->
+
                         <li class="nav-item">
+
                             @if (currentUser != null)
                             {
-                                <a class="nav-link icon-link" href="#" title="@currentUser.FullName">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="12" cy="7" r="4"></circle>
+                                <a class="evw-icon-btn"
+                                   href="#"
+                                   title="@currentUser.FullName">
+
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         width="19"
+                                         height="19"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="2">
+
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2">
+                                        </path>
+
+                                        <circle cx="12"
+                                                cy="7"
+                                                r="4">
+                                        </circle>
+
                                     </svg>
+
                                 </a>
                             }
                             else
                             {
-                                <a class="nav-link icon-link" asp-controller="Account" asp-action="Login" title="Login / Register">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="12" cy="7" r="4"></circle>
+                                <a class="evw-icon-btn"
+                                   asp-controller="Account"
+                                   asp-action="Login"
+                                   title="Login / Register">
+
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         width="19"
+                                         height="19"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="2">
+
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2">
+                                        </path>
+
+                                        <circle cx="12"
+                                                cy="7"
+                                                r="4">
+                                        </circle>
+
                                     </svg>
+
                                 </a>
                             }
+
                         </li>
+
                     </ul>
+
                 </div>
+
             </div>
+
         </nav>
+
     </header>
 
-    <!-- Sidebar (offcanvas) -->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="siteSidebar" aria-labelledby="siteSidebarLabel">
+
+    <!-- =========================================================
+         SIDEBAR
+         ========================================================= -->
+
+    <div class="offcanvas offcanvas-start"
+         tabindex="-1"
+         id="siteSidebar"
+         aria-labelledby="siteSidebarLabel">
+
+
+        <!-- Sidebar Header -->
+
         <div class="offcanvas-header">
+
             <div>
+
                 @if (currentUser != null)
                 {
-                    <div class="sidebar-username">@currentUser.FullName</div>
-                    <div class="sidebar-usermail">@currentUser.Email</div>
+                    <div class="sidebar-username">
+                        @currentUser.FullName
+                    </div>
+
+                    <div class="sidebar-usermail">
+                        @currentUser.Email
+                    </div>
                 }
                 else
                 {
-                    <div class="sidebar-username">EyewearsProject</div>
+                    <div class="sidebar-username">
+                        EyeCraft
+                    </div>
+
+                    <div class="sidebar-usermail">
+                        Crafted for Your Vision
+                    </div>
                 }
+
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="offcanvas"
+                    aria-label="Close">
+            </button>
+
         </div>
+
+
+        <!-- Sidebar Body -->
+
         <div class="offcanvas-body">
-            <div class="sidebar-section-label">Shop</div>
+
+
+            <!-- SHOP -->
+
+            <div class="sidebar-section-label">
+                Shop
+            </div>
+
+
             <ul class="sidebar-nav">
-                <li><a asp-controller="Products" asp-action="Index">All Products</a></li>
+
+                <li>
+
+                    <a asp-controller="Products"
+                       asp-action="Index">
+
+                        All Products
+
+                    </a>
+
+                </li>
+
+
                 @foreach (var cat in categories)
                 {
-                    <li><a asp-controller="Products" asp-action="Index" asp-route-category="@cat.Name">@cat.Name</a></li>
+                    <li>
+
+                        <a asp-controller="Products"
+                           asp-action="Index"
+                           asp-route-category="@cat.Name">
+
+                            @cat.Name
+
+                        </a>
+
+                    </li>
                 }
+
             </ul>
+
 
             <hr />
 
+
+            <!-- ACCOUNT / SHOP LINKS -->
+
             <ul class="sidebar-nav">
-                <li><a asp-controller="Wishlist" asp-action="Index">Wishlist</a></li>
-                <li><a asp-controller="Cart" asp-action="Index">Cart</a></li>
+
+                <li>
+
+                    <a asp-controller="Wishlist"
+                       asp-action="Index">
+
+                        Wishlist
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-controller="Cart"
+                       asp-action="Index">
+
+                        Cart
+
+                    </a>
+
+                </li>
+
+
                 @if (currentUser != null)
                 {
-                    <li><a asp-controller="Addresses" asp-action="Index">Addresses</a></li>
-                    <li><a asp-controller="Prescriptions" asp-action="Index">Prescriptions</a></li>
-                    <li><a asp-controller="Orders" asp-action="Index">My Orders</a></li>
-                    <li><a asp-controller="Addresses" asp-action="Index">Settings</a></li>
+                    <li>
+
+                        <a asp-controller="Addresses"
+                           asp-action="Index">
+
+                            Addresses
+
+                        </a>
+
+                    </li>
+
+
+                    <li>
+
+                        <a asp-controller="Prescriptions"
+                           asp-action="Index">
+
+                            Prescriptions
+
+                        </a>
+
+                    </li>
+
+
+                    <li>
+
+                        <a asp-controller="Orders"
+                           asp-action="Index">
+
+                            My Orders
+
+                        </a>
+
+                    </li>
+
+
+                    <li>
+
+                        <a asp-controller="Addresses"
+                           asp-action="Index">
+
+                            Settings
+
+                        </a>
+
+                    </li>
                 }
                 else
                 {
-                    <li><a asp-controller="Account" asp-action="Login">Settings</a></li>
+                    <li>
+
+                        <a asp-controller="Account"
+                           asp-action="Login">
+
+                            Settings
+
+                        </a>
+
+                    </li>
                 }
+
             </ul>
 
+
+            <!-- AUTH BUTTONS -->
             @if (currentUser != null)
             {
                 <hr />
-                <form asp-controller="Account" asp-action="Logout" method="post">
-                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Logout</button>
+
+                <form asp-controller="Account"
+                      asp-action="Logout"
+                      method="post">
+
+                    <button type="submit"
+                            class="btn btn-outline-secondary btn-sm w-100">
+
+                        Logout
+
+                    </button>
+
                 </form>
             }
             else
             {
                 <hr />
-                <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-sm w-100 mb-2">Login</a>
-                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary btn-sm w-100">Register</a>
+
+                <a asp-controller="Account"
+                   asp-action="Login"
+                   class="btn btn-primary btn-sm w-100 mb-2">
+
+                    Login
+
+                </a>
+
+
+                <a asp-controller="Account"
+                   asp-action="Register"
+                   class="btn btn-outline-primary btn-sm w-100">
+
+                    Register
+
+                </a>
             }
+
         </div>
+
     </div>
+
+
+    <!-- =========================================================
+         MAIN CONTENT
+         ========================================================= -->
 
     <div class="container">
-        <main role="main" class="pb-3">
+
+        <main role="main"
+              class="pb-3">
+
             @RenderBody()
+
         </main>
+
     </div>
 
+
+    <!-- =========================================================
+         FOOTER
+         ========================================================= -->
+
+    <footer class="evw-footer">
+
+        <div class="container">
+
+            <div class="row g-4">
+
+
+                <!-- BRAND -->
+
+                <div class="col-md-4">
+
+                    <h6>
+                        EyeCraft
+                    </h6>
+
+                    <p class="small mb-0"
+                       style="color:#9AA2B8;">
+
+                        Crafted for Your Vision.
+                        Quality eyewear, prescription-ready
+                        lenses, and stylish frames delivered
+                        to your door.
+
+                    </p>
+
+                </div>
+
+
+                <!-- SHOP -->
+
+                <div class="col-6 col-md-2">
+
+                    <h6>
+                        Shop
+                    </h6>
+
+
+                    <a asp-controller="Products"
+                       asp-action="Index">
+
+                        All Products
+
+                    </a>
+
+
+                    @foreach (var cat in categories.Take(4))
+                    {
+                        <a asp-controller="Products"
+                           asp-action="Index"
+                           asp-route-category="@cat.Name">
+
+                            @cat.Name
+
+                        </a>
+                    }
+
+                </div>
+
+
+                <!-- ACCOUNT -->
+
+                <div class="col-6 col-md-2">
+
+                    <h6>
+                        Account
+                    </h6>
+
+
+                    <a asp-controller="Orders"
+                       asp-action="Index">
+
+                        My Orders
+
+                    </a>
+
+
+                    <a asp-controller="Wishlist"
+                       asp-action="Index">
+
+                        Wishlist
+
+                    </a>
+
+
+                    <a asp-controller="Prescriptions"
+                       asp-action="Index">
+
+                        Prescriptions
+
+                    </a>
+
+                </div>
+
+
+                <!-- HELP -->
+
+                <div class="col-6 col-md-2">
+
+                    <h6>
+                        Help
+                    </h6>
+
+
+                    <a asp-controller="Home"
+                       asp-action="Privacy">
+
+                        Privacy Policy
+
+                    </a>
+
+
+                    <a href="#">
+                        Returns &amp; Exchanges
+                    </a>
+
+
+                    <a href="#">
+                        Contact Us
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER BOTTOM -->
+
+            <div class="evw-footer-bottom">
+
+                &copy; @DateTime.Now.Year
+                EyeCraft. All rights reserved.
+
+            </div>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =========================================================
+         SCRIPTS
+         ========================================================= -->
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true">
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
+
 </html>

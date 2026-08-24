@@ -33,7 +33,7 @@ namespace EyewearsProject.Data
                 }
             }
 
-            const string superAdminEmail = "superadmin@eyewear.com";
+            const string superAdminEmail = "superadmin@eyecraft.com";
             var existingAdmin = await userManager.FindByEmailAsync(superAdminEmail);
 
             if (existingAdmin == null)

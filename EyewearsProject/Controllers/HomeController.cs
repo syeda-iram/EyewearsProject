@@ -21,6 +21,16 @@ namespace EyewearsProject.Controllers
                 .OrderBy(c => c.SortOrder)
                 .ToListAsync();
 
+            ViewBag.Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+
+            ViewBag.FeaturedProducts = await _context.Products
+                .Include(p => p.Brand)
+                .Include(p => p.Images)
+                .Where(p => p.IsActive)
+                .OrderByDescending(p => p.Id)
+                .Take(4)
+                .ToListAsync();
+
             return View(banners);
         }
 

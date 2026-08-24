@@ -1,5 +1,5 @@
 /* ===================================
-   EyewearsProject — Design System
+   EyeCraft — Design System
    =================================== */
 
 :root {
@@ -18,7 +18,11 @@
     --shadow-card: 0 4px 20px rgba(20, 33, 61, 0.08);
 }
 
-/* ---------- Base layout (classic sticky-footer pattern — proven working) ---------- */
+
+/* ===================================
+   Base Layout
+   =================================== */
+
 html {
     font-size: 14px;
     position: relative;
@@ -33,13 +37,21 @@ html {
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: var(--brand-cream);
+    background-color: #FFFFFF;
     color: var(--brand-text);
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
-.form-control:focus, .form-check-input:focus {
+
+/* ===================================
+   Focus States
+   =================================== */
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
     box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.15);
 }
 
@@ -54,8 +66,17 @@ body {
     text-align: start;
 }
 
-/* ---------- Typography ---------- */
-h1, h2, h3, h4, h5, h6,
+
+/* ===================================
+   Typography
+   =================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 .navbar-brand {
     font-family: 'Poppins', 'Inter', sans-serif;
     font-weight: 600;
@@ -77,12 +98,16 @@ a {
         text-decoration: underline;
     }
 
-/* ---------- Navbar ---------- */
+
+/* ===================================
+   Navbar / Header
+   =================================== */
+
 .navbar {
     background-color: #FFFFFF !important;
     border-bottom: 1px solid var(--brand-border);
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
     box-shadow: none;
 }
 
@@ -104,12 +129,219 @@ a {
         color: var(--brand-navy) !important;
     }
 
-/* ---------- Buttons ---------- */
+
+/* ===================================
+   EyeCraft Header / Logo
+   =================================== */
+
+.evw-logo-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: none;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.evw-logo-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--brand-navy);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.evw-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    line-height: 1;
+    min-width: max-content;
+}
+
+.evw-logo-text {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 1;
+    color: var(--brand-navy);
+    letter-spacing: 0.01em;
+}
+
+.evw-tagline {
+    display: block;
+    margin-top: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--brand-text-muted);
+    opacity: 0.8;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+
+/* ===================================
+   Header Search
+   =================================== */
+
+.evw-search-form {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+    .evw-search-form .input-group {
+        width: 100%;
+        min-height: 50px;
+        background: #F4F5F7;
+        border-radius: 999px;
+        padding: 4px 6px 4px 20px;
+        border: 1px solid transparent;
+        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+        .evw-search-form .input-group:focus-within {
+            background: #FFFFFF;
+            border-color: var(--brand-border);
+            box-shadow: 0 2px 10px rgba(20, 33, 61, 0.06);
+        }
+
+    .evw-search-form input {
+        border: none;
+        outline: none;
+        background: transparent;
+        box-shadow: none !important;
+        font-size: 14px;
+        color: var(--brand-text);
+    }
+
+        .evw-search-form input::placeholder {
+            color: #8A8F98;
+        }
+
+    .evw-search-form button {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: transparent;
+        color: #7A808A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+        .evw-search-form button:hover {
+            background: #E9EBEF;
+            color: var(--brand-navy);
+        }
+
+
+/* ===================================
+   Header Navigation
+   =================================== */
+
+.evw-nav-link {
+    color: var(--brand-navy);
+    font-weight: 500;
+    font-size: 14.5px;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+    .evw-nav-link:hover {
+        background: #F4F5F7;
+        color: var(--brand-navy);
+        text-decoration: none;
+    }
+
+    .evw-nav-link.active {
+        background: #E7ECFB;
+        color: #2B4EDB;
+    }
+
+
+/* ===================================
+   Header Icon Buttons
+   =================================== */
+
+.evw-icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-navy);
+    position: relative;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+    .evw-icon-btn:hover {
+        background: #F4F5F7;
+        color: var(--brand-navy);
+        text-decoration: none;
+    }
+
+.btn-icon-only {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.icon-link {
+    color: var(--brand-navy) !important;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+
+/* ===================================
+   Cart / Wishlist Badge
+   =================================== */
+
+.icon-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: var(--brand-navy);
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+}
+
+
+/* ===================================
+   Buttons
+   =================================== */
+
 .btn {
     border-radius: var(--radius-md);
     font-weight: 500;
     padding: 0.55rem 1.25rem;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn-primary {
@@ -117,7 +349,8 @@ a {
     border-color: var(--brand-navy);
 }
 
-    .btn-primary:hover, .btn-primary:focus {
+    .btn-primary:hover,
+    .btn-primary:focus {
         background-color: var(--brand-navy-hover);
         border-color: var(--brand-navy-hover);
     }
@@ -152,7 +385,11 @@ a {
     font-size: 1.05rem;
 }
 
-/* ---------- Cards ---------- */
+
+/* ===================================
+   Cards
+   =================================== */
+
 .card {
     border: 1px solid var(--brand-border);
     border-radius: var(--radius-lg);
@@ -178,14 +415,20 @@ a {
     border-bottom-right-radius: var(--radius-lg) !important;
 }
 
-/* ---------- Forms ---------- */
-.form-control, .form-select {
+
+/* ===================================
+   Forms
+   =================================== */
+
+.form-control,
+.form-select {
     border-radius: var(--radius-md);
     border-color: var(--brand-border);
     padding: 0.6rem 0.9rem;
 }
 
-    .form-control:focus, .form-select:focus {
+    .form-control:focus,
+    .form-select:focus {
         border-color: var(--brand-navy);
     }
 
@@ -195,7 +438,11 @@ a {
     margin-bottom: 0.4rem;
 }
 
-/* ---------- Tables ---------- */
+
+/* ===================================
+   Tables
+   =================================== */
+
 .table {
     background-color: #FFFFFF;
     border-radius: var(--radius-md);
@@ -211,14 +458,22 @@ a {
         border-bottom-width: 1px;
     }
 
-/* ---------- Badges ---------- */
+
+/* ===================================
+   Badges
+   =================================== */
+
 .badge {
     font-weight: 500;
     padding: 0.4em 0.7em;
     border-radius: 20px;
 }
 
-/* ---------- Alerts ---------- */
+
+/* ===================================
+   Alerts
+   =================================== */
+
 .alert {
     border-radius: var(--radius-md);
     border: none;
@@ -239,43 +494,49 @@ a {
     color: var(--brand-danger);
 }
 
-/* ---------- Layout ---------- */
+
+/* ===================================
+   Main Layout
+   =================================== */
+
 .container {
     max-width: 1200px;
 }
 
-/* ---------- Footer ---------- */
-.footer {
-    background-color: #FFFFFF;
-    border-top: 1px solid var(--brand-border);
-    padding: 1.2rem 0;
-    color: var(--brand-text-muted);
-    font-size: 0.9rem;
-}
-/* ---------- Top bar (v2) ---------- */
-.site-topbar {
-    background-color: #FFFFFF !important;
-    border-bottom: 1px solid var(--brand-border);
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+
+/* ===================================
+   Home Hero
+   =================================== */
+
+.evw-hero {
+    background-color: var(--brand-cream);
+    border-radius: var(--radius-lg);
+    padding: 56px 48px;
+    margin-top: 4px;
+    margin-bottom: 40px;
+    overflow: hidden;
 }
 
-.btn-icon-only {
-    background: none;
-    border: none;
-    padding: 0;
+.evw-highlight {
+    color: #2B4EDB;
 }
 
-.icon-link {
-    color: var(--brand-navy) !important;
-    display: flex;
-    align-items: center;
-}
 
-/* ---------- Sidebar ---------- */
+/* ===================================
+   Sidebar / Offcanvas
+   =================================== */
+
 .offcanvas {
-    width: 280px;
+    width: 240px;
     background-color: #FFFFFF;
+}
+
+.offcanvas-header {
+    padding: 1.25rem 1.15rem;
+}
+
+.offcanvas-body {
+    padding: 1rem 1.15rem;
 }
 
 .sidebar-username {
@@ -310,6 +571,7 @@ a {
         border-radius: var(--radius-md);
         color: var(--brand-text);
         font-weight: 500;
+        transition: background-color 0.15s ease, color 0.15s ease;
     }
 
         .sidebar-nav li a:hover {
@@ -317,26 +579,12 @@ a {
             color: var(--brand-navy);
             text-decoration: none;
         }
-.icon-link {
-    position: relative;
-}
 
-.icon-badge {
-    position: absolute;
-    top: -4px;
-    right: -6px;
-    background-color: var(--brand-danger);
-    color: #FFFFFF;
-    font-size: 0.65rem;
-    font-weight: 600;
-    min-width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 3px;
-}
+
+/* ===================================
+   Filters
+   =================================== */
+
 .filter-panel {
     background-color: #FFFFFF;
     border: 1px solid var(--brand-border);
@@ -364,4 +612,98 @@ a {
     text-transform: uppercase;
     letter-spacing: 0.03em;
     margin-bottom: 0.35rem;
+}
+
+
+/* ===================================
+   Footer
+   =================================== */
+
+.footer {
+    background-color: #FFFFFF;
+    border-top: 1px solid var(--brand-border);
+    padding: 1.2rem 0;
+    color: var(--brand-text-muted);
+    font-size: 0.9rem;
+}
+
+.evw-footer {
+    background: var(--brand-navy);
+    color: #C9CEDA;
+    margin-top: 64px;
+    padding: 48px 0 24px;
+}
+
+    .evw-footer h6 {
+        font-family: "Fraunces", serif;
+        color: #FFFFFF;
+        font-weight: 600;
+        margin-bottom: 14px;
+    }
+
+    .evw-footer a {
+        color: #C9CEDA;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+        .evw-footer a:hover {
+            color: #FFFFFF;
+        }
+
+    .evw-footer .evw-footer-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        margin-top: 32px;
+        padding-top: 20px;
+        font-size: 13px;
+        color: #8891A8;
+    }
+
+
+/* ===================================
+   Mobile
+   =================================== */
+
+@media (max-width: 767px) {
+
+    .evw-search-form {
+        display: none;
+    }
+
+    .evw-hero {
+        padding: 36px 24px;
+        border-radius: var(--radius-lg);
+    }
+
+    .evw-logo-text {
+        font-size: 18px;
+    }
+
+    .evw-tagline {
+        font-size: 0.58rem;
+    }
+
+    .offcanvas {
+        width: 240px;
+    }
+}
+
+
+/* ===================================
+   Small Desktop / Tablet Header
+   =================================== */
+
+@media (min-width: 768px) and (max-width: 1100px) {
+
+    .evw-search-form {
+        max-width: 500px;
+        padding: 0 16px;
+    }
+
+    .evw-nav-link {
+        padding-left: 9px;
+        padding-right: 9px;
+    }
 }

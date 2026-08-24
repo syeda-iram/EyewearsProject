@@ -12,7 +12,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false;
+    options.SignIn.RequireConfirmedAccount = true;
     options.Password.RequireNonAlphanumeric = false;
 })
     .AddEntityFrameworkStores<AppDbContext>()
@@ -52,8 +52,15 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<EyewearsProject.Services.IAuditLogger, EyewearsProject.Services.AuditLogger>();
-builder.Services.AddScoped<EyewearsProject.Services.IInventoryService, EyewearsProject.Services.InventoryService>();
+builder.Services.AddScoped<
+    EyewearsProject.Services.IAuditLogger, 
+    EyewearsProject.Services.AuditLogger>();
+builder.Services.AddScoped<
+    EyewearsProject.Services.IInventoryService, 
+    EyewearsProject.Services.InventoryService>();
+builder.Services.AddScoped<
+    EyewearsProject.Services.Email.IEmailService,
+    EyewearsProject.Services.Email.EmailService>();
 
 var app = builder.Build();
 

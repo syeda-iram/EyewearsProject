@@ -1,42 +1,595 @@
-﻿@model List<CmsContent>
+﻿@using EyewearsProject.Extensions
+@using EyewearsProject.Models
+@model List<CmsContent>
+
 @{
     ViewData["Title"] = "Home";
+    var categories = (List<Category>)ViewBag.Categories;
+    var featured = (List<Product>)ViewBag.FeaturedProducts;
 }
 
+<style>
+    :root {
+        --evw-ink: #14213D;
+        --evw-parchment: #F7F2E9;
+        --evw-amber: #D9A441;
+        --evw-sage: #E9EDE6;
+        --evw-charcoal: #2B2B2B;
+    }
+
+    /* ================================
+           HOME HERO
+           ================================ */
+
+    .evw-hero {
+        background: var(--evw-parchment);
+        border-radius: 20px;
+        padding: 56px 48px;
+        margin-bottom: 40px;
+        overflow: hidden;
+    }
+
+        .evw-hero h1 {
+            font-family: "Fraunces", serif;
+            font-size: 52px;
+            font-weight: 600;
+            line-height: 1.05;
+            color: var(--evw-ink);
+            margin-bottom: 18px;
+        }
+
+        .evw-hero .evw-highlight {
+            color: var(--evw-amber);
+        }
+
+        .evw-hero p.evw-sub {
+            font-size: 17px;
+            line-height: 1.6;
+            color: #4A5266;
+            max-width: 480px;
+            margin-bottom: 28px;
+        }
+
+        .evw-hero .evw-feature-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            color: #596174;
+            font-size: 13px;
+        }
+
+    .evw-feature-dot {
+        width: 7px;
+        height: 7px;
+        background: var(--evw-amber);
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    /* ================================
+           HERO BUTTONS
+           ================================ */
+
+    .evw-cta-primary {
+        background: var(--evw-ink);
+        color: #fff;
+        border-radius: 999px;
+        padding: 13px 26px;
+        font-weight: 600;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all .15s ease;
+    }
+
+        .evw-cta-primary:hover {
+            background: #0c1830;
+            color: #fff;
+            transform: translateY(-1px);
+            text-decoration: none;
+        }
+
+    .evw-cta-secondary {
+        background: #fff;
+        color: var(--evw-ink);
+        border: 1px solid #E3DCC9;
+        border-radius: 999px;
+        padding: 13px 26px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all .15s ease;
+    }
+
+        .evw-cta-secondary:hover {
+            background: #fff;
+            color: var(--evw-ink);
+            border-color: var(--evw-ink);
+            text-decoration: none;
+        }
+
+    /* ================================
+           HERO IMAGE
+           ================================ */
+
+    .evw-focus-wrap {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        background: #ddd;
+    }
+
+        .evw-focus-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+    /* ================================
+           CATEGORIES
+    ================================ */
+
+    .evw-cat-tile {
+        display: block;
+        background: #fff;
+        border: 1px solid #ECE7DA;
+        border-radius: 14px;
+        padding: 20px;
+        text-decoration: none;
+        color: var(--evw-ink);
+        transition: transform .15s ease, box-shadow .15s ease;
+        height: 100%;
+    }
+
+        .evw-cat-tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(20,33,61,.08);
+            color: var(--evw-ink);
+            text-decoration: none;
+        }
+
+        .evw-cat-tile .evw-cat-name {
+            font-family: "Fraunces", serif;
+            font-size: 19px;
+            font-weight: 600;
+        }
+
+    /* ================================
+           SECTION TITLES
+           ================================ */
+
+    .evw-section-title {
+        font-family: "Fraunces", serif;
+        font-size: 26px;
+        font-weight: 600;
+        color: var(--evw-ink);
+    }
+
+    /* ================================
+           FEATURED PRODUCTS
+           ================================ */
+
+    .evw-product-card {
+        border: 1px solid #ECE7DA;
+        border-radius: 14px;
+        overflow: hidden;
+        text-decoration: none;
+        color: var(--evw-charcoal);
+        display: block;
+        height: 100%;
+        background: #fff;
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+
+        .evw-product-card:hover {
+            box-shadow: 0 10px 24px rgba(20,33,61,.08);
+            color: var(--evw-charcoal);
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .evw-product-card img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            background: var(--evw-parchment);
+        }
+
+        .evw-product-card .evw-p-body {
+            padding: 14px;
+        }
+
+        .evw-product-card .evw-p-brand {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: #8A8F98;
+        }
+
+        .evw-product-card .evw-p-name {
+            font-weight: 600;
+            margin: 2px 0 6px;
+        }
+
+    /* ================================
+           TRUST STRIP
+           ================================ */
+
+    .evw-trust {
+        background: var(--evw-sage);
+        border-radius: 16px;
+        padding: 24px;
+    }
+
+        .evw-trust .evw-trust-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .evw-trust .evw-trust-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+    /* ================================
+           MOBILE
+           ================================ */
+
+    @@media (max-width: 767px) {
+
+        .evw-hero {
+            padding: 32px 24px;
+            border-radius: 16px;
+        }
+
+            .evw-hero h1 {
+                font-size: 36px;
+            }
+
+            .evw-hero p.evw-sub {
+                font-size: 15px;
+            }
+
+        .evw-focus-wrap {
+            aspect-ratio: 1 / 1;
+        }
+
+        .evw-tryon-overlay {
+            padding: 11px 12px;
+        }
+
+        .evw-cta-primary,
+        .evw-cta-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+
+<!-- ==========================================
+     HERO
+     ========================================== -->
+
+<div class="evw-hero">
+
+    <div class="row align-items-center g-4">
+
+        <!-- Hero Text -->
+        <div class="col-lg-6">
+            <h1>
+                See it.<br />
+                <span class="evw-highlight">Try it.</span><br />
+                Love it.
+            </h1>
+
+            <p class="evw-sub">
+                Discover frames that match your style and
+                <strong>try them on virtually</strong> before you buy.
+                Find your perfect look without the guesswork.
+            </p>
+
+            <div class="d-flex gap-2 flex-wrap">
+
+                <!-- MAIN CTA -->
+                <a asp-controller="Products"
+                   asp-action="Index"
+                   class="evw-cta-primary">
+                    Try Frames On &rarr;
+                </a>
+
+                <!-- SECONDARY CTA -->
+                <a asp-controller="Products"
+                   asp-action="Index"
+                   class="evw-cta-secondary">
+                    Shop Frames
+                </a>
+
+            </div>
+
+            <div class="evw-feature-text">
+                <span class="evw-feature-dot"></span>
+                Virtual Try-On made simple
+            </div>
+
+            <div class="evw-feature-text">
+                <span class="evw-feature-dot"></span>
+                Prescription-ready eyewear
+            </div>
+
+        </div>
+
+
+        <!-- Hero Image -->
+        <div class="col-lg-6">
+
+            <div class="evw-focus-wrap">
+
+                <img src="https://images.unsplash.com/photo-1577803645773-f96470509666?w=900&q=80"
+                     alt="Person wearing stylish glasses" />
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ==========================================
+     CATEGORIES
+     ========================================== -->
+@if (categories.Any())
+{
+    <div class="row g-3 mb-5">
+
+        @foreach (var cat in categories.Take(4))
+        {
+            <div class="col-6 col-md-3">
+
+                <a asp-controller="Products"
+                   asp-action="Index"
+                   asp-route-category="@cat.Name"
+                   class="evw-cat-tile">
+
+                    <div class="evw-cat-name">
+                        @cat.Name
+                    </div>
+
+                    <div class="text-muted small mt-1">
+                        Explore frames &rarr;
+                    </div>
+
+                </a>
+
+            </div>
+        }
+
+    </div>
+}
+
+
+<!-- ==========================================
+     CMS BANNER CAROUSEL
+     ========================================== -->
 @if (Model.Any())
 {
-    <div id="bannerCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
-        <div class="carousel-inner">
+    <div id="bannerCarousel"
+         class="carousel slide mb-5"
+         data-bs-ride="carousel">
+
+        <div class="carousel-inner rounded-4 overflow-hidden">
+
             @for (int i = 0; i < Model.Count; i++)
             {
                 var banner = Model[i];
+
                 <div class="carousel-item @(i == 0 ? "active" : "")">
+
                     @if (!string.IsNullOrEmpty(banner.LinkUrl))
                     {
                         <a href="@banner.LinkUrl">
-                            <img src="@banner.ImageUrl" class="d-block w-100" alt="@banner.Title" style="max-height:350px;object-fit:cover;" />
+
+                            <img src="@banner.ImageUrl"
+                                 class="d-block w-100"
+                                 alt="@banner.Title"
+                                 style="max-height:320px; object-fit:cover;" />
+
                         </a>
                     }
                     else
                     {
-                        <img src="@banner.ImageUrl" class="d-block w-100" alt="@banner.Title" style="max-height:350px;object-fit:cover;" />
+                        <img src="@banner.ImageUrl"
+                             class="d-block w-100"
+                             alt="@banner.Title"
+                             style="max-height:320px; object-fit:cover;" />
                     }
+
                 </div>
             }
+
         </div>
+
         @if (Model.Count > 1)
         {
-            <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+            <button class="carousel-control-prev"
+                    type="button"
+                    data-bs-target="#bannerCarousel"
+                    data-bs-slide="prev">
+
                 <span class="carousel-control-prev-icon"></span>
+
             </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+
+            <button class="carousel-control-next"
+                    type="button"
+                    data-bs-target="#bannerCarousel"
+                    data-bs-slide="next">
+
                 <span class="carousel-control-next-icon"></span>
+
             </button>
         }
+
     </div>
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Browse our <a asp-controller="Products" asp-action="Index">eyewear collection</a>.</p>
+
+<!-- ==========================================
+     FEATURED FRAMES
+     ========================================== -->
+@if (featured.Any())
+{
+    <div class="d-flex justify-content-between align-items-end mb-3">
+
+        <span class="evw-section-title">
+            Featured Frames
+        </span>
+
+        <a asp-controller="Products"
+           asp-action="Index"
+           class="text-decoration-none">
+
+            View all &rarr;
+
+        </a>
+
+    </div>
+
+
+    <div class="row g-3 mb-5">
+
+        @foreach (var p in featured)
+        {
+            var img = p.Images.FirstOrDefault(i => i.IsPrimary)
+                      ?? p.Images.FirstOrDefault();
+
+            <div class="col-6 col-md-3">
+
+                <a asp-controller="Products"
+                   asp-action="Details"
+                   asp-route-id="@p.Id"
+                   class="evw-product-card">
+
+                    <img src="@(img?.ImageUrl ?? "/images/placeholder.jpg")"
+                         alt="@p.Name" />
+
+                    <div class="evw-p-body">
+
+                        <div class="evw-p-brand">
+                            @p.Brand?.Name
+                        </div>
+
+                        <div class="evw-p-name">
+                            @p.Name
+                        </div>
+
+                        <div>
+                            @((p.DiscountPrice ?? p.Price).ToPkr())
+                        </div>
+
+                    </div>
+
+                </a>
+
+            </div>
+        }
+
+    </div>
+}
+
+
+<!-- ==========================================
+     TRUST STRIP
+     ========================================== -->
+
+<div class="evw-trust mb-5">
+
+    <div class="row g-4">
+
+        <div class="col-md-4">
+
+            <div class="evw-trust-item">
+
+                <div class="evw-trust-icon">
+                    👓
+                </div>
+
+                <div>
+
+                    <strong>Virtual Try-On</strong>
+
+                    <div class="text-muted small">
+                        Try different frames before making your choice.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="evw-trust-item">
+
+                <div class="evw-trust-icon">
+                    ✔️
+                </div>
+
+                <div>
+
+                    <strong>Prescription Ready</strong>
+
+                    <div class="text-muted small">
+                        Choose your frame and add your prescription.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="evw-trust-item">
+
+                <div class="evw-trust-icon">
+                    🚚
+                </div>
+
+                <div>
+
+                    <strong>Delivered to Your Door</strong>
+
+                    <div class="text-muted small">
+                        Your eyewear, prepared and delivered with care.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
