@@ -1,31 +1,367 @@
+/* ===================================
+   EyewearsProject — Design System
+   =================================== */
+
+:root {
+    --brand-navy: #14213D;
+    --brand-navy-hover: #1D2E52;
+    --brand-cream: #FAF6EF;
+    --brand-cream-dark: #F0EAE0;
+    --brand-text: #2A2A2E;
+    --brand-text-muted: #6B6B70;
+    --brand-border: #E4DFD5;
+    --brand-danger: #B3413A;
+    --brand-success: #3E7A5E;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --shadow-soft: 0 2px 12px rgba(20, 33, 61, 0.06);
+    --shadow-card: 0 4px 20px rgba(20, 33, 61, 0.08);
+}
+
+/* ---------- Base layout (classic sticky-footer pattern — proven working) ---------- */
 html {
-  font-size: 14px;
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html {
+        font-size: 16px;
+    }
 }
 
 body {
-  margin-bottom: 60px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--brand-cream);
+    color: var(--brand-text);
+    margin-bottom: 0px;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
+.form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.15);
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+/* ---------- Typography ---------- */
+h1, h2, h3, h4, h5, h6,
+.navbar-brand {
+    font-family: 'Poppins', 'Inter', sans-serif;
+    font-weight: 600;
+    color: var(--brand-navy);
+    letter-spacing: -0.01em;
+}
+
+h1 {
+    font-weight: 700;
+}
+
+a {
+    color: var(--brand-navy);
+    text-decoration: none;
+}
+
+    a:hover {
+        color: var(--brand-navy-hover);
+        text-decoration: underline;
+    }
+
+/* ---------- Navbar ---------- */
+.navbar {
+    background-color: #FFFFFF !important;
+    border-bottom: 1px solid var(--brand-border);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    box-shadow: none;
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.nav-link {
+    font-weight: 500;
+    color: var(--brand-text) !important;
+    padding: 0.5rem 0.9rem !important;
+    border-radius: var(--radius-md);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+    .nav-link:hover {
+        background-color: var(--brand-cream-dark);
+        color: var(--brand-navy) !important;
+    }
+
+/* ---------- Buttons ---------- */
+.btn {
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    padding: 0.55rem 1.25rem;
+    transition: all 0.15s ease;
+}
+
+.btn-primary {
+    background-color: var(--brand-navy);
+    border-color: var(--brand-navy);
+}
+
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: var(--brand-navy-hover);
+        border-color: var(--brand-navy-hover);
+    }
+
+.btn-success {
+    background-color: var(--brand-success);
+    border-color: var(--brand-success);
+}
+
+.btn-outline-primary {
+    color: var(--brand-navy);
+    border-color: var(--brand-navy);
+}
+
+    .btn-outline-primary:hover {
+        background-color: var(--brand-navy);
+        border-color: var(--brand-navy);
+    }
+
+.btn-outline-danger {
+    color: var(--brand-danger);
+    border-color: var(--brand-danger);
+}
+
+    .btn-outline-danger:hover {
+        background-color: var(--brand-danger);
+        border-color: var(--brand-danger);
+    }
+
+.btn-lg {
+    padding: 0.75rem 1.75rem;
+    font-size: 1.05rem;
+}
+
+/* ---------- Cards ---------- */
+.card {
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    transition: box-shadow 0.2s ease;
+}
+
+    .card:hover {
+        box-shadow: var(--shadow-card);
+    }
+
+.card-header {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid var(--brand-border);
+    font-weight: 600;
+    border-top-left-radius: var(--radius-lg) !important;
+    border-top-right-radius: var(--radius-lg) !important;
+}
+
+.card-footer {
+    border-top: 1px solid var(--brand-border);
+    border-bottom-left-radius: var(--radius-lg) !important;
+    border-bottom-right-radius: var(--radius-lg) !important;
+}
+
+/* ---------- Forms ---------- */
+.form-control, .form-select {
+    border-radius: var(--radius-md);
+    border-color: var(--brand-border);
+    padding: 0.6rem 0.9rem;
+}
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--brand-navy);
+    }
+
+.form-label {
+    font-weight: 500;
+    color: var(--brand-text);
+    margin-bottom: 0.4rem;
+}
+
+/* ---------- Tables ---------- */
+.table {
+    background-color: #FFFFFF;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+    .table thead th {
+        font-weight: 600;
+        color: var(--brand-text-muted);
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        letter-spacing: 0.03em;
+        border-bottom-width: 1px;
+    }
+
+/* ---------- Badges ---------- */
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.7em;
+    border-radius: 20px;
+}
+
+/* ---------- Alerts ---------- */
+.alert {
+    border-radius: var(--radius-md);
+    border: none;
+}
+
+.alert-info {
+    background-color: #E8EEF7;
+    color: var(--brand-navy);
+}
+
+.alert-success {
+    background-color: #E4F1EA;
+    color: var(--brand-success);
+}
+
+.alert-danger {
+    background-color: #F5E6E4;
+    color: var(--brand-danger);
+}
+
+/* ---------- Layout ---------- */
+.container {
+    max-width: 1200px;
+}
+
+/* ---------- Footer ---------- */
+.footer {
+    background-color: #FFFFFF;
+    border-top: 1px solid var(--brand-border);
+    padding: 1.2rem 0;
+    color: var(--brand-text-muted);
+    font-size: 0.9rem;
+}
+/* ---------- Top bar (v2) ---------- */
+.site-topbar {
+    background-color: #FFFFFF !important;
+    border-bottom: 1px solid var(--brand-border);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.btn-icon-only {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.icon-link {
+    color: var(--brand-navy) !important;
+    display: flex;
+    align-items: center;
+}
+
+/* ---------- Sidebar ---------- */
+.offcanvas {
+    width: 280px;
+    background-color: #FFFFFF;
+}
+
+.sidebar-username {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--brand-navy);
+}
+
+.sidebar-usermail {
+    font-size: 0.85rem;
+    color: var(--brand-text-muted);
+}
+
+.sidebar-section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--brand-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+    .sidebar-nav li a {
+        display: block;
+        padding: 0.6rem 0.75rem;
+        border-radius: var(--radius-md);
+        color: var(--brand-text);
+        font-weight: 500;
+    }
+
+        .sidebar-nav li a:hover {
+            background-color: var(--brand-cream-dark);
+            color: var(--brand-navy);
+            text-decoration: none;
+        }
+.icon-link {
+    position: relative;
+}
+
+.icon-badge {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    background-color: var(--brand-danger);
+    color: #FFFFFF;
+    font-size: 0.65rem;
+    font-weight: 600;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+}
+.filter-panel {
+    background-color: #FFFFFF;
+    border: 1px solid var(--brand-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    position: sticky;
+    top: 1rem;
+}
+
+.filter-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.filter-group {
+    margin-bottom: 1rem;
+}
+
+.filter-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--brand-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.35rem;
 }

@@ -1,4 +1,33 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using EyewearsProject.Models
+@using EyewearsProject.Extensions
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject AppDbContext DbContext
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var categories = await DbContext.Categories.OrderBy(c => c.Name).ToListAsync();
+    ApplicationUser? currentUser = null;
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+    }
+
+    var cartItems = HttpContextAccessor.HttpContext?.Session.GetObject<List<CartItem>>("Cart") ?? new List<CartItem>();
+    var cartCount = cartItems.Sum(i => i.Quantity);
+
+    int wishlistCount = 0;
+    if (currentUser != null)
+    {
+        wishlistCount = await DbContext.WishlistItems
+            .Where(wi => wi.Wishlist.UserId == currentUser.Id)
+            .CountAsync();
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -8,71 +37,149 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EyewearsProject.styles.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm site-topbar">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">EyewearsProject</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                <button class="btn btn-icon-only" type="button" data-bs-toggle="offcanvas" data-bs-target="#siteSidebar" aria-controls="siteSidebar">
+                    <span class="navbar-brand mb-0">EyewearsProject</span>
+                </button>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".topbar-links" aria-controls="topbarLinks"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div class="collapse navbar-collapse topbar-links justify-content-end">
+                    <ul class="navbar-nav align-items-center gap-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-controller="Products" asp-action="Index">Shop</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link" href="#" title="Virtual Try-On — coming soon">Try-On</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Cart" asp-action="Index">Cart</a>
+                            <a class="nav-link" asp-controller="Prescriptions" asp-action="Index">Prescription</a>
                         </li>
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Orders" asp-action="Index">My Orders</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Addresses" asp-action="Index">Addresses</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Prescriptions" asp-action="Index">Prescriptions</a>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-link nav-link text-dark">Logout (@User.Identity.Name)</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
-                            </li>
-                        }
+                        <li class="nav-item">
+                            <a class="nav-link icon-link" asp-controller="Wishlist" asp-action="Index" title="Wishlist">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
+                                </svg>
+                                @if (wishlistCount > 0)
+                                {
+                                    <span class="icon-badge">@wishlistCount</span>
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link icon-link" asp-controller="Cart" asp-action="Index" title="Cart">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path>
+                                </svg>
+                                @if (cartCount > 0)
+                                {
+                                    <span class="icon-badge">@cartCount</span>
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            @if (currentUser != null)
+                            {
+                                <a class="nav-link icon-link" href="#" title="@currentUser.FullName">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="nav-link icon-link" asp-controller="Account" asp-action="Login" title="Login / Register">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </a>
+                            }
+                        </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
+
+    <!-- Sidebar (offcanvas) -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="siteSidebar" aria-labelledby="siteSidebarLabel">
+        <div class="offcanvas-header">
+            <div>
+                @if (currentUser != null)
+                {
+                    <div class="sidebar-username">@currentUser.FullName</div>
+                    <div class="sidebar-usermail">@currentUser.Email</div>
+                }
+                else
+                {
+                    <div class="sidebar-username">EyewearsProject</div>
+                }
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="sidebar-section-label">Shop</div>
+            <ul class="sidebar-nav">
+                <li><a asp-controller="Products" asp-action="Index">All Products</a></li>
+                @foreach (var cat in categories)
+                {
+                    <li><a asp-controller="Products" asp-action="Index" asp-route-category="@cat.Name">@cat.Name</a></li>
+                }
+            </ul>
+
+            <hr />
+
+            <ul class="sidebar-nav">
+                <li><a asp-controller="Wishlist" asp-action="Index">Wishlist</a></li>
+                <li><a asp-controller="Cart" asp-action="Index">Cart</a></li>
+                @if (currentUser != null)
+                {
+                    <li><a asp-controller="Addresses" asp-action="Index">Addresses</a></li>
+                    <li><a asp-controller="Prescriptions" asp-action="Index">Prescriptions</a></li>
+                    <li><a asp-controller="Orders" asp-action="Index">My Orders</a></li>
+                    <li><a asp-controller="Addresses" asp-action="Index">Settings</a></li>
+                }
+                else
+                {
+                    <li><a asp-controller="Account" asp-action="Login">Settings</a></li>
+                }
+            </ul>
+
+            @if (currentUser != null)
+            {
+                <hr />
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Logout</button>
+                </form>
+            }
+            else
+            {
+                <hr />
+                <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-sm w-100 mb-2">Login</a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary btn-sm w-100">Register</a>
+            }
+        </div>
+    </div>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - EyewearsProject - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

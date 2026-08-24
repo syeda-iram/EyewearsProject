@@ -16,13 +16,6 @@ namespace EyewearsProject.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Logged-out visitors land on Login first; the Welcome page
-            // is only for authenticated customers.
-            if (User.Identity?.IsAuthenticated != true)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
             var banners = await _context.CmsContents
                 .Where(c => c.Type == CmsPageType.Banner && c.IsActive)
                 .OrderBy(c => c.SortOrder)

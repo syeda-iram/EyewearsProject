@@ -18,14 +18,67 @@ namespace EyewearsProject.Controllers
         }
 
         // GET: /Products
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? category, int? brandId, string? color,
+    decimal? minPrice, decimal? maxPrice, string? spec)
         {
-            var products = await _context.Products
+            var query = _context.Products
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
                 .Include(p => p.Images)
+                .Include(p => p.Variants)
+                .Include(p => p.Specifications)
                 .Where(p => p.IsActive)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(category))
+                query = query.Where(p => p.Category.Name == category);
+
+            if (brandId.HasValue)
+                query = query.Where(p => p.BrandId == brandId.Value);
+
+            if (!string.IsNullOrWhiteSpace(color))
+                query = query.Where(p => p.Variants.Any(v => v.Color == color));
+
+            if (minPrice.HasValue)
+                query = query.Where(p => (p.DiscountPrice ?? p.Price) >= minPrice.Value);
+
+            if (maxPrice.HasValue)
+                query = query.Where(p => (p.DiscountPrice ?? p.Price) <= maxPrice.Value);
+
+            if (!string.IsNullOrWhiteSpace(spec))
+            {
+                // spec comes in as "Name:Value", e.g. "Material:Acetate"
+                var parts = spec.Split(':', 2);
+                if (parts.Length == 2)
+                {
+                    var specName = parts[0];
+                    var specValue = parts[1];
+                    query = query.Where(p => p.Specifications.Any(s => s.Name == specName && s.Value == specValue));
+                }
+            }
+
+            var products = await query.ToListAsync();
+
+            // Facet data for the filter sidebar — pulled from the FULL catalog,
+            // not the filtered result, so options don't disappear as you filter.
+            ViewBag.AllBrands = await _context.Brands.OrderBy(b => b.Name).ToListAsync();
+            ViewBag.AllColors = await _context.ProductVariants
+                .Select(v => v.Color)
+                .Distinct()
+                .OrderBy(c => c)
                 .ToListAsync();
+            ViewBag.AllSpecs = await _context.ProductSpecifications
+                .Select(s => new { s.Name, s.Value })
+                .Distinct()
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+
+            ViewBag.SelectedCategory = category;
+            ViewBag.SelectedBrandId = brandId;
+            ViewBag.SelectedColor = color;
+            ViewBag.SelectedMinPrice = minPrice;
+            ViewBag.SelectedMaxPrice = maxPrice;
+            ViewBag.SelectedSpec = spec;
 
             return View(products);
         }

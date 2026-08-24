@@ -3,47 +3,124 @@
 
 @{
     ViewData["Title"] = "Shop";
+    var brands = (List<EyewearsProject.Models.Brand>)ViewBag.AllBrands;
+    var colors = (List<string>)ViewBag.AllColors;
+    var specs = ViewBag.AllSpecs;
 }
 
 <h1 class="mb-4">Shop Eyewear</h1>
 
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    @foreach (var product in Model)
-    {
-        var primaryImage = product.Images.FirstOrDefault(i => i.IsPrimary) ?? product.Images.FirstOrDefault();
+<div class="row">
+    <div class="col-md-3">
+        <div class="filter-panel">
+            <h6 class="filter-title">Filters</h6>
 
-        <div class="col">
-            <div class="card h-100 shadow-sm">
-                <img src="@(primaryImage?.ImageUrl ?? "/images/placeholder.jpg")"
-                     class="card-img-top" alt="@product.Name" style="height:220px; object-fit:cover;">
+            <form asp-controller="Products" asp-action="Index" method="get">
+                @if (!string.IsNullOrEmpty((string)ViewBag.SelectedCategory))
+                {
+                    <input type="hidden" name="category" value="@ViewBag.SelectedCategory" />
+                }
 
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">@product.Name</h5>
-                    <p class="text-muted mb-1">@product.Brand.Name &middot; @product.Category.Name</p>
-
-                    <div class="mt-auto">
-                        @if (product.DiscountPrice.HasValue)
+                <div class="filter-group">
+                    <label class="filter-label">Brand</label>
+                    <select name="brandId" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All Brands</option>
+                        @foreach (var b in brands)
                         {
-                            <p class="mb-2">
-                                <span class="text-decoration-line-through text-muted">@product.Price.ToPkr()</span>
-                                <span class="fw-bold text-danger ms-2">@product.DiscountPrice.Value.ToPkr()</span>
-                            </p>
+                            <option value="@b.Id" selected="@(ViewBag.SelectedBrandId == b.Id ? "selected" : null)">@b.Name</option>
                         }
-                        else
-                        {
-                            <p class="fw-bold mb-2">@product.Price.ToPkr()</p>
-                        }
+                    </select>
+                </div>
 
-                        <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id"
-                           class="btn btn-primary w-100">View Details</a>
+                <div class="filter-group">
+                    <label class="filter-label">Color</label>
+                    <select name="color" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All Colors</option>
+                        @foreach (var c in colors)
+                        {
+                            <option value="@c" selected="@(((string)ViewBag.SelectedColor) == c ? "selected" : null)">@c</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Price Range (Rs)</label>
+                    <div class="d-flex gap-2">
+                        <input type="number" name="minPrice" placeholder="Min" class="form-control form-control-sm" value="@ViewBag.SelectedMinPrice" />
+                        <input type="number" name="maxPrice" placeholder="Max" class="form-control form-control-sm" value="@ViewBag.SelectedMaxPrice" />
                     </div>
                 </div>
-            </div>
-        </div>
-    }
-</div>
 
-@if (!Model.Any())
-{
-    <p class="text-muted">No products available right now.</p>
-}
+                @if (specs != null && ((IEnumerable<dynamic>)specs).Any())
+                {
+                    <div class="filter-group">
+                        <label class="filter-label">Attributes</label>
+                        <select name="spec" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Any</option>
+                            @foreach (var s in specs)
+                            {
+                                string val = s.Name + ":" + s.Value;
+                                <option value="@val" selected="@(((string)ViewBag.SelectedSpec) == val ? "selected" : null)">@s.Name: @s.Value</option>
+                            }
+                        </select>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted small">More attribute filters (material, shape, gender) will appear here once products have those details added in Admin.</p>
+                }
+
+                <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">Apply Filters</button>
+                <a asp-controller="Products" asp-action="Index" asp-route-category="@ViewBag.SelectedCategory" class="btn btn-outline-secondary btn-sm w-100 mt-2">Clear Filters</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        @if (!string.IsNullOrEmpty((string)ViewBag.SelectedCategory))
+        {
+            <p class="text-muted">Showing: <strong>@ViewBag.SelectedCategory</strong></p>
+        }
+
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            @foreach (var product in Model)
+            {
+                var primaryImage = product.Images.FirstOrDefault(i => i.IsPrimary) ?? product.Images.FirstOrDefault();
+
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <img src="@(primaryImage?.ImageUrl ?? "/images/placeholder.jpg")"
+                             class="card-img-top" alt="@product.Name" style="height:220px; object-fit:cover;">
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="text-muted mb-1">@product.Brand.Name &middot; @product.Category.Name</p>
+
+                            <div class="mt-auto">
+                                @if (product.DiscountPrice.HasValue)
+                                {
+                                    <p class="mb-2">
+                                        <span class="text-decoration-line-through text-muted">@product.Price.ToPkr()</span>
+                                        <span class="fw-bold text-danger ms-2">@product.DiscountPrice.Value.ToPkr()</span>
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="fw-bold mb-2">@product.Price.ToPkr()</p>
+                                }
+
+                                <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id"
+                                   class="btn btn-primary w-100">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (!Model.Any())
+        {
+            <p class="text-muted">No products match these filters.</p>
+        }
+    </div>
+</div>
