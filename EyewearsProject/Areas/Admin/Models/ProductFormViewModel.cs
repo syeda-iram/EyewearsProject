@@ -27,5 +27,7 @@ namespace EyewearsProject.Areas.Admin.Models
         public decimal? DiscountPrice { get; set; }
 
         public bool IsActive { get; set; } = true;
+        [Display(Name = "Try-On Overlay Image URL")]
+        public string? TryOnOverlayImageUrl { get; set; }
     }
 }

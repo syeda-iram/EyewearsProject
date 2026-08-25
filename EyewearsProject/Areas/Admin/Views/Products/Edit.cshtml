@@ -35,9 +35,25 @@
         <label asp-for="DiscountPrice" class="form-label"></label>
         <input asp-for="DiscountPrice" class="form-control" />
     </div>
+    <div class="mb-3">
+        <label asp-for="TryOnOverlayImageUrl" class="form-label"></label>
+        <input type="file" id="tryOnFileInput" class="form-control mb-2" accept="image/png" />
+        <input asp-for="TryOnOverlayImageUrl" type="hidden" id="TryOnOverlayImageUrl" />
+        <img id="tryOnPreview" src="@Model.TryOnOverlayImageUrl" style="max-height:120px; display:@(string.IsNullOrEmpty(Model.TryOnOverlayImageUrl) ? "none" : "block");" class="mt-2 rounded border" />
+        <span asp-validation-for="TryOnOverlayImageUrl" class="text-danger"></span>
+        <div class="form-text">Upload a transparent PNG of just the glasses (no face, no background) — used for the Virtual Try-On feature.</div>
+    </div>
     <div class="mb-3 form-check">
         <input asp-for="IsActive" class="form-check-input" />
         <label asp-for="IsActive" class="form-check-label"></label>
     </div>
     <button class="btn btn-dark">Save</button>
 </form>
+@section Scripts {
+    <form id="tryOnAntiforgeryForm">@Html.AntiForgeryToken()</form>
+    <script>
+        const tryOnToken = document.querySelector('#tryOnAntiforgeryForm input[name="__RequestVerificationToken"]').value;
+        wireImageUpload('tryOnFileInput', 'TryOnOverlayImageUrl', 'tryOnPreview',
+            '@Url.Action("Image", "Upload", new { area = "Admin" })', tryOnToken);
+    </script>
+}

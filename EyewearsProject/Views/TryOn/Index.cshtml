@@ -1,0 +1,214 @@
+﻿@using EyewearsProject.Models
+@{
+    ViewData["Title"] = "Virtual Try-On";
+    var products = (List<Product>)ViewBag.Products;
+    var selected = (Product?)ViewBag.SelectedProduct;
+}
+
+<h1>Virtual Try-On</h1>
+<p class="text-muted">See how a frame looks on you — upload a photo or use your webcam.</p>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Choose a frame</label>
+            <select id="productSelect" class="form-select">
+                @foreach (var p in products)
+                {
+                    <option value="@p.Id"
+                            data-overlay="@(p.TryOnOverlayImageUrl ?? "/images/tryon/default-glasses.png")"
+                            selected="@(selected != null && selected.Id == p.Id ? "selected" : null)">
+                        @p.Name
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Your photo</label>
+            <input type="file" id="photoInput" accept="image/*" class="form-control" />
+        </div>
+
+        <button type="button" id="startWebcamBtn" class="btn btn-outline-primary w-100 mb-2">Use Webcam Instead</button>
+        <button type="button" id="captureBtn" class="btn btn-primary w-100" style="display:none;">Capture Photo</button>
+
+        <div id="statusMessage" class="text-muted small mt-3"></div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="tryon-stage">
+            <video id="webcamVideo" autoplay muted playsinline style="display:none; max-width:100%;"></video>
+            <canvas id="tryonCanvas" style="max-width:100%; border-radius:12px; background:#f4f2ee;"></canvas>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script>
+        const canvas = document.getElementById('tryonCanvas');
+        const ctx = canvas.getContext('2d');
+        const video = document.getElementById('webcamVideo');
+        const statusEl = document.getElementById('statusMessage');
+        const productSelect = document.getElementById('productSelect');
+
+        canvas.width = 640;
+        canvas.height = 480;
+
+        let modelsLoaded = false;
+        let currentImage = null;
+        let webcamStream = null;
+        let webcamLoopActive = false;
+
+        async function loadModels() {
+            statusEl.textContent = 'Loading face detection...';
+            try {
+                const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                modelsLoaded = true;
+                statusEl.textContent = 'Ready. Upload a photo or use your webcam.';
+            } catch (err) {
+                statusEl.textContent = 'Could not load face detection. Check your internet connection and refresh the page. (' + err.message + ')';
+                console.error('face-api model load failed:', err);
+            }
+        }
+        function getOverlayUrl() {
+            const opt = productSelect.options[productSelect.selectedIndex];
+            return opt.dataset.overlay;
+        }
+
+        function drawImageFitted(sourceElement) {
+            // Draw the photo/video preserving its real aspect ratio instead of
+            // stretching it to fill the canvas — stretching distorts faces and
+            // makes them much harder for the detector to recognize.
+            const srcWidth = sourceElement.videoWidth || sourceElement.naturalWidth || sourceElement.width;
+            const srcHeight = sourceElement.videoHeight || sourceElement.naturalHeight || sourceElement.height;
+
+            const scale = Math.min(canvas.width / srcWidth, canvas.height / srcHeight);
+            const drawWidth = srcWidth * scale;
+            const drawHeight = srcHeight * scale;
+            const offsetX = (canvas.width - drawWidth) / 2;
+            const offsetY = (canvas.height - drawHeight) / 2;
+
+            ctx.fillStyle = '#f4f2ee';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(sourceElement, offsetX, offsetY, drawWidth, drawHeight);
+        }
+
+        async function detectAndDraw(sourceElement) {
+            if (!modelsLoaded) return;
+
+            drawImageFitted(sourceElement);
+
+            const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.3 });
+            const detection = await faceapi
+                .detectSingleFace(canvas, detectorOptions)
+                .withFaceLandmarks();
+
+            console.log('Try-on detection result:', detection);
+
+            if (!detection) {
+                statusEl.textContent = 'No face detected — try a clearer, front-facing photo.';
+                return;
+            }
+
+            const leftEye = detection.landmarks.getLeftEye();
+            const rightEye = detection.landmarks.getRightEye();
+
+            const leftCenter = averagePoint(leftEye);
+            const rightCenter = averagePoint(rightEye);
+
+            const eyeMidX = (leftCenter.x + rightCenter.x) / 2;
+            const eyeMidY = (leftCenter.y + rightCenter.y) / 2;
+            const eyeDistance = Math.hypot(rightCenter.x - leftCenter.x, rightCenter.y - leftCenter.y);
+
+            const glassesImg = new Image();
+            glassesImg.crossOrigin = "anonymous";
+            glassesImg.onload = function() {
+                const glassesWidth = eyeDistance * 3.0;
+                const glassesHeight = glassesWidth * (glassesImg.height / glassesImg.width);
+
+                ctx.drawImage(
+                    glassesImg,
+                    eyeMidX - glassesWidth / 2,
+                    eyeMidY - glassesHeight / 2.1,
+                    glassesWidth,
+                    glassesHeight
+                );
+                statusEl.textContent = 'Looking good! Switch frames above to compare.';
+            };
+            glassesImg.src = getOverlayUrl();
+        }
+
+        function averagePoint(points) {
+            const x = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+            const y = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+            return { x, y };
+        }
+
+        document.getElementById('photoInput').addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+
+            stopWebcam();
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+
+            const img = new Image();
+            img.onload = function() {
+                currentImage = img;
+                detectAndDraw(img);
+            };
+            img.src = URL.createObjectURL(file);
+        });
+
+        document.getElementById('startWebcamBtn').addEventListener('click', async function() {
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                video.srcObject = webcamStream;
+                video.style.display = 'block';
+                document.getElementById('captureBtn').style.display = 'block';
+                webcamLoopActive = true;
+                requestAnimationFrame(webcamLoop);
+            } catch (err) {
+                statusEl.textContent = 'Could not access webcam: ' + err.message;
+            }
+        });
+
+        let webcamBusy = false;
+
+        async function webcamLoop() {
+            if (!webcamLoopActive) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA && !webcamBusy) {
+                webcamBusy = true;
+                await detectAndDraw(video);
+                webcamBusy = false;
+            }
+
+            setTimeout(() => requestAnimationFrame(webcamLoop), 200);
+        }
+
+        document.getElementById('captureBtn').addEventListener('click', function() {
+            webcamLoopActive = false;
+            stopWebcam();
+            video.style.display = 'none';
+            statusEl.textContent = 'Photo captured.';
+        });
+
+        function stopWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            webcamLoopActive = false;
+        }
+
+        productSelect.addEventListener('change', function() {
+            if (currentImage) detectAndDraw(currentImage);
+            else if (video.style.display === 'block') { /* webcam loop will pick up new overlay next frame */ }
+        });
+
+        window.addEventListener('DOMContentLoaded', loadModels);</script>
+}

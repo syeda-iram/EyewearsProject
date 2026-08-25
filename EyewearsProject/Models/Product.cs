@@ -13,6 +13,7 @@
         public decimal Price { get; set; }
         public decimal? DiscountPrice { get; set; }
         public bool IsActive { get; set; } = true;
+        public string? TryOnOverlayImageUrl { get; set; } // transparent PNG for virtual try-on overlay
         public List<ProductVariant> Variants { get; set; } = new();
         public List<ProductImage> Images { get; set; } = new();
         public List<ProductSpecification> Specifications { get; set; } = new();
