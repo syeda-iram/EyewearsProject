@@ -27,7 +27,17 @@ namespace EyewearsProject.Areas.Admin.Models
         public decimal? DiscountPrice { get; set; }
 
         public bool IsActive { get; set; } = true;
+
         [Display(Name = "Try-On Overlay Image URL")]
         public string? TryOnOverlayImageUrl { get; set; }
+
+        [Display(Name = "3D Try-On Model (.glb path)")]
+        public string? TryOn3DModelUrl { get; set; }
+
+        [Display(Name = "2D Overlay Scale (default 1.0)")]
+        public double TryOnOverlayScale { get; set; } = 1.0;
+
+        [Display(Name = "2D Overlay Vertical Offset (default 0)")]
+        public double TryOnOverlayVerticalOffset { get; set; } = 0;
     }
 }

@@ -5,8 +5,10 @@
     var selected = (Product?)ViewBag.SelectedProduct;
 }
 
+<link rel="stylesheet" href="~/css/JeelizVTOWidget.css" />
+
 <h1>Virtual Try-On</h1>
-<p class="text-muted">See how a frame looks on you — upload a photo or use your webcam.</p>
+<p class="text-muted">Upload a photo for a quick preview, or use your webcam for full 3D tracking (available on select frames).</p>
 
 <div class="row">
     <div class="col-md-4">
@@ -15,200 +17,252 @@
             <select id="productSelect" class="form-select">
                 @foreach (var p in products)
                 {
+                    var hasSku = !string.IsNullOrWhiteSpace(p.TryOn3DModelUrl);
                     <option value="@p.Id"
                             data-overlay="@(p.TryOnOverlayImageUrl ?? "/images/tryon/default-glasses.png")"
+                            data-sku="@(p.TryOn3DModelUrl ?? "")"
+                            data-scale="@p.TryOnOverlayScale.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                            data-voffset="@p.TryOnOverlayVerticalOffset.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                             selected="@(selected != null && selected.Id == p.Id ? "selected" : null)">
-                        @p.Name
+                        @p.Name @(hasSku ? "(3D)" : "")
                     </option>
                 }
             </select>
         </div>
 
         <div class="mb-3">
-            <label class="form-label fw-bold">Your photo</label>
+            <label class="form-label fw-bold">Your photo (2D preview)</label>
             <input type="file" id="photoInput" accept="image/*" class="form-control" />
         </div>
 
-        <button type="button" id="startWebcamBtn" class="btn btn-outline-primary w-100 mb-2">Use Webcam Instead</button>
-        <button type="button" id="captureBtn" class="btn btn-primary w-100" style="display:none;">Capture Photo</button>
+        <div id="fitControls" class="mb-3" style="display:none;">
+            <label class="form-label small">Fit size</label>
+            <input type="range" id="scaleSlider" min="0.5" max="2" step="0.05" value="1" class="form-range" />
+            <label class="form-label small">Position (up/down)</label>
+<input type="range" id="offsetSlider" min="-0.3" max="0.3" step="0.02" value="0" class="form-range" />
+
+<label class="form-label small">Position (left/right)</label>
+<input type="range" id="horizontalOffsetSlider" min="-0.3" max="0.3" step="0.02" value="0" class="form-range" />
+
+<button type="button" id="resetFitBtn" class="btn btn-sm btn-outline-secondary">Reset to default</button>
+               </div>
+        <button type="button" id="startWebcamBtn" class="btn btn-primary w-100 mb-2">Use Webcam</button>
+        <button type="button" id="stopWebcamBtn" class="btn btn-outline-secondary w-100" style="display:none;">Stop</button>
 
         <div id="statusMessage" class="text-muted small mt-3"></div>
     </div>
 
     <div class="col-md-8">
-        <div class="tryon-stage">
-            <video id="webcamVideo" autoplay muted playsinline style="display:none; max-width:100%;"></video>
-            <canvas id="tryonCanvas" style="max-width:100%; border-radius:12px; background:#f4f2ee;"></canvas>
+        <!-- 2D photo mode -->
+        <canvas id="tryonCanvas" width="640" height="480" style="max-width:100%; border-radius:12px; background:#f4f2ee; display:block;"></canvas>
+
+        <!-- 3D Jeeliz mode -->
+        <div id="JeelizVTOWidget" style="width:100%; max-width:640px; aspect-ratio:4/3; display:none;">
+            <canvas id="JeelizVTOWidgetCanvas"></canvas>
+            <div class="JeelizVTOWidgetControls JeelizVTOWidgetControlsTop">
+                <button id="JeelizVTOWidgetAdjust">Adjust</button>
+            </div>
+            <div id="JeelizVTOWidgetAdjustNotice">
+                Move the glasses to adjust them.
+                <button class="JeelizVTOWidgetBottomButton" id="JeelizVTOWidgetAdjustExit">Quit</button>
+            </div>
+            <div id="JeelizVTOWidgetLoading">
+                <div class="JeelizVTOWidgetLoadingText">LOADING...</div>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="~/js/jeeliz/JeelizVTOWidget.js"></script>
+
     <script>
-        const canvas = document.getElementById('tryonCanvas');
-        const ctx = canvas.getContext('2d');
-        const video = document.getElementById('webcamVideo');
+        const canvas2d = document.getElementById('tryonCanvas');
+        const ctx2d = canvas2d.getContext('2d');
+        const jeelizDiv = document.getElementById('JeelizVTOWidget');
         const statusEl = document.getElementById('statusMessage');
         const productSelect = document.getElementById('productSelect');
 
-        canvas.width = 640;
-        canvas.height = 480;
+        function showMode(mode) {
+            canvas2d.style.display = (mode === '2d') ? 'block' : 'none';
+            jeelizDiv.style.display = (mode === '3d') ? 'block' : 'none';
+        }
 
-        let modelsLoaded = false;
+        // ---------- 2D photo mode ----------
+        let modelsLoaded2d = false;
         let currentImage = null;
-        let webcamStream = null;
-        let webcamLoopActive = false;
 
-        async function loadModels() {
-            statusEl.textContent = 'Loading face detection...';
+        async function loadFaceApiModels() {
             try {
                 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                modelsLoaded = true;
-                statusEl.textContent = 'Ready. Upload a photo or use your webcam.';
+                modelsLoaded2d = true;
+                statusEl.textContent = 'Ready. Upload a photo or use webcam.';
             } catch (err) {
-                statusEl.textContent = 'Could not load face detection. Check your internet connection and refresh the page. (' + err.message + ')';
-                console.error('face-api model load failed:', err);
+                console.error('face-api load failed:', err);
             }
         }
-        function getOverlayUrl() {
-            const opt = productSelect.options[productSelect.selectedIndex];
-            return opt.dataset.overlay;
+
+        function drawImageFitted(img) {
+            const scale = Math.min(canvas2d.width / img.naturalWidth, canvas2d.height / img.naturalHeight);
+            const w = img.naturalWidth * scale;
+            const h = img.naturalHeight * scale;
+            ctx2d.fillStyle = '#f4f2ee';
+            ctx2d.fillRect(0, 0, canvas2d.width, canvas2d.height);
+            ctx2d.drawImage(img, (canvas2d.width - w) / 2, (canvas2d.height - h) / 2, w, h);
         }
 
-        function drawImageFitted(sourceElement) {
-            // Draw the photo/video preserving its real aspect ratio instead of
-            // stretching it to fill the canvas — stretching distorts faces and
-            // makes them much harder for the detector to recognize.
-            const srcWidth = sourceElement.videoWidth || sourceElement.naturalWidth || sourceElement.width;
-            const srcHeight = sourceElement.videoHeight || sourceElement.naturalHeight || sourceElement.height;
+        let lastDetection = null; // cached so sliders can redraw instantly without re-running face detection
 
-            const scale = Math.min(canvas.width / srcWidth, canvas.height / srcHeight);
-            const drawWidth = srcWidth * scale;
-            const drawHeight = srcHeight * scale;
-            const offsetX = (canvas.width - drawWidth) / 2;
-            const offsetY = (canvas.height - drawHeight) / 2;
+function drawGlasses(detection) {
+    const leftEye = avg(detection.landmarks.getLeftEye());
+    const rightEye = avg(detection.landmarks.getRightEye());
+    const midX = (leftEye.x + rightEye.x) / 2;
+    const midY = (leftEye.y + rightEye.y) / 2;
+    const eyeDist = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
 
-            ctx.fillStyle = '#f4f2ee';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(sourceElement, offsetX, offsetY, drawWidth, drawHeight);
-        }
+    const selectedOpt = productSelect.options[productSelect.selectedIndex];
+    const baseScale = parseFloat(selectedOpt.dataset.scale) || 1.0;
+    const baseOffset = parseFloat(selectedOpt.dataset.voffset) || 0;
 
-        async function detectAndDraw(sourceElement) {
-            if (!modelsLoaded) return;
+    // Customer's slider adjustments apply on top of the admin-set defaults.
+    const userScale = parseFloat(document.getElementById('scaleSlider').value);
+    const userVOffset = parseFloat(document.getElementById('offsetSlider').value);
+    const userHOffset = parseFloat(document.getElementById('horizontalOffsetSlider').value);
 
-            drawImageFitted(sourceElement);
+    const finalScale = baseScale * userScale;
+    const finalVOffset = baseOffset + userVOffset;
 
-            const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.3 });
-            const detection = await faceapi
-                .detectSingleFace(canvas, detectorOptions)
-                .withFaceLandmarks();
+    const glassesImg = new Image();
+    glassesImg.crossOrigin = "anonymous";
+    glassesImg.onload = function () {
+        const w = eyeDist * 3.0 * finalScale;
+        const h = w * (glassesImg.height / glassesImg.width);
+        drawImageFitted(currentImage); // redraw the base photo first so old glasses positions don't ghost
+        ctx2d.drawImage(
+            glassesImg,
+            midX - w / 2 + (eyeDist * userHOffset),
+            midY - h / 2.3 + (eyeDist * finalVOffset),
+            w, h
+        );
+        statusEl.textContent = 'Looking good! Use the sliders to fine-tune the fit.';
+    };
+    glassesImg.src = selectedOpt.dataset.overlay;
+}
+async function detectAndDraw2D(img) {
+    if (!modelsLoaded2d) return;
+    drawImageFitted(img);
 
-            console.log('Try-on detection result:', detection);
+    const detection = await faceapi
+        .detectSingleFace(canvas2d, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.3 }))
+        .withFaceLandmarks();
 
-            if (!detection) {
-                statusEl.textContent = 'No face detected — try a clearer, front-facing photo.';
-                return;
-            }
+    if (!detection) {
+        statusEl.textContent = 'No face detected — try a clearer, front-facing photo.';
+        document.getElementById('fitControls').style.display = 'none';
+        return;
+    }
 
-            const leftEye = detection.landmarks.getLeftEye();
-            const rightEye = detection.landmarks.getRightEye();
+    lastDetection = detection;
+    document.getElementById('fitControls').style.display = 'block';
+    drawGlasses(detection);
+}
 
-            const leftCenter = averagePoint(leftEye);
-            const rightCenter = averagePoint(rightEye);
+document.getElementById('scaleSlider').addEventListener('input', function () {
+    if (lastDetection) drawGlasses(lastDetection);
+});
 
-            const eyeMidX = (leftCenter.x + rightCenter.x) / 2;
-            const eyeMidY = (leftCenter.y + rightCenter.y) / 2;
-            const eyeDistance = Math.hypot(rightCenter.x - leftCenter.x, rightCenter.y - leftCenter.y);
+document.getElementById('offsetSlider').addEventListener('input', function () {
+    if (lastDetection) drawGlasses(lastDetection);
+});
 
-            const glassesImg = new Image();
-            glassesImg.crossOrigin = "anonymous";
-            glassesImg.onload = function() {
-                const glassesWidth = eyeDistance * 3.0;
-                const glassesHeight = glassesWidth * (glassesImg.height / glassesImg.width);
+document.getElementById('horizontalOffsetSlider').addEventListener('input', function () {
+    if (lastDetection) drawGlasses(lastDetection);
+});
 
-                ctx.drawImage(
-                    glassesImg,
-                    eyeMidX - glassesWidth / 2,
-                    eyeMidY - glassesHeight / 2.1,
-                    glassesWidth,
-                    glassesHeight
-                );
-                statusEl.textContent = 'Looking good! Switch frames above to compare.';
+document.getElementById('resetFitBtn').addEventListener('click', function () {
+    document.getElementById('scaleSlider').value = 1;
+    document.getElementById('offsetSlider').value = 0;
+    document.getElementById('horizontalOffsetSlider').value = 0;
+    if (lastDetection) drawGlasses(lastDetection);
+});
+        function avg(points) {
+            return {
+                x: points.reduce((s, p) => s + p.x, 0) / points.length,
+                y: points.reduce((s, p) => s + p.y, 0) / points.length
             };
-            glassesImg.src = getOverlayUrl();
+        }
+        document.getElementById('photoInput').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    stopJeeliz();
+    showMode('2d');
+    document.getElementById('scaleSlider').value = 1;
+    document.getElementById('offsetSlider').value = 0;
+    const img = new Image();
+    img.onload = function () { currentImage = img; detectAndDraw2D(img); };
+    img.src = URL.createObjectURL(file);
+});
+
+       productSelect.addEventListener('change', function () {
+    document.getElementById('scaleSlider').value = 1;
+    document.getElementById('offsetSlider').value = 0;
+    if (currentImage && jeelizDiv.style.display === 'none' && lastDetection) {
+        drawGlasses(lastDetection);
+    }
+});
+
+        // ---------- 3D Jeeliz webcam mode ----------
+        let jeelizStarted = false;
+
+        function startJeeliz(sku) {
+            statusEl.textContent = 'Loading 3D try-on...';
+            showMode('3d');
+
+            JEELIZVTOWIDGET.start({
+                sku: sku,
+                searchImageMask: 'https://appstatic.jeeliz.com/jeewidget/images/target512.jpg',
+                searchImageColor: 0xeeeeee,
+                callbackReady: function () {
+                    jeelizStarted = true;
+                    statusEl.textContent = '3D tracking active — move your head to see it follow.';
+                },
+                onError: function (errorLabel) {
+                    statusEl.textContent = '3D try-on unavailable for this frame (' + errorLabel + ') — try photo mode instead.';
+                    console.error('Jeeliz error:', errorLabel);
+                    showMode('2d');
+                }
+            });
         }
 
-        function averagePoint(points) {
-            const x = points.reduce((sum, p) => sum + p.x, 0) / points.length;
-            const y = points.reduce((sum, p) => sum + p.y, 0) / points.length;
-            return { x, y };
+        function stopJeeliz() {
+            if (jeelizStarted) {
+                JEELIZVTOWIDGET.destroy();
+                jeelizStarted = false;
+            }
+            document.getElementById('stopWebcamBtn').style.display = 'none';
         }
 
-        document.getElementById('photoInput').addEventListener('change', function() {
-            const file = this.files[0];
-            if (!file) return;
+        document.getElementById('startWebcamBtn').addEventListener('click', function () {
+            const sku = productSelect.options[productSelect.selectedIndex].dataset.sku;
+            document.getElementById('stopWebcamBtn').style.display = 'block';
 
-            stopWebcam();
-            video.style.display = 'none';
-            canvas.style.display = 'block';
-
-            const img = new Image();
-            img.onload = function() {
-                currentImage = img;
-                detectAndDraw(img);
-            };
-            img.src = URL.createObjectURL(file);
-        });
-
-        document.getElementById('startWebcamBtn').addEventListener('click', async function() {
-            try {
-                webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-                video.srcObject = webcamStream;
-                video.style.display = 'block';
-                document.getElementById('captureBtn').style.display = 'block';
-                webcamLoopActive = true;
-                requestAnimationFrame(webcamLoop);
-            } catch (err) {
-                statusEl.textContent = 'Could not access webcam: ' + err.message;
+            if (sku) {
+                startJeeliz(sku);
+            } else {
+                statusEl.textContent = '3D not available for this frame — showing photo mode instead. Upload a photo above.';
+                showMode('2d');
             }
         });
 
-        let webcamBusy = false;
-
-        async function webcamLoop() {
-            if (!webcamLoopActive) return;
-
-            if (video.readyState === video.HAVE_ENOUGH_DATA && !webcamBusy) {
-                webcamBusy = true;
-                await detectAndDraw(video);
-                webcamBusy = false;
-            }
-
-            setTimeout(() => requestAnimationFrame(webcamLoop), 200);
-        }
-
-        document.getElementById('captureBtn').addEventListener('click', function() {
-            webcamLoopActive = false;
-            stopWebcam();
-            video.style.display = 'none';
-            statusEl.textContent = 'Photo captured.';
+        document.getElementById('stopWebcamBtn').addEventListener('click', function () {
+            stopJeeliz();
+            showMode('2d');
+            statusEl.textContent = 'Stopped.';
         });
 
-        function stopWebcam() {
-            if (webcamStream) {
-                webcamStream.getTracks().forEach(track => track.stop());
-                webcamStream = null;
-            }
-            webcamLoopActive = false;
-        }
-
-        productSelect.addEventListener('change', function() {
-            if (currentImage) detectAndDraw(currentImage);
-            else if (video.style.display === 'block') { /* webcam loop will pick up new overlay next frame */ }
-        });
-
-        window.addEventListener('DOMContentLoaded', loadModels);</script>
+        window.addEventListener('DOMContentLoaded', loadFaceApiModels);
+    </script>
 }

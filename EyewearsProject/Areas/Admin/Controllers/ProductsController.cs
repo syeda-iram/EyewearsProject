@@ -70,6 +70,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 Price = model.Price,
                 DiscountPrice = model.DiscountPrice,
                 TryOnOverlayImageUrl = model.TryOnOverlayImageUrl,
+                TryOn3DModelUrl = model.TryOn3DModelUrl,
+                TryOnOverlayScale = model.TryOnOverlayScale,
+                TryOnOverlayVerticalOffset = model.TryOnOverlayVerticalOffset,
                 IsActive = model.IsActive
             };
 
@@ -99,6 +102,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 Price = product.Price,
                 DiscountPrice = product.DiscountPrice,
                 TryOnOverlayImageUrl = product.TryOnOverlayImageUrl,
+                TryOn3DModelUrl = product.TryOn3DModelUrl,
+                TryOnOverlayScale = product.TryOnOverlayScale,
+                TryOnOverlayVerticalOffset = product.TryOnOverlayVerticalOffset,
                 IsActive = product.IsActive
             };
 
@@ -127,6 +133,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
             product.CategoryId = model.CategoryId;
             product.BrandId = model.BrandId;
             product.TryOnOverlayImageUrl = model.TryOnOverlayImageUrl;
+            product.TryOn3DModelUrl = model.TryOn3DModelUrl;
+            product.TryOnOverlayScale = model.TryOnOverlayScale;
+            product.TryOnOverlayVerticalOffset = model.TryOnOverlayVerticalOffset;
             product.Price = model.Price;
             product.DiscountPrice = model.DiscountPrice;
             product.IsActive = model.IsActive;

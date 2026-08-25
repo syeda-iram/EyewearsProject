@@ -36,5 +36,7 @@ namespace EyewearsProject.Areas.Admin.Models
         public int? UsageLimit { get; set; }
 
         public bool IsActive { get; set; } = true;
+        [Display(Name = "3D Try-On Model (.glb path)")]
+        public string? TryOn3DModelUrl { get; set; }
     }
 }

@@ -4,21 +4,25 @@
 
 <form asp-action="@(Model.Id == 0 ? "Create" : "Edit")" method="post" style="max-width:520px;">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
     <div class="mb-3">
         <label asp-for="Name" class="form-label"></label>
         <input asp-for="Name" class="form-control" />
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="Sku" class="form-label">SKU</label>
         <input asp-for="Sku" class="form-control" />
         <span asp-validation-for="Sku" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="Description" class="form-label"></label>
         <textarea asp-for="Description" class="form-control"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="CategoryId" class="form-label">Category</label>
         <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
@@ -26,6 +30,7 @@
         </select>
         <span asp-validation-for="CategoryId" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="BrandId" class="form-label">Brand</label>
         <select asp-for="BrandId" class="form-select" asp-items="ViewBag.Brands">
@@ -33,16 +38,19 @@
         </select>
         <span asp-validation-for="BrandId" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="Price" class="form-label"></label>
         <input asp-for="Price" class="form-control" />
         <span asp-validation-for="Price" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="DiscountPrice" class="form-label"></label>
         <input asp-for="DiscountPrice" class="form-control" />
         <span asp-validation-for="DiscountPrice" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="TryOnOverlayImageUrl" class="form-label"></label>
         <input type="file" id="tryOnFileInput" class="form-control mb-2" accept="image/png" />
@@ -51,9 +59,27 @@
         <span asp-validation-for="TryOnOverlayImageUrl" class="text-danger"></span>
         <div class="form-text">Upload a transparent PNG of just the glasses (no face, no background) — used for the Virtual Try-On feature.</div>
     </div>
+
+    <div class="mb-3">
+        <label asp-for="TryOn3DModelUrl" class="form-label"></label>
+        <input asp-for="TryOn3DModelUrl" class="form-control" placeholder="rayban_aviator_or_vertFlash" />
+        <span asp-validation-for="TryOn3DModelUrl" class="text-danger"></span>
+        <div class="form-text">Paste a real Jeeliz SKU that matches this product's style (e.g. <code>rayban_aviator_or_vertFlash</code>). Browse available styles in the project's <code>glassesSKU.csv</code>. Leave blank to use the simpler 2D try-on for this product instead.</div>
+    </div>
+
     <div class="mb-3 form-check">
         <input asp-for="IsActive" class="form-check-input" />
         <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="TryOnOverlayScale" class="form-label"></label>
+            <input asp-for="TryOnOverlayScale" type="number" step="0.1" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="TryOnOverlayVerticalOffset" class="form-label"></label>
+            <input asp-for="TryOnOverlayVerticalOffset" type="number" step="0.05" class="form-control" />
+        </div>
     </div>
     <button type="submit" class="btn btn-dark">Save</button>
 </form>
