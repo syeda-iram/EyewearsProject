@@ -19,7 +19,6 @@ namespace EyewearsProject.Controllers
             _userManager = userManager;
         }
 
-        // GET: /Lens/Customize?productId=1&variantId=2
         public async Task<IActionResult> Customize(int productId, int variantId)
         {
             var product = await _context.Products
@@ -55,7 +54,13 @@ namespace EyewearsProject.Controllers
 
         // POST: /Lens/AddToCart
         [HttpPost]
-        public async Task<IActionResult> AddToCart(int productId, int variantId, string lensType, string coating, int? prescriptionId, int quantity = 1)
+        public async Task<IActionResult> AddToCart(
+            int productId, int variantId, string lensType, string coating, int quantity = 1,
+            int? prescriptionId = null,
+            string? newPatientName = null,
+            decimal? rSph = null, decimal? rCyl = null, int? rAxis = null, decimal? rAdd = null, decimal? rPd = null,
+            decimal? lSph = null, decimal? lCyl = null, int? lAxis = null, decimal? lAdd = null, decimal? lPd = null,
+            string? uploadedFileUrl = null)
         {
             var product = await _context.Products
                 .Include(p => p.Images)
@@ -67,11 +72,43 @@ namespace EyewearsProject.Controllers
             var variant = product.Variants.FirstOrDefault(v => v.Id == variantId);
             if (variant == null) return NotFound();
 
-            // Re-check the prices server-side — never trust the posted lens/coating
-            // strings for price, only for which option was chosen.
             decimal lensPrice = LensOptions.LensTypes.TryGetValue(lensType, out var lp) ? lp : 0;
             decimal coatingPrice = LensOptions.Coatings.TryGetValue(coating, out var cp) ? cp : 0;
             decimal basePrice = product.DiscountPrice ?? product.Price;
+
+            // If the customer entered a prescription manually or uploaded a file
+            // right here in the lens flow, save it as a real Prescription now
+            // so it's also available in "My Prescriptions" going forward.
+            if (prescriptionId == null && User.Identity?.IsAuthenticated == true)
+            {
+                var userId = _userManager.GetUserId(User)!;
+                bool hasManualEntry = rSph.HasValue || rCyl.HasValue || lSph.HasValue || lCyl.HasValue;
+                bool hasUpload = !string.IsNullOrWhiteSpace(uploadedFileUrl);
+
+                if (hasManualEntry || hasUpload)
+                {
+                    var newRx = new Prescription
+                    {
+                        UserId = userId,
+                        PatientName = string.IsNullOrWhiteSpace(newPatientName) ? "Prescription" : newPatientName,
+                        RightSphere = rSph,
+                        RightCylinder = rCyl,
+                        RightAxis = rAxis,
+                        RightAdd = rAdd,
+                        RightPd = rPd,
+                        LeftSphere = lSph,
+                        LeftCylinder = lCyl,
+                        LeftAxis = lAxis,
+                        LeftAdd = lAdd,
+                        LeftPd = lPd,
+                        UploadedFileUrl = uploadedFileUrl,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Prescriptions.Add(newRx);
+                    await _context.SaveChangesAsync();
+                    prescriptionId = newRx.Id;
+                }
+            }
 
             var cart = HttpContext.Session.GetObject<List<CartItem>>(CartSessionKey) ?? new List<CartItem>();
 

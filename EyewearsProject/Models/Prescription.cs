@@ -31,6 +31,7 @@ namespace EyewearsProject.Models
         public decimal? LeftPd { get; set; }
 
         public string? Notes { get; set; }
+        public string? UploadedFileUrl { get; set; } // photo or PDF of the prescription, if the customer chose to upload instead of typing values
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

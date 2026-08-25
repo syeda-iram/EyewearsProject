@@ -65,10 +65,7 @@
                         </select>
                     </div>
                 }
-                else
-                {
-                    <p class="text-muted small">More attribute filters (material, shape, gender) will appear here once products have those details added in Admin.</p>
-                }
+               
 
                 <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">Apply Filters</button>
                 <a asp-controller="Products" asp-action="Index" asp-route-category="@ViewBag.SelectedCategory" class="btn btn-outline-secondary btn-sm w-100 mt-2">Clear Filters</a>

@@ -9,13 +9,15 @@ namespace EyewearsProject.Controllers
     [Authorize]
     public class PrescriptionsController : Controller
     {
+        private readonly IWebHostEnvironment _env;
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public PrescriptionsController(AppDbContext context, UserManager<ApplicationUser> userManager)
+        public PrescriptionsController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment env)
         {
             _context = context;
             _userManager = userManager;
+            _env = env;
         }
 
         // GET: /Prescriptions
@@ -128,6 +130,37 @@ namespace EyewearsProject.Controllers
             await _context.SaveChangesAsync();
 
             return RedirectToAction("Index");
+        }
+        private static readonly string[] AllowedPrescriptionExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
+        private const long MaxPrescriptionFileBytes = 8 * 1024 * 1024; // 8 MB
+
+        // POST: /Prescriptions/UploadFile
+        [HttpPost]
+        public async Task<IActionResult> UploadFile(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return Json(new { success = false, message = "No file selected." });
+
+            if (file.Length > MaxPrescriptionFileBytes)
+                return Json(new { success = false, message = "File too large. Max size is 8 MB." });
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!AllowedPrescriptionExtensions.Contains(ext))
+                return Json(new { success = false, message = "Only JPG, PNG, or PDF files are allowed." });
+
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "prescriptions");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var publicUrl = $"/uploads/prescriptions/{fileName}";
+            return Json(new { success = true, url = publicUrl });
         }
     }
 }

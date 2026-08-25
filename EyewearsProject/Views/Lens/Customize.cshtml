@@ -59,33 +59,70 @@
                 }
             </div>
 
-            <h5>3. Prescription</h5>
-            @if (User.Identity?.IsAuthenticated != true)
-            {
-                <p class="text-muted">
-                    <a asp-controller="Account" asp-action="Login">Log in</a> to attach a saved prescription, or continue without one and add it later.
-                </p>
-            }
-            else if (!savedPrescriptions.Any())
-            {
-                <p class="text-muted">
-                    You don't have any saved prescriptions yet.
-                    <a asp-controller="Prescriptions" asp-action="Create">Add one</a>, or continue without one and add it later.
-                </p>
-            }
-            else
-            {
-                <div class="mb-4">
-                    <select name="prescriptionId" class="form-select" style="max-width:400px;">
-                        <option value="">No prescription — I'll add it later</option>
-                        @foreach (var rx in savedPrescriptions)
+            <<h5>3. Prescription</h5>
+
+                @if (User.Identity?.IsAuthenticated != true)
+                {
+                    <p class="text-muted"><a asp-controller="Account" asp-action="Login">Log in</a> to attach a prescription, or continue without one.</p>
+                }
+                else
+                {
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" class="btn btn-outline-primary" id="addPrescriptionBtn">+ Add Prescription</button>
+                        <span class="text-muted align-self-center" id="continueWithoutLabel">or continue without one</span>
+                    </div>
+
+                    <div id="prescriptionPanel" class="border rounded p-3 mb-4" style="display:none;">
+                        @if (savedPrescriptions.Any())
                         {
-                            <option value="@rx.Id">@rx.PatientName — @rx.CreatedAt.ToString("dd MMM yyyy")</option>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Use a saved prescription</label>
+                                <select name="prescriptionId" id="savedRxSelect" class="form-select" style="max-width:400px;">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var rx in savedPrescriptions)
+                                    {
+                                        <option value="@rx.Id">@rx.PatientName — @rx.CreatedAt.ToString("dd MMM yyyy")</option>
+                                    }
+                                </select>
+                            </div>
+                            <hr />
+                            <p class="text-muted small">Or add a new one below:</p>
                         }
-                    </select>
-                    <a asp-controller="Prescriptions" asp-action="Create" class="d-inline-block mt-2">+ Add a new prescription</a>
-                </div>
-            }
+
+                        <div class="btn-group mb-3" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm rx-tab-btn active" data-tab="upload">Upload Photo/PDF</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rx-tab-btn" data-tab="manual">Enter Manually</button>
+                        </div>
+
+                        <div id="rx-tab-upload" class="rx-tab-content">
+                            <input type="file" id="rxFileInput" accept=".jpg,.jpeg,.png,.pdf" class="form-control mb-2" style="max-width:400px;" />
+                            <div id="rxUploadStatus" class="small text-muted"></div>
+                            <input type="hidden" name="uploadedFileUrl" id="uploadedFileUrlField" />
+                        </div>
+
+                        <div id="rx-tab-manual" class="rx-tab-content" style="display:none;">
+                            <div class="mb-2">
+                                <input type="text" name="newPatientName" class="form-control form-control-sm" placeholder="Patient name" style="max-width:300px;" />
+                            </div>
+                            <p class="fw-bold mb-1 small">Right Eye (OD)</p>
+                            <div class="row g-2 mb-2" style="max-width:600px;">
+                                <div class="col"><input type="number" step="0.25" name="rSph" class="form-control form-control-sm" placeholder="SPH" /></div>
+                                <div class="col"><input type="number" step="0.25" name="rCyl" class="form-control form-control-sm" placeholder="CYL" /></div>
+                                <div class="col"><input type="number" name="rAxis" class="form-control form-control-sm" placeholder="Axis" /></div>
+                                <div class="col"><input type="number" step="0.25" name="rAdd" class="form-control form-control-sm" placeholder="Add" /></div>
+                                <div class="col"><input type="number" step="0.5" name="rPd" class="form-control form-control-sm" placeholder="PD" /></div>
+                            </div>
+                            <p class="fw-bold mb-1 small">Left Eye (OS)</p>
+                            <div class="row g-2" style="max-width:600px;">
+                                <div class="col"><input type="number" step="0.25" name="lSph" class="form-control form-control-sm" placeholder="SPH" /></div>
+                                <div class="col"><input type="number" step="0.25" name="lCyl" class="form-control form-control-sm" placeholder="CYL" /></div>
+                                <div class="col"><input type="number" name="lAxis" class="form-control form-control-sm" placeholder="Axis" /></div>
+                                <div class="col"><input type="number" step="0.25" name="lAdd" class="form-control form-control-sm" placeholder="Add" /></div>
+                                <div class="col"><input type="number" step="0.5" name="lPd" class="form-control form-control-sm" placeholder="PD" /></div>
+                            </div>
+                        </div>
+                    </div>
+                }
         </div>
 
         <div class="col-md-5">
@@ -136,5 +173,49 @@
         });
 
         recalcTotal();
+            const addBtn = document.getElementById('addPrescriptionBtn');
+            const panel = document.getElementById('prescriptionPanel');
+            if (addBtn) {
+                addBtn.addEventListener('click', function() {
+                    const isOpen = panel.style.display !== 'none';
+                    panel.style.display = isOpen ? 'none' : 'block';
+                    addBtn.textContent = isOpen ? '+ Add Prescription' : 'Hide Prescription Form';
+                });
+            }
+
+            document.querySelectorAll('.rx-tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.rx-tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelectorAll('.rx-tab-content').forEach(c => c.style.display = 'none');
+                    document.getElementById('rx-tab-' + this.dataset.tab).style.display = 'block';
+                });
+            });
+
+            const rxFileInput = document.getElementById('rxFileInput');
+            if (rxFileInput) {
+                rxFileInput.addEventListener('change', async function() {
+                    const file = this.files[0];
+                    if (!file) return;
+
+                    const statusEl = document.getElementById('rxUploadStatus');
+                    statusEl.textContent = 'Uploading...';
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch('/Prescriptions/UploadFile', { method: 'POST', body: formData });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        document.getElementById('uploadedFileUrlField').value = data.url;
+                        statusEl.textContent = 'Uploaded: ' + file.name;
+                        statusEl.classList.add('text-success');
+                    } else {
+                        statusEl.textContent = data.message;
+                        statusEl.classList.add('text-danger');
+                    }
+                });
+            }
     </script>
 }
