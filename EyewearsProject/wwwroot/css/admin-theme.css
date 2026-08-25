@@ -1,5 +1,6 @@
 ﻿/* ============================================
-   Admin Portal Theme v2 — light, icon-nav, pill components
+   EyeCraft Admin Portal Theme v3
+   Light Admin UI + Bootstrap Icons
    Loads AFTER bootstrap.min.css
    ============================================ */
 
@@ -27,21 +28,54 @@
     --admin-font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
+
+/* ============================================
+   GLOBAL
+   ============================================ */
+
+html {
+    font-size: 14px;
+}
+
 body {
+    margin: 0;
     font-family: var(--admin-font);
     background: var(--admin-surface);
     color: var(--admin-text);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
-/* ---------- Shell ---------- */
+a {
+    color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+
+/* ============================================
+   SHELL
+   ============================================ */
 
 .admin-shell {
     display: flex;
     min-height: 100vh;
+    width: 100%;
 }
+
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
 
 .admin-sidebar {
     width: 250px;
+    min-width: 250px;
     flex-shrink: 0;
     background: var(--admin-card);
     border-right: 1px solid var(--admin-border);
@@ -50,15 +84,41 @@ body {
     position: sticky;
     top: 0;
     height: 100vh;
-    overflow-y: auto;
+    /*
+       IMPORTANT:
+       Sidebar itself does NOT scroll.
+       Only .admin-nav scrolls.
+    */
+    overflow: hidden;
     padding: 18px 14px;
+    scrollbar-width: thin;
+    scrollbar-color: #D9DDE3 transparent;
 }
+
+    .admin-sidebar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .admin-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .admin-sidebar::-webkit-scrollbar-thumb {
+        background: #D9DDE3;
+        border-radius: 999px;
+    }
+
+
+/* ============================================
+   BRAND
+   ============================================ */
 
 .admin-brand {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 6px 6px 18px;
+    flex-shrink: 0;
 }
 
 .admin-brand-icon {
@@ -73,11 +133,22 @@ body {
     flex-shrink: 0;
 }
 
+    .admin-brand-icon i {
+        font-size: 17px;
+        line-height: 1;
+    }
+
 .admin-brand-name {
     font-weight: 700;
     font-size: 16px;
     letter-spacing: -0.2px;
+    white-space: nowrap;
 }
+
+
+/* ============================================
+   PROFILE CARD
+   ============================================ */
 
 .admin-profile-card {
     display: flex;
@@ -87,6 +158,8 @@ body {
     border-radius: var(--admin-radius);
     padding: 10px 12px;
     margin-bottom: 18px;
+    background: #fff;
+    flex-shrink: 0;
 }
 
 .admin-profile-avatar {
@@ -112,11 +185,50 @@ body {
 .admin-profile-role {
     font-size: 11.5px;
     color: var(--admin-text-muted);
+    margin-top: 2px;
 }
+
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
 
 .admin-nav {
     flex: 1;
+    /*
+       IMPORTANT:
+       This is the ONLY scrolling area
+       inside the sidebar.
+    */
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: #D9DDE3 transparent;
 }
+
+    .admin-nav::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .admin-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .admin-nav::-webkit-scrollbar-thumb {
+        background: #D9DDE3;
+        border-radius: 999px;
+    }
+
+        .admin-nav::-webkit-scrollbar-thumb:hover {
+            background: #BFC5CD;
+        }
+
+
+/* ============================================
+   NAVIGATION LINKS
+   ============================================ */
 
 .admin-nav-link {
     display: flex;
@@ -130,21 +242,39 @@ body {
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 4px;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
-    .admin-nav-link svg {
+
+    /* Bootstrap Icons */
+
+    .admin-nav-link i {
         width: 18px;
-        height: 18px;
+        min-width: 18px;
+        font-size: 17px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
-        stroke-width: 1.8;
     }
+
+
+    /* Hover */
 
     .admin-nav-link:hover {
         background: var(--admin-surface);
         border-color: var(--admin-border-dashed);
         color: var(--admin-text);
+        text-decoration: none;
     }
+
+        .admin-nav-link:hover i {
+            color: var(--admin-blue);
+        }
+
+
+    /* Active */
 
     .admin-nav-link.active {
         background: var(--admin-blue-soft);
@@ -153,14 +283,77 @@ body {
         font-weight: 600;
     }
 
+        .admin-nav-link.active i {
+            color: var(--admin-blue);
+        }
+
+
+    /* Click effect */
+
+    .admin-nav-link:active {
+        transform: translateY(1px);
+    }
+
+
+/* ============================================
+   NAVIGATION SECTION GAP
+   ============================================ */
+
 .admin-nav-section-gap {
     height: 14px;
 }
 
-/* ---------- Topbar ---------- */
+
+/* ============================================
+   LOGOUT
+   ============================================ */
+
+/*
+   IMPORTANT FIX
+
+   Logout form is OUTSIDE the scrolling
+   navigation area.
+
+   Result:
+
+   - Menu scrolls
+   - Logout remains at bottom
+   - Logout does not move with menu
+   - No strange center positioning
+*/
+
+.admin-sidebar > form {
+    margin-top: auto !important;
+    flex-shrink: 0;
+    width: 100%;
+    padding-top: 10px;
+    background: var(--admin-card);
+}
+
+
+    /* Logout button */
+
+    .admin-sidebar > form .btn {
+        width: 100%;
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+    }
+
+        .admin-sidebar > form .btn i {
+            font-size: 15px;
+        }
+
+
+/* ============================================
+   TOPBAR
+   ============================================ */
 
 .admin-topbar {
     height: 68px;
+    min-height: 68px;
     background: var(--admin-card);
     border-bottom: 1px solid var(--admin-border);
     display: flex;
@@ -173,6 +366,30 @@ body {
     gap: 20px;
 }
 
+
+/* ============================================
+   MOBILE MENU BUTTON
+   ============================================ */
+
+.admin-menu-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+    .admin-menu-btn i {
+        font-size: 19px;
+    }
+
+
+/* ============================================
+   SEARCH
+   ============================================ */
+
 .admin-search {
     flex: 1;
     max-width: 420px;
@@ -184,22 +401,42 @@ body {
     border-radius: 999px;
     padding: 9px 16px;
     color: var(--admin-text-muted);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
+
+    .admin-search:focus-within {
+        background: #fff;
+        border-color: var(--admin-blue);
+        box-shadow: 0 0 0 3px var(--admin-blue-soft);
+    }
+
+    .admin-search i {
+        font-size: 16px;
+        line-height: 1;
+        flex-shrink: 0;
+    }
 
     .admin-search input {
         border: none;
-        background: transparent;
         outline: none;
+        background: transparent;
         font-size: 14px;
         width: 100%;
         color: var(--admin-text);
     }
 
-    .admin-search svg {
-        width: 16px;
-        height: 16px;
-        flex-shrink: 0;
-    }
+        .admin-search input::placeholder {
+            color: var(--admin-text-muted);
+        }
+
+        .admin-search input:focus {
+            outline: none;
+        }
+
+
+/* ============================================
+   TOPBAR ICONS
+   ============================================ */
 
 .admin-topbar-icons {
     display: flex;
@@ -218,30 +455,55 @@ body {
     color: var(--admin-text-muted);
     position: relative;
     background: #fff;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
-    .admin-icon-btn svg {
-        width: 17px;
-        height: 17px;
+    .admin-icon-btn i {
+        font-size: 17px;
+        line-height: 1;
     }
+
+    .admin-icon-btn:hover {
+        background: var(--admin-surface);
+        border-color: var(--admin-border-dashed);
+        color: var(--admin-text);
+    }
+
+    .admin-icon-btn:active {
+        transform: scale(0.96);
+    }
+
+
+    /* Notification dot */
 
     .admin-icon-btn .dot {
         position: absolute;
-        top: 8px;
-        right: 9px;
+        top: 7px;
+        right: 7px;
         width: 7px;
         height: 7px;
         border-radius: 50%;
         background: var(--admin-danger);
+        border: 1.5px solid #fff;
     }
+
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
 
 .admin-content {
     padding: 26px;
     flex: 1;
     min-width: 0;
+    background: var(--admin-surface);
 }
 
-/* ---------- Page header ---------- */
+
+/* ============================================
+   PAGE HEADER
+   ============================================ */
 
 .page-header {
     display: flex;
@@ -268,15 +530,20 @@ body {
 .page-header-actions {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
-/* ---------- Stat card ---------- */
+
+/* ============================================
+   STAT CARDS
+   ============================================ */
 
 .stat-card {
     background: var(--admin-card);
     border: 1px solid var(--admin-border);
     border-radius: var(--admin-radius);
     padding: 16px 18px;
+    height: 100%;
 }
 
 .stat-label {
@@ -306,7 +573,10 @@ body {
     color: var(--admin-success);
 }
 
-/* ---------- Filter bar ---------- */
+
+/* ============================================
+   FILTER BAR
+   ============================================ */
 
 .filter-bar {
     background: var(--admin-card);
@@ -326,7 +596,14 @@ body {
     border-radius: 999px;
     padding: 9px 14px;
     font-size: 14px;
+    background: #fff;
 }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--admin-blue);
+        box-shadow: 0 0 0 3px var(--admin-blue-soft);
+    }
 
 .filter-select {
     border: 1px solid var(--admin-border);
@@ -336,7 +613,16 @@ body {
     background: #fff;
 }
 
-/* ---------- Bulk action bar ---------- */
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--admin-blue);
+        box-shadow: 0 0 0 3px var(--admin-blue-soft);
+    }
+
+
+/* ============================================
+   BULK ACTION BAR
+   ============================================ */
 
 .bulk-bar {
     background: var(--admin-ink);
@@ -358,9 +644,13 @@ body {
     .bulk-bar .actions {
         display: flex;
         gap: 8px;
+        flex-wrap: wrap;
     }
 
-/* ---------- Avatars & pill badges ---------- */
+
+/* ============================================
+   AVATARS
+   ============================================ */
 
 .avatar-circle {
     width: 34px;
@@ -377,12 +667,18 @@ body {
     object-fit: cover;
 }
 
+
+/* ============================================
+   PILLS
+   ============================================ */
+
 .pill {
     display: inline-block;
     padding: 3px 11px;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .pill-blue {
@@ -415,6 +711,11 @@ body {
     color: var(--admin-warning);
 }
 
+
+/* ============================================
+   STATUS DOT
+   ============================================ */
+
 .status-dot {
     display: inline-flex;
     align-items: center;
@@ -429,6 +730,7 @@ body {
         height: 7px;
         border-radius: 50%;
         background: currentColor;
+        flex-shrink: 0;
     }
 
     .status-dot.active {
@@ -443,7 +745,10 @@ body {
         color: var(--admin-warning);
     }
 
-/* ---------- Table ---------- */
+
+/* ============================================
+   TABLE
+   ============================================ */
 
 .admin-table-card {
     background: var(--admin-card);
@@ -465,6 +770,7 @@ body {
         border-bottom: 1px solid var(--admin-border);
         padding: 14px 16px;
         background: var(--admin-surface);
+        white-space: nowrap;
     }
 
     .admin-table-card td {
@@ -477,21 +783,39 @@ body {
         border-bottom: none;
     }
 
+    .admin-table-card tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+        .admin-table-card tbody tr:hover {
+            background: #FBFCFD;
+        }
+
+
+/* ============================================
+   MONOSPACE
+   ============================================ */
+
 .font-mono {
     font-family: var(--admin-font-mono);
     font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Pagination pills ---------- */
+
+/* ============================================
+   PAGINATION
+   ============================================ */
 
 .pager {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 14px 16px;
+    flex-wrap: wrap;
 }
 
-    .pager a, .pager span {
+    .pager a,
+    .pager span {
         min-width: 30px;
         height: 30px;
         border-radius: 8px;
@@ -511,16 +835,30 @@ body {
 
         .pager a:hover:not(.active) {
             background: var(--admin-surface);
+            color: var(--admin-text);
         }
 
-/* ---------- Buttons ---------- */
+
+/* ============================================
+   BUTTONS
+   ============================================ */
 
 .btn {
     border-radius: 999px;
     font-weight: 600;
     font-size: 13.5px;
     padding: 8px 18px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
+
+    .btn i {
+        line-height: 1;
+        vertical-align: -0.08em;
+    }
+
+    .btn:active {
+        transform: translateY(1px);
+    }
 
 .btn-dark {
     background: var(--admin-ink);
@@ -535,34 +873,393 @@ body {
 .btn-outline-secondary {
     border-color: var(--admin-border);
     color: var(--admin-text);
+    background: #fff;
 }
+
+    .btn-outline-secondary:hover {
+        background: var(--admin-surface);
+        border-color: var(--admin-border-dashed);
+        color: var(--admin-text);
+    }
 
 .btn-outline-danger {
     border-radius: 999px;
 }
 
-.form-control:focus, .form-select:focus {
-    border-color: var(--admin-blue);
-    box-shadow: 0 0 0 3px var(--admin-blue-soft);
+
+/* ============================================
+   FORM CONTROLS
+   ============================================ */
+
+.form-control,
+.form-select {
+    border-color: var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+    font-size: 14px;
 }
 
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--admin-blue);
+        box-shadow: 0 0 0 3px var(--admin-blue-soft);
+    }
+
+
+/* ============================================
+   CARDS
+   ============================================ */
+
+.admin-card {
+    background: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+}
+
+
+/* ============================================
+   ALERTS
+   ============================================ */
+
+.admin-alert {
+    border-radius: var(--admin-radius);
+    border: 1px solid var(--admin-border);
+    background: var(--admin-card);
+    padding: 14px 16px;
+}
+
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.admin-empty-state {
+    background: var(--admin-card);
+    border: 1px dashed var(--admin-border-dashed);
+    border-radius: var(--admin-radius);
+    padding: 50px 25px;
+    text-align: center;
+    color: var(--admin-text-muted);
+}
+
+    .admin-empty-state i {
+        display: block;
+        font-size: 38px;
+        margin-bottom: 12px;
+        color: #B7BDC6;
+    }
+
+    .admin-empty-state h5 {
+        color: var(--admin-text);
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .admin-empty-state p {
+        margin-bottom: 0;
+        font-size: 13px;
+    }
+
+
+/* ============================================
+   DROPDOWN
+   ============================================ */
+
+.dropdown-menu {
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    box-shadow: 0 10px 30px rgba(20, 24, 29, 0.08);
+    padding: 6px;
+}
+
+.dropdown-item {
+    border-radius: 7px;
+    font-size: 13.5px;
+    padding: 8px 10px;
+}
+
+    .dropdown-item i {
+        width: 18px;
+        margin-right: 6px;
+    }
+
+    .dropdown-item:hover {
+        background: var(--admin-surface);
+    }
+
+
+/* ============================================
+   MODAL
+   ============================================ */
+
+.modal-content {
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    box-shadow: 0 20px 50px rgba(20, 24, 29, 0.12);
+}
+
+.modal-header {
+    border-bottom-color: var(--admin-border);
+}
+
+.modal-footer {
+    border-top-color: var(--admin-border);
+}
+
+
+/* ============================================
+   TOOLTIP / SMALL ICON HELPERS
+   ============================================ */
+
+.admin-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.admin-icon-sm {
+    font-size: 14px;
+}
+
+.admin-icon-md {
+    font-size: 17px;
+}
+
+.admin-icon-lg {
+    font-size: 20px;
+}
+
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #D9DDE3 transparent;
+}
+
+    *::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    *::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        background: #D9DDE3;
+        border-radius: 999px;
+    }
+
+        *::-webkit-scrollbar-thumb:hover {
+            background: #BFC5CD;
+        }
+
+
+/* ============================================
+   MOBILE OVERLAY
+   ============================================ */
+
+.admin-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 24, 29, 0.35);
+    z-index: 29;
+}
+
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1100px) {
+
+    .admin-sidebar {
+        width: 235px;
+        min-width: 235px;
+    }
+
+    .admin-topbar {
+        padding: 0 20px;
+    }
+
+    .admin-content {
+        padding: 22px;
+    }
+}
+
+
 @media (max-width: 860px) {
+
     .admin-sidebar {
         position: fixed;
         left: -270px;
+        top: 0;
+        bottom: 0;
+        width: 250px;
+        min-width: 250px;
+        height: 100vh;
         z-index: 30;
         transition: left 0.2s ease;
+        box-shadow: 8px 0 30px rgba(20, 24, 29, 0.08);
+        /*
+           Mobile sidebar also remains non-scrolling.
+           Only nav scrolls.
+        */
+        overflow: hidden;
     }
 
         .admin-sidebar.open {
             left: 0;
         }
 
+            .admin-sidebar.open + .admin-sidebar-overlay {
+                display: block;
+            }
+
     .admin-content {
         padding: 16px;
     }
 
+    .admin-topbar {
+        height: 62px;
+        min-height: 62px;
+        padding: 0 16px;
+        gap: 10px;
+    }
+
     .admin-search {
         display: none;
+    }
+
+    .admin-topbar-icons {
+        margin-left: auto;
+    }
+
+    .admin-menu-btn {
+        display: inline-flex !important;
+    }
+
+    .page-header h1 {
+        font-size: 23px;
+    }
+}
+
+
+@media (min-width: 861px) {
+
+    .admin-menu-btn {
+        display: none !important;
+    }
+}
+
+
+@media (max-width: 576px) {
+
+    .admin-content {
+        padding: 14px;
+    }
+
+    .admin-topbar {
+        padding: 0 12px;
+    }
+
+    .admin-topbar-icons {
+        gap: 6px;
+    }
+
+    .admin-icon-btn {
+        width: 35px;
+        height: 35px;
+    }
+
+        .admin-icon-btn i {
+            font-size: 16px;
+        }
+
+    .page-header {
+        margin-bottom: 18px;
+    }
+
+        .page-header h1 {
+            font-size: 21px;
+        }
+
+    .page-header-actions {
+        width: 100%;
+    }
+
+        .page-header-actions .btn {
+            flex: 1;
+        }
+
+    .filter-bar {
+        padding: 12px;
+    }
+
+    .filter-input {
+        min-width: 100%;
+    }
+
+    .filter-select {
+        flex: 1;
+        min-width: 140px;
+    }
+
+    .stat-value {
+        font-size: 26px;
+    }
+
+    .bulk-bar {
+        padding: 12px 14px;
+    }
+
+        .bulk-bar .actions {
+            width: 100%;
+        }
+
+            .bulk-bar .actions .btn {
+                flex: 1;
+            }
+
+    .admin-table-card {
+        overflow-x: auto;
+    }
+
+        .admin-table-card table {
+            min-width: 700px;
+        }
+}
+
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+.admin-nav-link:focus-visible,
+.admin-icon-btn:focus-visible,
+.admin-menu-btn:focus-visible,
+.btn:focus-visible {
+    outline: 2px solid var(--admin-blue);
+    outline-offset: 2px;
+}
+
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
     }
 }

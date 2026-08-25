@@ -1,137 +1,1041 @@
 ﻿@{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-    bool IsActive(string c) => currentController == c;
+
+    bool IsActive(string c) =>
+        string.Equals(currentController, c, StringComparison.OrdinalIgnoreCase);
+
+    var userName = User.Identity?.Name ?? "Admin User";
+
+    var userInitial =
+        !string.IsNullOrWhiteSpace(userName)
+            ? userName.Substring(0, 1).ToUpper()
+            : "A";
+
+    var userRole =
+        User.Claims.FirstOrDefault(c => c.Type.EndsWith("/role"))?.Value
+        ?? User.Claims.FirstOrDefault(c => c.Type == "role")?.Value
+        ?? "Staff";
 }
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
     <title>@ViewData["Title"] · EyeCraft Admin</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/admin-theme.css" asp-append-version="true" />
+
+
+    <!-- ========================================================= -->
+    <!-- FONTS -->
+    <!-- ========================================================= -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com" />
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin />
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap"
+          rel="stylesheet" />
+
+
+    <!-- ========================================================= -->
+    <!-- BOOTSTRAP -->
+    <!-- ========================================================= -->
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+
+    <!-- ========================================================= -->
+    <!-- BOOTSTRAP ICONS -->
+    <!-- ========================================================= -->
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+
+    <!-- ========================================================= -->
+    <!-- ADMIN THEME -->
+    <!-- ========================================================= -->
+
+    <link rel="stylesheet"
+          href="~/css/admin-theme.css"
+          asp-append-version="true" />
+
+
+    <!-- ========================================================= -->
+    <!-- ADMIN LAYOUT FIXES -->
+    <!-- ========================================================= -->
+
+    <style>
+
+            /* =========================================================
+                       ROOT / BODY
+                       ========================================================= */
+
+            html,
+            body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                overflow: hidden;
+            }
+
+
+            /* =========================================================
+                       MAIN ADMIN SHELL
+                       ========================================================= */
+
+            .admin-shell {
+                width: 100%;
+                height: 100vh;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: row;
+                overflow: hidden;
+                position: relative;
+            }
+
+
+            /* =========================================================
+                       SIDEBAR
+                       ========================================================= */
+
+            .admin-sidebar {
+                width: 274px;
+                min-width: 274px;
+                height: 100vh;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+                z-index: 1000;
+                overflow: hidden;
+                flex-shrink: 0;
+            }
+
+
+            /* =========================================================
+                       SIDEBAR BRAND
+                       ========================================================= */
+
+            .admin-brand {
+                flex-shrink: 0;
+            }
+
+
+            /* =========================================================
+                       SIDEBAR PROFILE
+                       ========================================================= */
+
+            .admin-profile-card {
+                flex-shrink: 0;
+            }
+
+
+            /* =========================================================
+                       SIDEBAR NAVIGATION
+
+                       IMPORTANT:
+                       Only this area scrolls.
+                       Sidebar itself does NOT scroll.
+                       ========================================================= */
+
+            .admin-nav {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding-top: 6px;
+                padding-bottom: 10px;
+                scrollbar-width: thin;
+                scrollbar-color: #D6DAE0 transparent;
+            }
+
+                .admin-nav::-webkit-scrollbar {
+                    width: 5px;
+                }
+
+                .admin-nav::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+
+                .admin-nav::-webkit-scrollbar-thumb {
+                    background: #D6DAE0;
+                    border-radius: 10px;
+                }
+
+                    .admin-nav::-webkit-scrollbar-thumb:hover {
+                        background: #BCC2CA;
+                    }
+
+
+            /* =========================================================
+                       NAV LINKS
+                       ========================================================= */
+
+            .admin-nav-link {
+                flex-shrink: 0;
+            }
+
+
+            /* =========================================================
+                       SIDEBAR LOGOUT
+
+                       Always remains at bottom.
+                       ========================================================= */
+
+            .admin-sidebar > form {
+                flex: 0 0 auto;
+                margin-top: 0 !important;
+                padding: 10px 16px 16px;
+                border-top: 1px solid var(--admin-border, #ECEEF1);
+                background: var(--admin-card, #FFFFFF);
+            }
+
+
+            /* =========================================================
+                       MAIN AREA
+                       ========================================================= */
+
+            .admin-shell > .flex-grow-1 {
+                min-width: 0;
+                min-height: 0;
+                height: 100vh;
+                display: flex !important;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+
+            /* =========================================================
+                       TOPBAR
+                       ========================================================= */
+
+            .admin-topbar {
+                flex: 0 0 auto;
+                position: sticky;
+                top: 0;
+                z-index: 900;
+                min-height: 72px;
+            }
+
+
+            /* =========================================================
+                       MAIN CONTENT
+
+                       This is the ONLY page-level scroll area.
+                       ========================================================= */
+
+            .admin-content {
+                flex: 1 1 auto;
+                min-width: 0;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 22px 28px 32px;
+                scrollbar-width: thin;
+                scrollbar-color: #D6DAE0 transparent;
+            }
+
+                .admin-content::-webkit-scrollbar {
+                    width: 7px;
+                }
+
+                .admin-content::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+
+                .admin-content::-webkit-scrollbar-thumb {
+                    background: #D6DAE0;
+                    border-radius: 10px;
+                }
+
+                    .admin-content::-webkit-scrollbar-thumb:hover {
+                        background: #BCC2CA;
+                    }
+
+
+                /* =========================================================
+                       REMOVE UNNECESSARY TOP SPACING FROM FIRST CONTENT
+                       ========================================================= */
+
+                .admin-content > :first-child {
+                    margin-top: 0 !important;
+                }
+
+
+                /* =========================================================
+                       DASHBOARD PAGE HEADER
+
+                       Keeps dashboard content close to topbar.
+                       ========================================================= */
+
+                .admin-content .page-header {
+                    margin-top: 0 !important;
+                }
+
+
+            /* =========================================================
+                       MOBILE MENU BUTTON
+                       ========================================================= */
+
+            .admin-menu-btn {
+                display: none;
+            }
+
+
+            /* =========================================================
+                       MOBILE SIDEBAR BACKDROP
+                       ========================================================= */
+
+            .admin-sidebar-backdrop {
+                display: none;
+            }
+
+
+            /* =========================================================
+                       DESKTOP
+                       ========================================================= */
+
+            @@media (min-width: 992px) {
+
+                .admin-sidebar {
+                    position: relative;
+                }
+
+                .admin-content {
+                    padding-left: 28px;
+                    padding-right: 28px;
+                }
+            }
+
+
+            /* =========================================================
+                       TABLET / MOBILE
+                       ========================================================= */
+
+            @@media (max-width: 991.98px) {
+
+                body {
+                    overflow: hidden;
+                }
+
+                .admin-shell {
+                    height: 100vh;
+                    min-height: 100vh;
+                }
+                /* -----------------------------------------------------
+                           Sidebar becomes overlay
+                           ----------------------------------------------------- */
+
+                .admin-sidebar {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 274px;
+                    min-width: 274px;
+                    height: 100vh;
+                    min-height: 100vh;
+                    transform: translateX(-100%);
+                    transition: transform .2s ease;
+                    box-shadow: 10px 0 30px rgba(20, 24, 29, .12);
+                }
+
+                    .admin-sidebar.open {
+                        transform: translateX(0);
+                    }
+                /* -----------------------------------------------------
+                           Backdrop
+                           ----------------------------------------------------- */
+
+                .admin-sidebar-backdrop {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 999;
+                    background: rgba(20, 24, 29, .28);
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: opacity .2s ease, visibility .2s ease;
+                    display: block;
+                }
+
+                    .admin-sidebar-backdrop.show {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                /* -----------------------------------------------------
+                           Main area
+                           ----------------------------------------------------- */
+
+                .admin-shell > .flex-grow-1 {
+                    width: 100%;
+                    min-width: 0;
+                }
+                /* -----------------------------------------------------
+                           Mobile menu button
+                           ----------------------------------------------------- */
+
+                .admin-menu-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 36px;
+                    height: 36px;
+                    flex-shrink: 0;
+                }
+                /* -----------------------------------------------------
+                           Content
+                           ----------------------------------------------------- */
+
+                .admin-content {
+                    padding: 18px 18px 28px;
+                }
+            }
+
+
+            /* =========================================================
+                       SMALL MOBILE
+                       ========================================================= */
+
+            @@media (max-width: 575.98px) {
+
+                .admin-topbar {
+                    min-height: 64px;
+                }
+
+                .admin-content {
+                    padding: 16px 14px 24px;
+                }
+
+                .admin-sidebar {
+                    width: 270px;
+                    min-width: 270px;
+                }
+            }
+
+
+            /* =========================================================
+                       REDUCED MOTION
+                       ========================================================= */
+
+            @@media (prefers-reduced-motion: reduce) {
+
+                .admin-sidebar,
+                .admin-sidebar-backdrop {
+                    transition: none;
+                }
+            }
+
+    </style>
+
 </head>
+
+
 <body>
+
+
+    <!-- ========================================================= -->
+    <!-- ADMIN SHELL -->
+    <!-- ========================================================= -->
+
     <div class="admin-shell">
 
-        <aside class="admin-sidebar" id="adminSidebar">
+
+        <!-- ===================================================== -->
+        <!-- SIDEBAR -->
+        <!-- ===================================================== -->
+
+        <aside class="admin-sidebar"
+               id="adminSidebar">
+
+
+            <!-- ================================================= -->
+            <!-- BRAND -->
+            <!-- ================================================= -->
+
             <div class="admin-brand">
+
                 <div class="admin-brand-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="17" height="17"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                    <i class="bi bi-eye-fill"></i>
                 </div>
-                <span class="admin-brand-name">EyeCraft Admin</span>
+
+                <span class="admin-brand-name">
+                    EyeCraft Admin
+                </span>
+
             </div>
+
+
+            <!-- ================================================= -->
+            <!-- PROFILE -->
+            <!-- ================================================= -->
 
             <div class="admin-profile-card">
-                <div class="admin-profile-avatar">@(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "A")</div>
-                <div style="min-width:0; overflow:hidden;">
-                    <div class="admin-profile-name text-truncate" title="@(User.Identity?.Name ?? "Admin User")">
-                        @(User.Identity?.Name ?? "Admin User")
-                    </div>
-                    <div class="admin-profile-role">@(User.Claims.FirstOrDefault(c => c.Type.EndsWith("/role"))?.Value ?? "Staff")</div>
+
+                <div class="admin-profile-avatar">
+                    @userInitial
                 </div>
+
+                <div style="min-width:0; overflow:hidden;">
+
+                    <div class="admin-profile-name text-truncate"
+                         title="@userName">
+
+                        @userName
+
+                    </div>
+
+                    <div class="admin-profile-role">
+                        @userRole
+                    </div>
+
+                </div>
+
             </div>
 
+
+            <!-- ================================================= -->
+            <!-- NAVIGATION
+
+This section scrolls independently.
+                 ================================================= -->
+
             <nav class="admin-nav">
-                <a class="admin-nav-link @(IsActive("Dashboard") ? "active" : "")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
-                    Dashboard
+
+
+                <!-- Dashboard -->
+
+                <a class="admin-nav-link @(IsActive("Dashboard") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Dashboard"
+                   asp-action="Index">
+
+                    <i class="bi bi-grid-1x2-fill"></i>
+
+                    <span>
+                        Dashboard
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Users") ? "active" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                    User Management
+
+
+                <!-- User Management -->
+
+                <a class="admin-nav-link @(IsActive("Users") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Users"
+                   asp-action="Index">
+
+                    <i class="bi bi-people-fill"></i>
+
+                    <span>
+                        User Management
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Roles") ? "active" : "")" asp-area="Admin" asp-controller="Roles" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /></svg>
-                    Role Permissions
+
+
+                <!-- Role Permissions -->
+
+                <a class="admin-nav-link @(IsActive("Roles") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Roles"
+                   asp-action="Index">
+
+                    <i class="bi bi-shield-lock-fill"></i>
+
+                    <span>
+                        Role Permissions
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Products") ? "active" : "")" asp-area="Admin" asp-controller="Products" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m20.5 7.3-8.5 5-8.5-5" /><path d="M12 22V12" /><path d="m3.5 7.3 8.5-5 8.5 5-8.5 5-8.5-5Z" /></svg>
-                    Products
+
+
+                <!-- Products -->
+
+                <a class="admin-nav-link @(IsActive("Products") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Products"
+                   asp-action="Index">
+
+                    <i class="bi bi-box-seam-fill"></i>
+
+                    <span>
+                        Products
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Categories") ? "active" : "")" asp-area="Admin" asp-controller="Categories" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg>
-                    Categories
+
+
+                <!-- Categories -->
+
+                <a class="admin-nav-link @(IsActive("Categories") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Categories"
+                   asp-action="Index">
+
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+
+                    <span>
+                        Categories
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Brands") ? "active" : "")" asp-area="Admin" asp-controller="Brands" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.6 12.6 12 21.2a2 2 0 0 1-2.8 0L2.8 14.8a2 2 0 0 1 0-2.8L11.4 3.4a2 2 0 0 1 1.4-.6H19a2 2 0 0 1 2 2v6.4a2 2 0 0 1-.4 1.4Z" /><circle cx="16" cy="8" r="1.3" /></svg>
-                    Brands
+
+
+                <!-- Brands -->
+
+                <a class="admin-nav-link @(IsActive("Brands") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Brands"
+                   asp-action="Index">
+
+                    <i class="bi bi-tags-fill"></i>
+
+                    <span>
+                        Brands
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Inventory") ? "active" : "")" asp-area="Admin" asp-controller="Inventory" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2" /><path d="M3 8h18l-1.4 11.2A2 2 0 0 1 17.6 21H6.4a2 2 0 0 1-2-1.8L3 8Z" /><path d="M9 12h6" /></svg>
-                    Inventory
+
+
+                <!-- Inventory -->
+
+                <a class="admin-nav-link @(IsActive("Inventory") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Inventory"
+                   asp-action="Index">
+
+                    <i class="bi bi-boxes"></i>
+
+                    <span>
+                        Inventory
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Orders") ? "active" : "")" asp-area="Admin" asp-controller="Orders" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6" /></svg>
-                    Orders
+
+
+                <!-- Orders -->
+
+                <a class="admin-nav-link @(IsActive("Orders") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Orders"
+                   asp-action="Index">
+
+                    <i class="bi bi-cart3"></i>
+
+                    <span>
+                        Orders
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Returns") ? "active" : "")" asp-area="Admin" asp-controller="Returns" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 3v5h5" /></svg>
-                    Returns
+
+
+                <!-- Returns -->
+
+                <a class="admin-nav-link @(IsActive("Returns") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Returns"
+                   asp-action="Index">
+
+                    <i class="bi bi-arrow-return-left"></i>
+
+                    <span>
+                        Returns
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Promotions") ? "active" : "")" asp-area="Admin" asp-controller="Promotions" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></svg>
-                    Promotions
+
+
+                <!-- Promotions -->
+
+                <a class="admin-nav-link @(IsActive("Promotions") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Promotions"
+                   asp-action="Index">
+
+                    <i class="bi bi-percent"></i>
+
+                    <span>
+                        Promotions
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Reviews") ? "active" : "")" asp-area="Admin" asp-controller="Reviews" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15 9 22 9.3 17 14 18.5 21 12 17.3 5.5 21 7 14 2 9.3 9 9" /></svg>
-                    Reviews
+
+
+                <!-- Reviews -->
+
+                <a class="admin-nav-link @(IsActive("Reviews") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Reviews"
+                   asp-action="Index">
+
+                    <i class="bi bi-star-fill"></i>
+
+                    <span>
+                        Reviews
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Vendors") ? "active" : "")" asp-area="Admin" asp-controller="Vendors" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="7" width="15" height="10" rx="1.5" /><path d="M16 10h4l3 3v4h-7" /><circle cx="6" cy="19" r="1.7" /><circle cx="18.5" cy="19" r="1.7" /></svg>
-                    Vendors
+
+
+                <!-- Vendors -->
+
+                <a class="admin-nav-link @(IsActive("Vendors") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Vendors"
+                   asp-action="Index">
+
+                    <i class="bi bi-truck"></i>
+
+                    <span>
+                        Vendors
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("PurchaseOrders") ? "active" : "")" asp-area="Admin" asp-controller="PurchaseOrders" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 3v3h6V3" /><path d="M8 12h8M8 16h5" /></svg>
-                    Purchase Orders
+
+
+                <!-- Purchase Orders -->
+
+                <a class="admin-nav-link @(IsActive("PurchaseOrders") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="PurchaseOrders"
+                   asp-action="Index">
+
+                    <i class="bi bi-receipt"></i>
+
+                    <span>
+                        Purchase Orders
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Cms") ? "active" : "")" asp-area="Admin" asp-controller="Cms" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6" /></svg>
-                    CMS
+
+
+                <!-- CMS -->
+
+                <a class="admin-nav-link @(IsActive("Cms") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Cms"
+                   asp-action="Index">
+
+                    <i class="bi bi-file-earmark-text-fill"></i>
+
+                    <span>
+                        CMS
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("AuditLogs") ? "active" : "")" asp-area="Admin" asp-controller="AuditLogs" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
-                    Audit Logs
+
+
+                <!-- Audit Logs -->
+
+                <a class="admin-nav-link @(IsActive("AuditLogs") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="AuditLogs"
+                   asp-action="Index">
+
+                    <i class="bi bi-journal-check"></i>
+
+                    <span>
+                        Audit Logs
+                    </span>
+
                 </a>
-                <a class="admin-nav-link @(IsActive("Reports") ? "active" : "")" asp-area="Admin" asp-controller="Reports" asp-action="Index">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
-                    Reports
+
+
+                <!-- Reports -->
+
+                <a class="admin-nav-link @(IsActive("Reports") ? "active" : "")"
+                   asp-area="Admin"
+                   asp-controller="Reports"
+                   asp-action="Index">
+
+                    <i class="bi bi-bar-chart-fill"></i>
+
+                    <span>
+                        Reports
+                    </span>
+
                 </a>
+
             </nav>
 
-            <form asp-area="Admin" asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
-                <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Logout</button>
+
+            <!-- ================================================= -->
+            <!-- LOGOUT
+
+This stays at the bottom of sidebar.
+                 ================================================= -->
+
+            <form asp-area="Admin"
+                  asp-controller="Account"
+                  asp-action="Logout"
+                  method="post">
+
+                <button type="submit"
+                        class="btn btn-outline-secondary btn-sm w-100">
+
+                    <i class="bi bi-box-arrow-right me-1"></i>
+
+                    Logout
+
+                </button>
+
             </form>
+
         </aside>
 
-        <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+
+        <!-- ===================================================== -->
+        <!-- MOBILE SIDEBAR BACKDROP -->
+        <!-- ===================================================== -->
+
+        <div class="admin-sidebar-backdrop"
+             id="adminSidebarBackdrop">
+        </div>
+
+
+        <!-- ===================================================== -->
+        <!-- MAIN AREA -->
+        <!-- ===================================================== -->
+
+        <div class="flex-grow-1 d-flex flex-column">
+
+
+            <!-- ================================================= -->
+            <!-- TOPBAR -->
+            <!-- ================================================= -->
+
             <header class="admin-topbar">
-                <button class="btn btn-sm btn-outline-secondary d-md-none" onclick="document.getElementById('adminSidebar').classList.toggle('open')">☰</button>
+
+
+                <!-- Mobile Sidebar Button -->
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary admin-menu-btn"
+                        id="adminMenuButton"
+                        aria-label="Toggle navigation"
+                        aria-controls="adminSidebar"
+                        aria-expanded="false">
+
+                    <i class="bi bi-list"></i>
+
+                </button>
+
+
+                <!-- Search -->
+
                 <div class="admin-search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                    <input type="text" placeholder="Search users, roles..." />
+
+                    <i class="bi bi-search"></i>
+
+                    <input type="text"
+                           placeholder="Search users, roles..."
+                           autocomplete="off" />
+
                 </div>
+
+
+                <!-- Topbar Icons -->
+
                 <div class="admin-topbar-icons">
-                    <div class="admin-icon-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+
+
+                    <!-- Notifications -->
+
+                    <button type="button"
+                            class="admin-icon-btn"
+                            title="Notifications"
+                            aria-label="Notifications">
+
+                        <i class="bi bi-bell"></i>
+
                         <span class="dot"></span>
-                    </div>
-                    <div class="admin-icon-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10" /><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4" /><line x1="12" y1="17" x2="12" y2="17" /></svg>
-                    </div>
+
+                    </button>
+
+
+                    <!-- Help -->
+
+                    <button type="button"
+                            class="admin-icon-btn"
+                            title="Help"
+                            aria-label="Help">
+
+                        <i class="bi bi-question-circle"></i>
+
+                    </button>
+
                 </div>
+
             </header>
 
+
+            <!-- ================================================= -->
+            <!-- CONTENT
+
+Main page scroll happens here only.
+                 ================================================= -->
+
             <main class="admin-content">
+
                 @RenderBody()
+
             </main>
+
         </div>
+
     </div>
 
+
+    <!-- ========================================================= -->
+    <!-- SCRIPTS -->
+    <!-- ========================================================= -->
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+
+
+    <!-- ========================================================= -->
+    <!-- SIDEBAR BEHAVIOR -->
+    <!-- ========================================================= -->
+
+    <script>
+
+            (function() {
+
+                const sidebar =
+                    document.getElementById('adminSidebar');
+
+                const menuButton =
+                    document.getElementById('adminMenuButton');
+
+                const backdrop =
+                    document.getElementById('adminSidebarBackdrop');
+
+
+                if (!sidebar || !menuButton || !backdrop) {
+                    return;
+                }
+
+
+                function openSidebar() {
+
+                    sidebar.classList.add('open');
+
+                    backdrop.classList.add('show');
+
+                    menuButton.setAttribute(
+                        'aria-expanded',
+                        'true'
+                    );
+
+                    document.body.style.overflow = 'hidden';
+                }
+
+
+                function closeSidebar() {
+
+                    sidebar.classList.remove('open');
+
+                    backdrop.classList.remove('show');
+
+                    menuButton.setAttribute(
+                        'aria-expanded',
+                        'false'
+                    );
+
+                    document.body.style.overflow = '';
+                }
+
+
+                menuButton.addEventListener(
+                    'click',
+                    function() {
+
+                        if (sidebar.classList.contains('open')) {
+                            closeSidebar();
+                        }
+                        else {
+                            openSidebar();
+                        }
+
+                    }
+                );
+
+
+                backdrop.addEventListener(
+                    'click',
+                    closeSidebar
+                );
+
+
+                sidebar
+                    .querySelectorAll('.admin-nav-link')
+                    .forEach(function(link) {
+
+                        link.addEventListener(
+                            'click',
+                            function() {
+
+                                if (
+                                    window.innerWidth <= 991.98
+                                ) {
+                                    closeSidebar();
+                                }
+
+                            }
+                        );
+
+                    });
+
+
+                window.addEventListener(
+                    'resize',
+                    function() {
+
+                        if (window.innerWidth > 991.98) {
+                            closeSidebar();
+                        }
+
+                    }
+                );
+
+
+                document.addEventListener(
+                    'keydown',
+                    function(event) {
+
+                        if (event.key === 'Escape') {
+                            closeSidebar();
+                        }
+
+                    }
+                );
+
+            })();
+
+    </script>
+
+
+    @await RenderSectionAsync(
+        "Scripts",
+        required: false
+    )
+
 </body>
+
 </html>

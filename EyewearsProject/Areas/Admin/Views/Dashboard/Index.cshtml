@@ -1,412 +1,2663 @@
 ﻿@using EyewearsProject.Extensions
 @model DashboardViewModel
 
-<style>
-    .stat-card {
-        border: none;
-        border-radius: 10px;
-        padding: 14px 16px;
-        background: #fff;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        border-left: 3px solid transparent;
+@*
+    ============================================================
+    EyeCraft Admin Dashboard
+    ============================================================
+
+    DashboardViewModel properties preserved:
+    - TotalSales
+    - TodaySales
+    - MonthlySales
+    - TotalRefunded
+    - TotalOrders
+    - PendingOrders
+    - DeliveredOrders
+    - CancelledOrders
+    - TotalCustomers
+    - NewCustomersThisMonth
+    - LowStockCount
+    - TotalReturns
+    - SalesByDay
+    - SalesByMonth
+    - SalesByCategory
+    - SalesByBrand
+    - OrdersByStatus
+    - CustomerGrowth
+    - TopProducts
+    - TopBrands
+*@
+
+
+<div class="dashboard-page">
+
+
+    <!-- ========================================================
+         PAGE HEADER
+         ======================================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>Dashboard</h1>
+
+            <p>
+                Welcome back, @User.Identity?.Name.
+                Here's what's happening with your store.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         ATTENTION ALERT
+         ======================================================== -->
+    @if (Model.PendingOrders > 0 ||
+             Model.LowStockCount > 0 ||
+             Model.TotalReturns > 0)
+    {
+        <div class="dashboard-attention">
+
+            <div class="dashboard-attention-icon">
+
+                <i class="bi bi-exclamation-triangle"></i>
+
+            </div>
+
+            <div class="dashboard-attention-content">
+
+                <strong>Needs attention</strong>
+
+                <div class="dashboard-attention-items">
+
+                    @if (Model.PendingOrders > 0)
+                    {
+                        <span class="pill pill-gray">
+
+                            <i class="bi bi-clock"></i>
+
+                            @Model.PendingOrders pending order(s)
+
+                        </span>
+                    }
+
+                    @if (Model.LowStockCount > 0)
+                    {
+                        <span class="pill pill-warning">
+
+                            <i class="bi bi-box-seam"></i>
+
+                            @Model.LowStockCount low/out of stock item(s)
+
+                        </span>
+                    }
+
+                    @if (Model.TotalReturns > 0)
+                    {
+                        <span class="pill pill-blue">
+
+                            <i class="bi bi-arrow-counterclockwise"></i>
+
+                            @Model.TotalReturns return(s)
+
+                        </span>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
     }
 
-        .stat-card .stat-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            margin-bottom: 8px;
+
+    <!-- ========================================================
+         SALES
+         ======================================================== -->
+
+    <div class="dashboard-section-title">
+
+        <span class="dashboard-section-icon">
+            <i class="bi bi-cash-stack"></i>
+        </span>
+
+        <span>Sales</span>
+
+    </div>
+
+
+    <div class="row g-3">
+
+
+        <!-- Total Sales -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-blue">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        Overall
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Total Sales
+                </div>
+
+                <div class="dashboard-stat-value">
+                    @Model.TotalSales.ToPkr()
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Today's Sales -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-green">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-calendar-day"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        Today
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Today's Sales
+                </div>
+
+                <div class="dashboard-stat-value">
+                    @Model.TodaySales.ToPkr()
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Monthly Sales -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-warning">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        This month
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Monthly Sales
+                </div>
+
+                <div class="dashboard-stat-value">
+                    @Model.MonthlySales.ToPkr()
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Total Refunded -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-danger">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        Refunds
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Total Refunded
+                </div>
+
+                <div class="dashboard-stat-value text-danger">
+                    @Model.TotalRefunded.ToPkr()
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         ORDERS
+         ======================================================== -->
+
+    <div class="dashboard-section-title">
+
+        <span class="dashboard-section-icon">
+            <i class="bi bi-box-seam"></i>
+        </span>
+
+        <span>Orders</span>
+
+    </div>
+
+
+    <div class="row g-3">
+
+
+        <!-- Total Orders -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-dark">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        All time
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Total Orders
+                </div>
+
+                <div class="dashboard-stat-value">
+                    @Model.TotalOrders
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Pending -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-warning">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        Action needed
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Pending
+                </div>
+
+                <div class="dashboard-stat-value text-warning">
+                    @Model.PendingOrders
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Delivered -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-green">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        Completed
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Delivered
+                </div>
+
+                <div class="dashboard-stat-value text-success">
+                    @Model.DeliveredOrders
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Cancelled -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-danger">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        Cancelled
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Cancelled
+                </div>
+
+                <div class="dashboard-stat-value text-danger">
+                    @Model.CancelledOrders
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         CUSTOMERS & INVENTORY
+         ======================================================== -->
+
+    <div class="dashboard-section-title">
+
+        <span class="dashboard-section-icon">
+            <i class="bi bi-people"></i>
+        </span>
+
+        <span>Customers &amp; Inventory</span>
+
+    </div>
+
+
+    <div class="row g-3">
+
+
+        <!-- Total Customers -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-blue">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        Customers
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Total Customers
+                </div>
+
+                <div class="dashboard-stat-value">
+                    @Model.TotalCustomers
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- New Customers -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-green">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        This month
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    New This Month
+                </div>
+
+                <div class="dashboard-stat-value">
+                    @Model.NewCustomersThisMonth
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Low Stock -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-warning">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        Inventory
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Low Stock Products
+                </div>
+
+                <div class="dashboard-stat-value text-warning">
+                    @Model.LowStockCount
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Total Returns -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="dashboard-stat-card dashboard-stat-purple">
+
+                <div class="dashboard-stat-top">
+
+                    <div class="dashboard-stat-icon">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+
+                    <span class="dashboard-stat-mini-label">
+                        All time
+                    </span>
+
+                </div>
+
+                <div class="dashboard-stat-label">
+                    Total Returns
+                </div>
+
+                <div class="dashboard-stat-value">
+                    @Model.TotalReturns
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         TRENDS
+         ======================================================== -->
+
+    <div class="dashboard-section-title">
+
+        <span class="dashboard-section-icon">
+            <i class="bi bi-bar-chart-line"></i>
+        </span>
+
+        <span>Trends</span>
+
+    </div>
+
+
+    <div class="row g-3">
+
+
+        <!-- Sales By Day -->
+
+        <div class="col-12 col-xl-6">
+
+            <div class="dashboard-chart-card">
+
+                <div class="dashboard-card-header">
+
+                    <div>
+
+                        <div class="dashboard-card-title">
+                            Sales by Day
+                        </div>
+
+                        <div class="dashboard-card-subtitle">
+                            Last 30 days
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-card-icon dashboard-card-icon-blue">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+
+                </div>
+
+                <div class="dashboard-chart-wrap dashboard-line-chart">
+                    <canvas id="salesByDayChart"></canvas>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Sales By Month -->
+
+        <div class="col-12 col-xl-6">
+
+            <div class="dashboard-chart-card">
+
+                <div class="dashboard-card-header">
+
+                    <div>
+
+                        <div class="dashboard-card-title">
+                            Sales by Month
+                        </div>
+
+                        <div class="dashboard-card-subtitle">
+                            Last 12 months
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-card-icon dashboard-card-icon-green">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+
+                </div>
+
+                <div class="dashboard-chart-wrap dashboard-line-chart">
+                    <canvas id="salesByMonthChart"></canvas>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         DONUT CHARTS
+         ======================================================== -->
+
+    <div class="row g-3 dashboard-donut-row">
+
+
+        <!-- Sales By Category -->
+
+        <div class="col-12 col-lg-4">
+
+            <div class="dashboard-chart-card dashboard-donut-card">
+
+                <div class="dashboard-card-header">
+
+                    <div>
+
+                        <div class="dashboard-card-title">
+                            Sales by Category
+                        </div>
+
+                        <div class="dashboard-card-subtitle">
+                            Revenue distribution
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-card-icon dashboard-card-icon-blue">
+                        <i class="bi bi-grid"></i>
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-donut-wrap">
+
+                    <canvas id="salesByCategoryChart"></canvas>
+
+                </div>
+
+
+                <div class="dashboard-donut-legend"
+                     id="salesByCategoryLegend">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Sales By Brand -->
+
+        <div class="col-12 col-lg-4">
+
+            <div class="dashboard-chart-card dashboard-donut-card">
+
+                <div class="dashboard-card-header">
+
+                    <div>
+
+                        <div class="dashboard-card-title">
+                            Sales by Brand
+                        </div>
+
+                        <div class="dashboard-card-subtitle">
+                            Revenue distribution
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-card-icon dashboard-card-icon-purple">
+                        <i class="bi bi-tags"></i>
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-donut-wrap">
+
+                    <canvas id="salesByBrandChart"></canvas>
+
+                </div>
+
+
+                <div class="dashboard-donut-legend"
+                     id="salesByBrandLegend">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Orders By Status -->
+
+        <div class="col-12 col-lg-4">
+
+            <div class="dashboard-chart-card dashboard-donut-card">
+
+                <div class="dashboard-card-header">
+
+                    <div>
+
+                        <div class="dashboard-card-title">
+                            Orders by Status
+                        </div>
+
+                        <div class="dashboard-card-subtitle">
+                            Current order distribution
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-card-icon dashboard-card-icon-warning">
+                        <i class="bi bi-pie-chart"></i>
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-donut-wrap">
+
+                    <canvas id="ordersByStatusChart"></canvas>
+
+                </div>
+
+
+                <div class="dashboard-donut-legend"
+                     id="ordersByStatusLegend">
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         CUSTOMER GROWTH
+         ======================================================== -->
+
+    <div class="dashboard-chart-card dashboard-customer-growth">
+
+        <div class="dashboard-card-header">
+
+            <div>
+
+                <div class="dashboard-card-title">
+                    Customer Growth
+                </div>
+
+                <div class="dashboard-card-subtitle">
+                    Total customers — last 12 months
+                </div>
+
+            </div>
+
+            <div class="dashboard-card-icon dashboard-card-icon-green">
+                <i class="bi bi-person-plus"></i>
+            </div>
+
+        </div>
+
+
+        <div class="dashboard-growth-chart-wrap">
+
+            <canvas id="customerGrowthChart"></canvas>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         TOP PRODUCTS / TOP BRANDS
+         ======================================================== -->
+
+    <div class="row g-3 dashboard-top-tables">
+
+
+        <!-- TOP PRODUCTS -->
+
+        <div class="col-12 col-xl-6">
+
+            <div class="dashboard-table-card">
+
+                <div class="dashboard-table-header">
+
+                    <div>
+
+                        <div class="dashboard-card-title">
+                            Top Products
+                        </div>
+
+                        <div class="dashboard-card-subtitle">
+                            Best performing products
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-card-icon dashboard-card-icon-blue">
+                        <i class="bi bi-award"></i>
+                    </div>
+
+                </div>
+
+
+                <div class="table-responsive">
+
+                    <table class="table dashboard-data-table mb-0">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Product
+                                </th>
+
+                                <th class="text-end">
+                                    Units
+                                </th>
+
+                                <th class="text-end">
+                                    Revenue
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @if (Model.TopProducts.Any())
+                            {
+                                foreach (var p in Model.TopProducts)
+                                {
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="dashboard-product-name">
+
+                                                <span class="dashboard-table-avatar">
+                                                    <i class="bi bi-box"></i>
+                                                </span>
+
+                                                <span>
+                                                    @p.ProductName
+                                                </span>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td class="text-end font-mono">
+                                            @p.UnitsSold
+                                        </td>
+
+                                        <td class="text-end font-mono dashboard-revenue">
+                                            @p.Revenue.ToPkr()
+                                        </td>
+
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+
+                                    <td colspan="3">
+
+                                        <div class="dashboard-table-empty">
+
+                                            <i class="bi bi-bar-chart"></i>
+
+                                            <span>
+                                                No sales data yet.
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TOP BRANDS -->
+
+        <div class="col-12 col-xl-6">
+
+            <div class="dashboard-table-card">
+
+                <div class="dashboard-table-header">
+
+                    <div>
+
+                        <div class="dashboard-card-title">
+                            Top Brands
+                        </div>
+
+                        <div class="dashboard-card-subtitle">
+                            Best performing brands
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-card-icon dashboard-card-icon-purple">
+                        <i class="bi bi-tags"></i>
+                    </div>
+
+                </div>
+
+
+                <div class="table-responsive">
+
+                    <table class="table dashboard-data-table mb-0">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Brand
+                                </th>
+
+                                <th class="text-end">
+                                    Units
+                                </th>
+
+                                <th class="text-end">
+                                    Revenue
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @if (Model.TopBrands.Any())
+                            {
+                                foreach (var b in Model.TopBrands)
+                                {
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="dashboard-product-name">
+
+                                                <span class="dashboard-table-avatar dashboard-table-avatar-purple">
+                                                    <i class="bi bi-tag"></i>
+                                                </span>
+
+                                                <span>
+                                                    @b.BrandName
+                                                </span>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td class="text-end font-mono">
+                                            @b.UnitsSold
+                                        </td>
+
+                                        <td class="text-end font-mono dashboard-revenue">
+                                            @b.Revenue.ToPkr()
+                                        </td>
+
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+
+                                    <td colspan="3">
+
+                                        <div class="dashboard-table-empty">
+
+                                            <i class="bi bi-tags"></i>
+
+                                            <span>
+                                                No sales data yet.
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- ============================================================
+     DASHBOARD-SPECIFIC STYLES
+     ============================================================ -->
+
+<style>
+
+    /* ========================================================
+           DASHBOARD PAGE / GLOBAL SPACING
+           ======================================================== */
+
+    .dashboard-page {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+
+        /*
+           The dashboard itself should not introduce an
+           additional top gap.
+        */
+
+        .dashboard-page > .page-header {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
         }
 
-        .stat-card .stat-label {
-            font-size: 11px;
-            color: #8a8f98;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-            font-weight: 600;
+
+        /*
+           Keep Bootstrap rows from creating unwanted
+           additional top spacing.
+        */
+
+        .dashboard-page > .row {
+            margin-top: 0;
         }
 
-        .stat-card .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1f2430;
-            margin-top: 2px;
+
+        .dashboard-page .row {
+            --bs-gutter-y: 1rem;
         }
 
-    .section-title {
-        font-size: 12px;
+
+        /*
+           Compact spacing between major dashboard sections.
+        */
+
+        .dashboard-page .dashboard-section-title {
+            margin-top: 18px;
+            margin-bottom: 10px;
+        }
+
+
+            /*
+           First dashboard section should sit close to header.
+        */
+
+            .dashboard-page .dashboard-section-title:first-of-type {
+                margin-top: 12px;
+            }
+
+
+        /*
+           Chart/table cards should not stretch vertically
+           because of inherited layout rules.
+        */
+
+        .dashboard-page .dashboard-chart-card,
+        .dashboard-page .dashboard-table-card {
+            min-height: 0;
+        }
+
+
+        /*
+           Customer growth card should remain compact.
+        */
+
+        .dashboard-page .dashboard-customer-growth {
+            min-height: 0;
+            height: auto;
+            margin-top: 16px;
+        }
+
+
+        /*
+           Keep final tables from creating a huge bottom gap.
+        */
+
+        .dashboard-page .dashboard-top-tables {
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+
+
+    /* ========================================================
+           SECTION TITLES
+           ======================================================== */
+
+    .dashboard-section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 18px;
+        margin-bottom: 10px;
+        color: var(--admin-text-muted);
+        font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: .05em;
-        color: #6b7280;
-        margin: 18px 0 10px;
+        letter-spacing: .55px;
+    }
+
+
+    .dashboard-section-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        background: var(--admin-blue-soft);
+        color: var(--admin-blue);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+
+        .dashboard-section-icon i {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+
+    /* ========================================================
+           ATTENTION
+           ======================================================== */
+
+    .dashboard-attention {
         display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 13px 15px;
+        margin-bottom: 16px;
+        background: var(--admin-warning-soft);
+        border: 1px solid #F0DDBD;
+        border-radius: var(--admin-radius);
+    }
+
+
+    .dashboard-attention-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--admin-warning);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+
+        .dashboard-attention-icon i {
+            font-size: 15px;
+        }
+
+
+    .dashboard-attention-content {
+        min-width: 0;
+        flex: 1;
+    }
+
+
+        .dashboard-attention-content > strong {
+            display: block;
+            font-size: 13px;
+            color: var(--admin-text);
+            margin-bottom: 7px;
+        }
+
+
+    .dashboard-attention-items {
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 6px;
     }
 
-    .chart-card {
-        background: #fff;
-        border-radius: 10px;
-        padding: 14px 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+
+        .dashboard-attention-items .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+
+            .dashboard-attention-items .pill i {
+                font-size: 11px;
+            }
+
+
+    /* ========================================================
+           STAT CARDS
+           ======================================================== */
+
+    .dashboard-stat-card {
+        position: relative;
         height: 100%;
+        min-height: 132px;
+        padding: 15px 16px;
+        background: var(--admin-card);
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius);
+        overflow: hidden;
+        transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
     }
 
-    /* Standalone charts (not paired in a row) must NOT stretch to fill leftover space */
-    .chart-card-solo {
-        background: #fff;
-        border-radius: 10px;
-        padding: 14px 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        height: auto;
+
+        .dashboard-stat-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--stat-color, var(--admin-blue));
+        }
+
+
+        .dashboard-stat-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 18px rgba(20, 24, 29, .055);
+        }
+
+
+    .dashboard-stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 13px;
     }
 
-    .chart-canvas-wrap {
-        position: relative; /* required so Chart.js measures a stable size, not a growing one */
+
+    .dashboard-stat-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: var(--stat-soft);
+        color: var(--stat-color);
     }
 
-    .chart-card h6, .chart-card-solo h6 {
-        font-weight: 700;
-        color: #1f2430;
-        margin-bottom: 10px;
-        font-size: 13px;
+
+        .dashboard-stat-icon i {
+            font-size: 15px;
+            line-height: 1;
+        }
+
+
+    .dashboard-stat-mini-label {
+        color: var(--admin-text-muted);
+        font-size: 10.5px;
+        font-weight: 600;
+        white-space: nowrap;
     }
 
-    .data-table thead th {
-        background: #f8f9fb;
+
+    .dashboard-stat-label {
+        color: var(--admin-text-muted);
         font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: .03em;
-        color: #6b7280;
-        border-bottom: 1px solid #edeef1;
-        font-weight: 700;
-        padding: 8px 10px;
+        letter-spacing: .45px;
+        margin-bottom: 3px;
     }
 
-    .data-table td, .data-table th {
-        border-color: #f0f1f3;
-        vertical-align: middle;
+
+    .dashboard-stat-value {
+        color: var(--admin-text);
+        font-size: 21px;
+        line-height: 1.25;
+        font-weight: 800;
+        letter-spacing: -.35px;
+        overflow-wrap: anywhere;
+    }
+
+
+    /* BLUE */
+
+    .dashboard-stat-blue {
+        --stat-color: var(--admin-blue);
+        --stat-soft: var(--admin-blue-soft);
+    }
+
+
+    /* GREEN */
+
+    .dashboard-stat-green {
+        --stat-color: var(--admin-success);
+        --stat-soft: var(--admin-success-soft);
+    }
+
+
+    /* WARNING */
+
+    .dashboard-stat-warning {
+        --stat-color: var(--admin-warning);
+        --stat-soft: var(--admin-warning-soft);
+    }
+
+
+    /* DANGER */
+
+    .dashboard-stat-danger {
+        --stat-color: var(--admin-danger);
+        --stat-soft: var(--admin-danger-soft);
+    }
+
+
+    /* DARK */
+
+    .dashboard-stat-dark {
+        --stat-color: var(--admin-ink);
+        --stat-soft: #F0F1F3;
+    }
+
+
+    /* PURPLE */
+
+    .dashboard-stat-purple {
+        --stat-color: var(--admin-purple);
+        --stat-soft: var(--admin-purple-soft);
+    }
+
+
+    /* ========================================================
+           CHART CARDS
+           ======================================================== */
+
+    .dashboard-chart-card,
+    .dashboard-table-card {
+        height: 100%;
+        background: var(--admin-card);
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius);
+        overflow: hidden;
+    }
+
+
+    .dashboard-chart-card {
+        padding: 16px;
+    }
+
+
+    .dashboard-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+
+    .dashboard-card-title {
+        color: var(--admin-text);
         font-size: 13px;
-        padding: 8px 10px;
+        font-weight: 700;
+        line-height: 1.35;
     }
 
-    .donut-legend {
+
+    .dashboard-card-subtitle {
+        color: var(--admin-text-muted);
+        font-size: 11.5px;
+        line-height: 1.4;
+        margin-top: 2px;
+    }
+
+
+    .dashboard-card-icon {
+        width: 31px;
+        height: 31px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+
+        .dashboard-card-icon i {
+            font-size: 14px;
+        }
+
+
+    .dashboard-card-icon-blue {
+        background: var(--admin-blue-soft);
+        color: var(--admin-blue);
+    }
+
+
+    .dashboard-card-icon-green {
+        background: var(--admin-success-soft);
+        color: var(--admin-success);
+    }
+
+
+    .dashboard-card-icon-warning {
+        background: var(--admin-warning-soft);
+        color: var(--admin-warning);
+    }
+
+
+    .dashboard-card-icon-purple {
+        background: var(--admin-purple-soft);
+        color: var(--admin-purple);
+    }
+
+
+    /* ========================================================
+           CHART AREAS
+           ======================================================== */
+
+    .dashboard-chart-wrap {
+        position: relative;
+        width: 100%;
+    }
+
+
+    .dashboard-line-chart {
+        height: 225px;
+    }
+
+
+    .dashboard-growth-chart-wrap {
+        position: relative;
+        height: 190px;
+        width: 100%;
+    }
+
+
+    .dashboard-donut-card {
+        min-height: 360px;
+    }
+
+
+    .dashboard-donut-wrap {
+        position: relative;
+        height: 165px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    /* ========================================================
+           DONUT LEGEND
+           ======================================================== */
+
+    .dashboard-donut-legend {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 6px;
         margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--admin-border);
+        max-height: 105px;
+        overflow-y: auto;
     }
 
-        .donut-legend .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
+
+    .dashboard-donut-legend-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-width: 0;
+        font-size: 11.5px;
+    }
+
+
+    .dashboard-donut-legend-label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        color: var(--admin-text);
+    }
+
+
+    .dashboard-donut-legend-label-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+    .dashboard-donut-legend-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+
+    .dashboard-donut-legend-value {
+        color: var(--admin-text-muted);
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+
+    /* ========================================================
+           CUSTOMER GROWTH
+           ======================================================== */
+
+    .dashboard-customer-growth {
+        min-height: 0;
+    }
+
+
+    /* ========================================================
+           TABLE CARD
+           ======================================================== */
+
+    .dashboard-table-card {
+        padding: 0;
+    }
+
+
+    .dashboard-table-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px;
+        border-bottom: 1px solid var(--admin-border);
+    }
+
+
+    .dashboard-table-card .table-responsive {
+        overflow-x: auto;
+    }
+
+
+    /* ========================================================
+           DATA TABLE
+           ======================================================== */
+
+    .dashboard-data-table {
+        margin: 0;
+        width: 100%;
+    }
+
+
+        .dashboard-data-table thead th {
+            padding: 11px 16px;
+            background: var(--admin-surface);
+            color: var(--admin-text-muted);
+            border-bottom: 1px solid var(--admin-border);
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .45px;
+            white-space: nowrap;
         }
+
+
+        .dashboard-data-table tbody td {
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--admin-border);
+            color: var(--admin-text);
+            font-size: 12.5px;
+            vertical-align: middle;
+        }
+
+
+        .dashboard-data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+
+        .dashboard-data-table tbody tr {
+            transition: background-color .15s ease;
+        }
+
+
+            .dashboard-data-table tbody tr:hover {
+                background: #FBFCFD;
+            }
+
+
+    /* ========================================================
+           TABLE PRODUCT NAME
+           ======================================================== */
+
+    .dashboard-product-name {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 150px;
+        font-weight: 600;
+    }
+
+
+    .dashboard-table-avatar {
+        width: 29px;
+        height: 29px;
+        border-radius: 8px;
+        background: var(--admin-blue-soft);
+        color: var(--admin-blue);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+
+        .dashboard-table-avatar i {
+            font-size: 13px;
+        }
+
+
+    .dashboard-table-avatar-purple {
+        background: var(--admin-purple-soft);
+        color: var(--admin-purple);
+    }
+
+
+    .dashboard-revenue {
+        font-weight: 700;
+    }
+
+
+    /* ========================================================
+           EMPTY TABLE STATE
+           ======================================================== */
+
+    .dashboard-table-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 18px 10px;
+        color: var(--admin-text-muted);
+        font-size: 12px;
+    }
+
+
+        .dashboard-table-empty i {
+            font-size: 14px;
+        }
+
+
+    /* ========================================================
+           SCROLLBAR - DONUT LEGENDS ONLY
+           ======================================================== */
+
+    .dashboard-donut-legend {
+        scrollbar-width: thin;
+    }
+
+
+        .dashboard-donut-legend::-webkit-scrollbar {
+            width: 5px;
+        }
+
+
+        .dashboard-donut-legend::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+
+        .dashboard-donut-legend::-webkit-scrollbar-thumb {
+            background: #D8DCE2;
+            border-radius: 10px;
+        }
+
+
+    /* ========================================================
+           RESPONSIVE
+           ======================================================== */
+
+    @@media (max-width: 1199.98px) {
+
+        .dashboard-line-chart {
+            height: 215px;
+        }
+
+        .dashboard-donut-card {
+            min-height: 350px;
+        }
+
+        .dashboard-growth-chart-wrap {
+            height: 185px;
+        }
+    }
+
+
+    @@media (max-width: 767.98px) {
+
+        .dashboard-section-title {
+            margin-top: 16px;
+            margin-bottom: 9px;
+        }
+
+
+        .dashboard-stat-card {
+            min-height: 125px;
+        }
+
+
+        .dashboard-stat-value {
+            font-size: 20px;
+        }
+
+
+        .dashboard-line-chart {
+            height: 210px;
+        }
+
+
+        .dashboard-growth-chart-wrap {
+            height: 195px;
+        }
+
+
+        .dashboard-donut-card {
+            min-height: auto;
+        }
+
+
+        .dashboard-donut-wrap {
+            height: 185px;
+        }
+
+
+        .dashboard-customer-growth {
+            margin-top: 14px;
+        }
+    }
+
+
+    @@media (max-width: 575.98px) {
+
+        .dashboard-attention {
+            padding: 12px;
+        }
+
+
+        .dashboard-attention-items {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+
+            .dashboard-attention-items .pill {
+                width: fit-content;
+            }
+
+
+        .dashboard-stat-card {
+            padding: 14px;
+        }
+
+
+        .dashboard-stat-top {
+            margin-bottom: 11px;
+        }
+
+
+        .dashboard-stat-value {
+            font-size: 19px;
+        }
+
+
+        .dashboard-chart-card {
+            padding: 14px;
+        }
+
+
+        .dashboard-card-header {
+            margin-bottom: 10px;
+        }
+
+
+        .dashboard-line-chart {
+            height: 200px;
+        }
+
+
+        .dashboard-growth-chart-wrap {
+            height: 190px;
+        }
+
+
+        .dashboard-table-header {
+            padding: 14px;
+        }
+
+
+        .dashboard-data-table thead th,
+        .dashboard-data-table tbody td {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+
+        .dashboard-top-tables {
+            margin-top: 14px;
+            margin-bottom: 12px;
+        }
+    }
+
+
+    /* ========================================================
+           REDUCED MOTION
+           ======================================================== */
+
+    @@media (prefers-reduced-motion: reduce) {
+
+        .dashboard-stat-card {
+            transition: none;
+        }
+    }
+
 </style>
 
-<div class="mb-4">
-    <h3 class="mb-1 fw-bold">Dashboard</h3>
-    <p class="text-muted mb-0">Welcome back, @User.Identity?.Name.</p>
-</div>
-
-@if (Model.PendingOrders > 0 || Model.LowStockCount > 0 || Model.TotalReturns > 0)
-{
-    <div class="d-flex align-items-center gap-2 flex-wrap p-3 mb-4" style="background:#fff7e6; border:1px solid #ffe8b3; border-radius:12px;">
-        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
-        <strong class="me-1">Needs attention:</strong>
-        @if (Model.PendingOrders > 0)
-        {
-            <span class="badge rounded-pill" style="background:#1f2430;">@Model.PendingOrders pending order(s)</span>
-        }
-        @if (Model.LowStockCount > 0)
-        {
-            <span class="badge rounded-pill text-dark" style="background:#ffd43b;">@Model.LowStockCount low/out of stock item(s)</span>
-        }
-        @if (Model.TotalReturns > 0)
-        {
-            <span class="badge rounded-pill text-dark" style="background:#a5d8ff;">@Model.TotalReturns return(s)</span>
-        }
-    </div>
-}
-
-<div class="section-title"><i class="bi bi-cash-coin"></i> Sales</div>
-<div class="row g-3">
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#4c6ef5;">
-            <div class="stat-icon" style="background:#edf1ff; color:#4c6ef5;"><i class="bi bi-graph-up-arrow"></i></div>
-            <div class="stat-label">Total Sales</div>
-            <div class="stat-value">@Model.TotalSales.ToPkr()</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#12b886;">
-            <div class="stat-icon" style="background:#e6fcf5; color:#12b886;"><i class="bi bi-calendar-day"></i></div>
-            <div class="stat-label">Today's Sales</div>
-            <div class="stat-value">@Model.TodaySales.ToPkr()</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#f59f00;">
-            <div class="stat-icon" style="background:#fff9db; color:#f59f00;"><i class="bi bi-calendar3"></i></div>
-            <div class="stat-label">Monthly Sales</div>
-            <div class="stat-value">@Model.MonthlySales.ToPkr()</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#fa5252;">
-            <div class="stat-icon" style="background:#fff0f0; color:#fa5252;"><i class="bi bi-arrow-counterclockwise"></i></div>
-            <div class="stat-label">Total Refunded</div>
-            <div class="stat-value text-danger">@Model.TotalRefunded.ToPkr()</div>
-        </div>
-    </div>
-</div>
-
-<div class="section-title"><i class="bi bi-box-seam"></i> Orders</div>
-<div class="row g-3">
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#1f2430;">
-            <div class="stat-icon" style="background:#eef0f2; color:#1f2430;"><i class="bi bi-receipt"></i></div>
-            <div class="stat-label">Total Orders</div>
-            <div class="stat-value">@Model.TotalOrders</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#f59f00;">
-            <div class="stat-icon" style="background:#fff9db; color:#f59f00;"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-label">Pending</div>
-            <div class="stat-value text-warning">@Model.PendingOrders</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#12b886;">
-            <div class="stat-icon" style="background:#e6fcf5; color:#12b886;"><i class="bi bi-check-circle"></i></div>
-            <div class="stat-label">Delivered</div>
-            <div class="stat-value text-success">@Model.DeliveredOrders</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#fa5252;">
-            <div class="stat-icon" style="background:#fff0f0; color:#fa5252;"><i class="bi bi-x-circle"></i></div>
-            <div class="stat-label">Cancelled</div>
-            <div class="stat-value text-danger">@Model.CancelledOrders</div>
-        </div>
-    </div>
-</div>
-
-<div class="section-title"><i class="bi bi-people"></i> Customers &amp; Inventory</div>
-<div class="row g-3">
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#4c6ef5;">
-            <div class="stat-icon" style="background:#edf1ff; color:#4c6ef5;"><i class="bi bi-people-fill"></i></div>
-            <div class="stat-label">Total Customers</div>
-            <div class="stat-value">@Model.TotalCustomers</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#12b886;">
-            <div class="stat-icon" style="background:#e6fcf5; color:#12b886;"><i class="bi bi-person-plus"></i></div>
-            <div class="stat-label">New This Month</div>
-            <div class="stat-value">@Model.NewCustomersThisMonth</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#f59f00;">
-            <div class="stat-icon" style="background:#fff9db; color:#f59f00;"><i class="bi bi-box"></i></div>
-            <div class="stat-label">Low Stock Products</div>
-            <div class="stat-value text-warning">@Model.LowStockCount</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color:#868e96;">
-            <div class="stat-icon" style="background:#f1f3f5; color:#868e96;"><i class="bi bi-arrow-return-left"></i></div>
-            <div class="stat-label">Total Returns</div>
-            <div class="stat-value">@Model.TotalReturns</div>
-        </div>
-    </div>
-</div>
-
-<div class="section-title"><i class="bi bi-bar-chart-line"></i> Trends</div>
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="chart-card">
-            <h6>Sales by Day (last 30 days)</h6>
-            <canvas id="salesByDayChart" height="90"></canvas>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="chart-card">
-            <h6>Sales by Month (last 12 months)</h6>
-            <canvas id="salesByMonthChart" height="90"></canvas>
-        </div>
-    </div>
-</div>
-
-<div class="row g-3 mt-1">
-    <div class="col-md-4">
-        <div class="chart-card">
-            <h6>Sales by Category</h6>
-            <div class="chart-canvas-wrap" style="height:130px;">
-                <canvas id="salesByCategoryChart"></canvas>
-            </div>
-            <div class="donut-legend" id="salesByCategoryLegend"></div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="chart-card">
-            <h6>Sales by Brand</h6>
-            <div class="chart-canvas-wrap" style="height:130px;">
-                <canvas id="salesByBrandChart"></canvas>
-            </div>
-            <div class="donut-legend" id="salesByBrandLegend"></div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="chart-card">
-            <h6>Orders by Status</h6>
-            <div class="chart-canvas-wrap" style="height:130px;">
-                <canvas id="ordersByStatusChart"></canvas>
-            </div>
-            <div class="donut-legend" id="ordersByStatusLegend"></div>
-        </div>
-    </div>
-</div>
-
-<div class="chart-card-solo mt-3">
-    <h6>Customer Growth (last 12 months)</h6>
-    <div class="chart-canvas-wrap" style="height:180px;">
-        <canvas id="customerGrowthChart"></canvas>
-    </div>
-</div>
-
-<div class="row g-3 mt-1 mb-4">
-    <div class="col-md-6">
-        <div class="chart-card">
-            <h6 class="mb-3"><i class="bi bi-award me-1"></i> Top Products</h6>
-            <table class="table data-table mb-0">
-                <thead><tr><th>Product</th><th>Units</th><th>Revenue</th></tr></thead>
-                <tbody>
-                    @if (Model.TopProducts.Any())
-                    {
-                        @foreach (var p in Model.TopProducts)
-                        {
-                            <tr><td>@p.ProductName</td><td>@p.UnitsSold</td><td>@p.Revenue.ToPkr()</td></tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr><td colspan="3" class="text-muted text-center py-3">No sales data yet.</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="chart-card">
-            <h6 class="mb-3"><i class="bi bi-tags me-1"></i> Top Brands</h6>
-            <table class="table data-table mb-0">
-                <thead><tr><th>Brand</th><th>Units</th><th>Revenue</th></tr></thead>
-                <tbody>
-                    @if (Model.TopBrands.Any())
-                    {
-                        @foreach (var b in Model.TopBrands)
-                        {
-                            <tr><td>@b.BrandName</td><td>@b.UnitsSold</td><td>@b.Revenue.ToPkr()</td></tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr><td colspan="3" class="text-muted text-center py-3">No sales data yet.</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
+
+    <!-- ========================================================
+         CHART.JS
+         ======================================================== -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+
     <script>
-        const pkr = (v) => 'Rs ' + Number(v).toLocaleString('en-PK', { maximumFractionDigits: 0 });
-        const palette = ['#4c6ef5', '#12b886', '#f59f00', '#fa5252', '#845ef7', '#868e96'];
 
-        function lineChart(id, labels, data, label) {
-            new Chart(document.getElementById(id), {
-                type: 'line',
-                data: { labels, datasets: [{ label, data, borderColor: '#4c6ef5', backgroundColor: 'rgba(76,110,245,0.08)', fill: true, tension: 0.35, pointRadius: 0 }] },
-                options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pkr(v) } }, x: { grid: { display: false } } } }
-            });
-        }
+        /* =====================================================
+           DASHBOARD CHART CONFIG
+           ===================================================== */
 
-        function barChart(id, labels, data, label) {
-            new Chart(document.getElementById(id), {
-                type: 'bar',
-                data: { labels, datasets: [{ label, data, backgroundColor: '#4c6ef5', borderRadius: 4 }] },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { beginAtZero: true, title: { display: true, text: label } }
-                    }
-                }
-            });
-        }
+        const dashboardPkr = (value) => {
 
-        function pieChart(id, labels, data, legendElId) {
-            new Chart(document.getElementById(id), {
-                type: 'doughnut',
-                data: { labels, datasets: [{ data, backgroundColor: palette, borderWidth: 2, borderColor: '#fff' }] },
-                options: { maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false } } }
+            return 'Rs ' + Number(value || 0).toLocaleString('en-PK', {
+                maximumFractionDigits: 0
             });
 
-            const legendEl = document.getElementById(legendElId);
-            if (legendEl) {
-                const total = data.reduce((a, b) => a + b, 0) || 1;
-                legendEl.innerHTML = labels.map((l, i) => {
-                    const pct = Math.round((data[i] / total) * 100);
-                    return `<div class="d-flex justify-content-between small">
-                                        <span><span class="dot" style="background:${palette[i % palette.length]}"></span>${l}</span>
-                                        <span class="text-muted">${pct}%</span>
-                                    </div>`;
-                }).join('');
+        };
+
+
+        const dashboardPalette = [
+            '#2F6FED',
+            '#1F9D55',
+            '#C08A2E',
+            '#E23D3D',
+            '#7C5CDB',
+            '#6F7781',
+            '#14A3A5',
+            '#D96C75'
+        ];
+
+
+        const dashboardGridColor = '#ECEEF1';
+        const dashboardMutedColor = '#8A9099';
+        const dashboardTextColor = '#14181D';
+
+
+        /* =====================================================
+           CHART DEFAULTS
+           ===================================================== */
+
+        Chart.defaults.font.family =
+            '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+        Chart.defaults.font.size = 11;
+
+        Chart.defaults.color = dashboardMutedColor;
+
+        Chart.defaults.animation.duration = 500;
+
+
+        /* =====================================================
+           LINE CHART
+           ===================================================== */
+
+        function dashboardLineChart(
+            id,
+            labels,
+            data,
+            label
+        ) {
+
+            const canvas =
+                document.getElementById(id);
+
+            if (!canvas) {
+                return;
             }
+
+
+            new Chart(canvas, {
+
+                type: 'line',
+
+                data: {
+
+                    labels: labels || [],
+
+                    datasets: [
+
+                        {
+
+                            label: label,
+
+                            data: data || [],
+
+                            borderColor: '#2F6FED',
+
+                            backgroundColor:
+                                'rgba(47,111,237,0.07)',
+
+                            fill: true,
+
+                            tension: 0.35,
+
+                            borderWidth: 2,
+
+                            pointRadius: 0,
+
+                            pointHoverRadius: 4,
+
+                            pointHoverBackgroundColor: '#2F6FED',
+
+                            pointHoverBorderColor: '#FFFFFF',
+
+                            pointHoverBorderWidth: 2
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    interaction: {
+
+                        intersect: false,
+
+                        mode: 'index'
+
+                    },
+
+                    plugins: {
+
+                        legend: {
+
+                            display: false
+
+                        },
+
+                        tooltip: {
+
+                            backgroundColor: '#14181D',
+
+                            titleColor: '#FFFFFF',
+
+                            bodyColor: '#FFFFFF',
+
+                            padding: 10,
+
+                            cornerRadius: 8,
+
+                            displayColors: false,
+
+                            callbacks: {
+
+                                label: function(context) {
+
+                                    return ' ' +
+                                        dashboardPkr(context.parsed.y);
+
+                                }
+
+                            }
+
+                        }
+
+                    },
+
+                    scales: {
+
+                        x: {
+
+                            border: {
+                                display: false
+                            },
+
+                            grid: {
+
+                                display: false
+
+                            },
+
+                            ticks: {
+
+                                color: dashboardMutedColor,
+
+                                maxRotation: 0,
+
+                                autoSkip: true,
+
+                                maxTicksLimit: 8,
+
+                                font: {
+
+                                    size: 10
+
+                                }
+
+                            }
+
+                        },
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            border: {
+
+                                display: false
+
+                            },
+
+                            grid: {
+
+                                color: dashboardGridColor,
+
+                                drawTicks: false
+
+                            },
+
+                            ticks: {
+
+                                color: dashboardMutedColor,
+
+                                padding: 8,
+
+                                font: {
+
+                                    size: 10
+
+                                },
+
+                                callback: function(value) {
+
+                                    return dashboardPkr(value);
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
         }
 
-        lineChart('salesByDayChart',
-                            @Html.Raw(Json.Serialize(Model.SalesByDay.Select(x => x.Label))),
-                            @Html.Raw(Json.Serialize(Model.SalesByDay.Select(x => x.Value))),
-            'Sales');
 
-        lineChart('salesByMonthChart',
-                            @Html.Raw(Json.Serialize(Model.SalesByMonth.Select(x => x.Label))),
-                            @Html.Raw(Json.Serialize(Model.SalesByMonth.Select(x => x.Value))),
-            'Sales');
+        /* =====================================================
+           BAR CHART
+           ===================================================== */
 
-        pieChart('salesByCategoryChart',
-                            @Html.Raw(Json.Serialize(Model.SalesByCategory.Select(x => x.Label))),
-                            @Html.Raw(Json.Serialize(Model.SalesByCategory.Select(x => x.Value))),
-            'salesByCategoryLegend');
+        function dashboardBarChart(
+            id,
+            labels,
+            data,
+            label
+        ) {
 
-        pieChart('salesByBrandChart',
-                            @Html.Raw(Json.Serialize(Model.SalesByBrand.Select(x => x.Label))),
-                            @Html.Raw(Json.Serialize(Model.SalesByBrand.Select(x => x.Value))),
-            'salesByBrandLegend');
+            const canvas =
+                document.getElementById(id);
 
-        pieChart('ordersByStatusChart',
-                            @Html.Raw(Json.Serialize(Model.OrdersByStatus.Select(x => x.Label))),
-                            @Html.Raw(Json.Serialize(Model.OrdersByStatus.Select(x => x.Value))),
-            'ordersByStatusLegend');
+            if (!canvas) {
+                return;
+            }
 
-        barChart('customerGrowthChart',
-                            @Html.Raw(Json.Serialize(Model.CustomerGrowth.Select(x => x.Label))),
-                            @Html.Raw(Json.Serialize(Model.CustomerGrowth.Select(x => x.Value))),
-            'Total Customers');
+
+            new Chart(canvas, {
+
+                type: 'bar',
+
+                data: {
+
+                    labels: labels || [],
+
+                    datasets: [
+
+                        {
+
+                            label: label,
+
+                            data: data || [],
+
+                            backgroundColor: '#2F6FED',
+
+                            borderColor: '#2F6FED',
+
+                            borderWidth: 0,
+
+                            borderRadius: 5,
+
+                            borderSkipped: false,
+
+                            maxBarThickness: 34
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+
+                            display: false
+
+                        },
+
+                        tooltip: {
+
+                            backgroundColor: '#14181D',
+
+                            titleColor: '#FFFFFF',
+
+                            bodyColor: '#FFFFFF',
+
+                            padding: 10,
+
+                            cornerRadius: 8,
+
+                            displayColors: false,
+
+                            callbacks: {
+
+                                label: function(context) {
+
+                                    return ' ' +
+                                        Number(
+                                            context.parsed.y || 0
+                                        ).toLocaleString('en-PK');
+
+                                }
+
+                            }
+
+                        }
+
+                    },
+
+                    scales: {
+
+                        x: {
+
+                            border: {
+
+                                display: false
+
+                            },
+
+                            grid: {
+
+                                display: false
+
+                            },
+
+                            ticks: {
+
+                                color: dashboardMutedColor,
+
+                                maxRotation: 0,
+
+                                autoSkip: true,
+
+                                maxTicksLimit: 12,
+
+                                font: {
+
+                                    size: 10
+
+                                }
+
+                            }
+
+                        },
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            border: {
+
+                                display: false
+
+                            },
+
+                            grid: {
+
+                                color: dashboardGridColor,
+
+                                drawTicks: false
+
+                            },
+
+                            ticks: {
+
+                                color: dashboardMutedColor,
+
+                                padding: 8,
+
+                                font: {
+
+                                    size: 10
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+        }
+
+
+        /* =====================================================
+           DOUGHNUT CHART
+           ===================================================== */
+
+        function dashboardDonutChart(
+            id,
+            labels,
+            data,
+            legendElementId
+        ) {
+
+            const canvas =
+                document.getElementById(id);
+
+            if (!canvas) {
+                return;
+            }
+
+
+            const safeLabels =
+                labels || [];
+
+
+            const safeData =
+                (data || []).map(
+                    value => Number(value || 0)
+                );
+
+
+            new Chart(canvas, {
+
+                type: 'doughnut',
+
+                data: {
+
+                    labels: safeLabels,
+
+                    datasets: [
+
+                        {
+
+                            data: safeData,
+
+                            backgroundColor:
+                                dashboardPalette,
+
+                            borderWidth: 2,
+
+                            borderColor: '#FFFFFF',
+
+                            hoverOffset: 4
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: '72%',
+
+                    plugins: {
+
+                        legend: {
+
+                            display: false
+
+                        },
+
+                        tooltip: {
+
+                            backgroundColor: '#14181D',
+
+                            titleColor: '#FFFFFF',
+
+                            bodyColor: '#FFFFFF',
+
+                            padding: 9,
+
+                            cornerRadius: 8,
+
+                            callbacks: {
+
+                                label: function(context) {
+
+                                    const total =
+                                        safeData.reduce(
+                                            (sum, value) =>
+                                                sum + value,
+                                            0
+                                        ) || 1;
+
+
+                                    const value =
+                                        Number(
+                                            context.raw || 0
+                                        );
+
+
+                                    const percentage =
+                                        Math.round(
+                                            (value / total) * 100
+                                        );
+
+
+                                    return ' ' +
+                                        context.label +
+                                        ': ' +
+                                        percentage +
+                                        '%';
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+
+            const legendElement =
+                document.getElementById(legendElementId);
+
+            if (!legendElement) {
+                return;
+            }
+
+
+            const total =
+                safeData.reduce(
+                    (sum, value) =>
+                        sum + value,
+                    0
+                ) || 1;
+
+
+            if (!safeLabels.length) {
+
+                legendElement.innerHTML = `
+                            <div class="dashboard-table-empty">
+                                <i class="bi bi-bar-chart"></i>
+                                <span>No data available.</span>
+                            </div>
+                        `;
+
+                return;
+
+            }
+
+
+            legendElement.innerHTML =
+                safeLabels.map(
+                    (labelText, index) => {
+
+                        const percentage =
+                            Math.round(
+                                (
+                                    safeData[index] /
+                                    total
+                                ) * 100
+                            );
+
+
+                        return `
+
+                                    <div class="dashboard-donut-legend-row">
+
+                                        <div class="dashboard-donut-legend-label">
+
+                                            <span
+                                                class="dashboard-donut-legend-dot"
+                                                style="
+                                                    background:
+                                                    ${dashboardPalette[
+                            index %
+                            dashboardPalette.length
+                            ]};
+                                                ">
+                                            </span>
+
+                                            <span
+                                                class="dashboard-donut-legend-label-text">
+                                                ${labelText}
+                                            </span>
+
+                                        </div>
+
+                                        <span class="dashboard-donut-legend-value">
+                                            ${percentage}%
+                                        </span>
+
+                                    </div>
+
+                                `;
+
+                    }
+                ).join('');
+
+        }
+
+
+        /* =====================================================
+           CHART DATA
+           ===================================================== */
+
+        const salesByDayLabels =
+                    @Html.Raw(Json.Serialize(
+                            Model.SalesByDay.Select(x => x.Label)
+    ));
+
+
+        const salesByDayData =
+                    @Html.Raw(Json.Serialize(
+                            Model.SalesByDay.Select(x => x.Value)
+    ));
+
+
+        const salesByMonthLabels =
+                    @Html.Raw(Json.Serialize(
+                            Model.SalesByMonth.Select(x => x.Label)
+    ));
+
+
+        const salesByMonthData =
+                    @Html.Raw(Json.Serialize(
+                            Model.SalesByMonth.Select(x => x.Value)
+    ));
+
+
+        const salesByCategoryLabels =
+                    @Html.Raw(Json.Serialize(
+                            Model.SalesByCategory.Select(x => x.Label)
+    ));
+
+
+        const salesByCategoryData =
+                    @Html.Raw(Json.Serialize(
+                            Model.SalesByCategory.Select(x => x.Value)
+    ));
+
+
+        const salesByBrandLabels =
+                    @Html.Raw(Json.Serialize(
+                            Model.SalesByBrand.Select(x => x.Label)
+    ));
+
+
+        const salesByBrandData =
+                    @Html.Raw(Json.Serialize(
+                            Model.SalesByBrand.Select(x => x.Value)
+    ));
+
+
+        const ordersByStatusLabels =
+                    @Html.Raw(Json.Serialize(
+                            Model.OrdersByStatus.Select(x => x.Label)
+    ));
+
+
+        const ordersByStatusData =
+                    @Html.Raw(Json.Serialize(
+                            Model.OrdersByStatus.Select(x => x.Value)
+    ));
+
+
+        const customerGrowthLabels =
+                    @Html.Raw(Json.Serialize(
+                            Model.CustomerGrowth.Select(x => x.Label)
+    ));
+
+
+        const customerGrowthData =
+                    @Html.Raw(Json.Serialize(
+                            Model.CustomerGrowth.Select(x => x.Value)
+    ));
+
+
+        /* =====================================================
+           INITIALIZE CHARTS
+           ===================================================== */
+
+        dashboardLineChart(
+            'salesByDayChart',
+            salesByDayLabels,
+            salesByDayData,
+            'Sales'
+        );
+
+
+        dashboardLineChart(
+            'salesByMonthChart',
+            salesByMonthLabels,
+            salesByMonthData,
+            'Sales'
+        );
+
+
+        dashboardDonutChart(
+            'salesByCategoryChart',
+            salesByCategoryLabels,
+            salesByCategoryData,
+            'salesByCategoryLegend'
+        );
+
+
+        dashboardDonutChart(
+            'salesByBrandChart',
+            salesByBrandLabels,
+            salesByBrandData,
+            'salesByBrandLegend'
+        );
+
+
+        dashboardDonutChart(
+            'ordersByStatusChart',
+            ordersByStatusLabels,
+            ordersByStatusData,
+            'ordersByStatusLegend'
+        );
+
+
+        dashboardBarChart(
+            'customerGrowthChart',
+            customerGrowthLabels,
+            customerGrowthData,
+            'Total Customers'
+        );
+
     </script>
 }

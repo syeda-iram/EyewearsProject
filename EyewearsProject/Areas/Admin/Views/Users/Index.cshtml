@@ -1,183 +1,876 @@
 ﻿@model List<UserListItemViewModel>
+
 @{
-    var allRoles = (List<string?>)ViewBag.AllRoles;
+    var allRoles = (List<string?>)ViewBag.AllRoles ?? new List<string?>();
+
+    var currentSearch = ViewBag.CurrentSearch as string ?? "";
+    var currentRole = ViewBag.CurrentRole as string ?? "";
+    var currentStatus = ViewBag.CurrentStatus as string ?? "";
 }
 
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
         <h3 class="mb-1">User Management</h3>
-        <p class="text-muted mb-0">Manage platform access, roles, and user statuses.</p>
+        <p class="text-muted mb-0">
+            Manage platform access, roles, and user statuses.
+        </p>
     </div>
-    <a asp-action="Create" class="btn btn-dark">+ Add User</a>
+
+    <a asp-action="Create" class="btn btn-dark">
+        + Add User
+    </a>
 </div>
+
 
 @if (TempData["ResetResults"] != null)
 {
     <div class="alert alert-info">
-        <strong>Temporary passwords generated</strong> (share securely — email delivery isn't wired up yet):
-        <div>@TempData["ResetResults"]</div>
+        <strong>Temporary passwords generated</strong>
+        <div class="mt-1">
+            @TempData["ResetResults"]
+        </div>
     </div>
 }
 
+
+<!-- =========================
+     SUMMARY + FILTERS
+     ========================= -->
+
 <div class="row g-3 mb-3">
+
+    <!-- Total Users -->
     <div class="col-md-3">
-        <div class="card p-3 h-100">
-            <small class="text-muted text-uppercase">Total Users</small>
-            <h2 class="mb-0">@ViewBag.TotalUsers</h2>
+        <div class="card p-3 h-100 user-summary-card">
+            <small class="text-muted text-uppercase fw-semibold">
+                Total Users
+            </small>
+
+            <h2 class="mb-0 mt-1">
+                @ViewBag.TotalUsers
+            </h2>
         </div>
     </div>
+
+
+    <!-- Filters -->
     <div class="col-md-9">
         <div class="card p-3">
+
             <form method="get" class="row g-2 align-items-center">
-                <div class="col-md-5">
-                    <input type="text" name="search" class="form-control" placeholder="Search by name, email..." value="@ViewBag.CurrentSearch" />
+
+                <!-- Search -->
+                <div class="col-md-4">
+                    <input type="text"
+                           name="search"
+                           class="form-control"
+                           placeholder="Search by name, email..."
+                           value="@currentSearch" />
                 </div>
+
+
+                <!-- Role -->
                 <div class="col-md-3">
-                    <select name="role" class="form-select" onchange="this.form.submit()">
-                        <option value="">All Roles</option>
+                    <select name="role"
+                            class="form-select"
+                            onchange="this.form.submit()">
+
+                        <option value="">
+                            All Roles
+                        </option>
+
                         @foreach (var r in allRoles)
                         {
-                            <option value="@r" selected="@(r == (string)ViewBag.CurrentRole)">@r</option>
+                            <option value="@r"
+                                    selected="@(r == currentRole ? "selected" : null)">
+                                @r
+                            </option>
                         }
+
                     </select>
                 </div>
+
+
+                <!-- Status -->
                 <div class="col-md-3">
                     <select name="status" class="form-select" onchange="this.form.submit()">
                         <option value="">All Statuses</option>
-                        <option value="active" selected="@("active" == (string)ViewBag.CurrentStatus)">Active</option>
-                        <option value="inactive" selected="@("inactive" == (string)ViewBag.CurrentStatus)">Inactive</option>
+
+                        <option value="active"
+                                selected="@("active" == (string)ViewBag.CurrentStatus)">
+                            Active
+                        </option>
+
+                        <option value="inactive"
+                                selected="@("inactive" == (string)ViewBag.CurrentStatus)">
+                            Inactive
+                        </option>
+
+                        <option value="deleted"
+                                selected="@("deleted" == (string)ViewBag.CurrentStatus)">
+                            Deleted
+                        </option>
                     </select>
                 </div>
-                <div class="col-md-1">
-                    <button class="btn btn-outline-secondary w-100">Go</button>
+
+
+                <!-- Search Button -->
+                <div class="col-md-2">
+                    <button type="submit"
+                            class="btn btn-outline-secondary w-100">
+                        Go
+                    </button>
                 </div>
+
             </form>
+
         </div>
     </div>
+
 </div>
 
+
+<!-- =========================
+     USERS FORM
+     ========================= -->
+
 <form id="usersForm" method="post">
+
     @Html.AntiForgeryToken()
 
-    <div id="bulkBar" class="d-none bg-dark text-white p-2 rounded mb-2 d-flex align-items-center justify-content-between">
-        <span><span id="selectedCount">0</span> user(s) selected</span>
-        <div class="d-flex gap-2 align-items-center">
-            <select name="newRole" class="form-select form-select-sm" style="width:auto;">
-                <option value="">-- change role to --</option>
-                @foreach (var r in allRoles)
-                {
-                    <option value="@r">@r</option>
-                }
-            </select>
-            <button type="submit" formaction="@Url.Action("BulkChangeRole")" class="btn btn-sm btn-light">Change Role</button>
-            <button type="submit" formaction="@Url.Action("BulkResetPassword")" class="btn btn-sm btn-light">Reset Password</button>
-            <button type="submit" formaction="@Url.Action("BulkBlock")" class="btn btn-sm btn-danger"
-                    onclick="return confirm('Block selected users?');">
-                Block Users
-            </button>
+
+    <!-- =========================
+         BULK ACTION BAR
+         ========================= -->
+
+    <div id="bulkBar"
+         class="d-none bg-dark text-white p-2 rounded mb-2">
+
+        <div class="d-flex align-items-center justify-content-between gap-3">
+
+            <span>
+                <strong id="selectedCount">0</strong>
+                user(s) selected
+            </span>
+
+
+            <div class="d-flex gap-2 align-items-center">
+
+                <!-- Change Role -->
+                <select name="newRole"
+                        class="form-select form-select-sm bulk-role-select">
+
+                    <option value="">
+                        -- change role to --
+                    </option>
+
+                    @foreach (var r in allRoles)
+                    {
+                        <option value="@r">
+                            @r
+                        </option>
+                    }
+
+                </select>
+
+
+                <!-- Bulk Role -->
+                <button type="submit"
+                        formaction="@Url.Action("BulkChangeRole")"
+                        class="btn btn-sm btn-light">
+
+                    Change Role
+
+                </button>
+
+
+                <!-- Bulk Reset -->
+                <button type="submit"
+                        formaction="@Url.Action("BulkResetPassword")"
+                        class="btn btn-sm btn-light">
+
+                    Reset Password
+
+                </button>
+
+
+                <!-- Bulk Block -->
+                <button type="submit"
+                        formaction="@Url.Action("BulkBlock")"
+                        class="btn btn-sm btn-danger"
+                        onclick="return confirm('Block selected users?');">
+
+                    Block Users
+
+                </button>
+
+            </div>
+
         </div>
+
     </div>
 
-    <table class="table table-bordered bg-white align-middle">
-        <thead>
-            <tr>
-                <th style="width:36px;"><input type="checkbox" id="selectAll" /></th>
-                <th>User</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var u in Model)
-            {
-                var initials = string.Join("", u.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0])));
-                <tr class="@(u.IsDeleted ? "text-decoration-line-through" : "")" style="@(u.IsDeleted ? "background:#f1f1f1; color:#8a8f98;" : "")">
-                    <td>
-                        @if (!u.IsDeleted)
-                        {
-                            <input type="checkbox" class="row-check" name="selectedIds" value="@u.Id" />
-                        }
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                                 style="width:36px;height:36px;font-size:.8rem;flex-shrink:0;">
-                                @initials
-                            </div>
-                            <div>
-                                <div class="fw-semibold">@u.FullName</div>
-                                <div class="text-muted small">@u.Email</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        @if (u.Roles.Any())
-                        {
-                            @foreach (var r in u.Roles)
-                            {
-                                <span class="badge bg-primary">@r</span>
-                            }
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Customer</span>
-                        }
-                    </td>
-                    <td>
-                        @if (u.IsDeleted)
-                        {
-                            <span class="badge" style="background:#1f2430;">Deleted</span>
-                        }
-                        else if (u.IsActive)
-                        {
-                            <span class="badge bg-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning text-dark">Inactive</span>
-                        }
-                    </td>
-                    <td>@u.CreatedAt.ToString("dd MMM yyyy")</td>
-                    <td class="d-flex gap-1">
-                        @if (!u.IsDeleted)
-                        {
-                            <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <button type="submit" formaction="@Url.Action("ToggleActive", new { id = u.Id })" class="btn btn-sm btn-outline-warning">
-                                @(u.IsActive ? "Deactivate" : "Activate")
-                            </button>
-                            <button type="submit" formaction="@Url.Action("Delete", new { id = u.Id })" class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('Delete this user?');">
-                                Delete
-                            </button>
-                        }
-                    </td>
+
+    <!-- =========================
+         USERS TABLE
+         ========================= -->
+
+    <div class="table-responsive">
+
+        <table class="table table-bordered bg-white align-middle user-table">
+
+            <thead class="table-light">
+
+                <tr>
+
+                    <th style="width:42px;">
+                        <input type="checkbox"
+                               id="selectAll"
+                               title="Select active users" />
+                    </th>
+
+                    <th>
+                        User
+                    </th>
+
+                    <th>
+                        Role
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Created
+                    </th>
+
+                    <th style="min-width:300px;">
+                        Actions
+                    </th>
+
                 </tr>
-            }
-        </tbody>
-    </table>
+
+            </thead>
+
+
+            <tbody>
+
+                @foreach (var u in Model)
+                {
+                    var fullName = u.FullName ?? "Unknown User";
+
+                    var initials = string.Join(
+                        "",
+                        fullName
+                            .Split(
+                                ' ',
+                                StringSplitOptions.RemoveEmptyEntries
+                            )
+                            .Take(2)
+                            .Select(p => char.ToUpper(p[0]))
+                    );
+
+
+                    <tr class="@(u.IsDeleted ? "deleted-user-row" : "active-user-row")">
+
+
+                        <!-- =========================
+                             CHECKBOX
+                             ========================= -->
+
+                        <td>
+
+                            @if (!u.IsDeleted)
+                            {
+                                <input type="checkbox"
+                                       class="row-check"
+                                       name="selectedIds"
+                                       value="@u.Id" />
+                            }
+                            else
+                            {
+                                <input type="checkbox"
+                                       class="deleted-checkbox"
+                                       disabled
+                                       title="Deleted users cannot be selected" />
+                            }
+
+                        </td>
+
+
+                        <!-- =========================
+                             USER
+                             ========================= -->
+
+                        <td>
+
+                            <div class="d-flex align-items-center gap-2">
+
+                                <!-- Avatar -->
+                                <div class="user-avatar
+                                    rounded-circle
+                                    bg-secondary
+                                    text-white
+                                    d-flex
+                                    align-items-center
+                                    justify-content-center">
+
+                                    @initials
+
+                                </div>
+
+
+                                <!-- User information -->
+                                <div>
+
+                                    <div class="fw-semibold user-info-text">
+                                        @fullName
+                                    </div>
+
+                                    <div class="text-muted small user-info-text">
+                                        @u.Email
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- =========================
+                             ROLE
+                             ========================= -->
+
+                        <td>
+
+                            @if (u.Roles != null && u.Roles.Any())
+                            {
+                                foreach (var r in u.Roles)
+                                {
+                                    <span class="badge role-badge">
+                                        @r
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge customer-badge">
+                                    Customer
+                                </span>
+                            }
+
+                        </td>
+
+
+                        <!-- =========================
+                             STATUS
+                             ========================= -->
+
+                        <td>
+
+                            @if (u.IsDeleted)
+                            {
+                                <span class="badge deleted-badge">
+                                    Deleted
+                                </span>
+                            }
+                            else if (u.IsActive)
+                            {
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    Inactive
+                                </span>
+                            }
+
+                        </td>
+
+
+                        <!-- =========================
+                             CREATED
+                             ========================= -->
+
+                        <td class="user-info-text">
+
+                            @u.CreatedAt.ToString("dd MMM yyyy")
+
+                        </td>
+
+
+                        <!-- =========================
+                             ACTIONS
+                             ========================= -->
+
+                        <td>
+
+                            <div class="d-flex gap-1 flex-wrap">
+
+                                @if (!u.IsDeleted)
+                                {
+                                    <!-- EDIT -->
+                                    <a asp-action="Edit"
+                                       asp-route-id="@u.Id"
+                                       class="btn btn-sm btn-outline-primary">
+
+                                        Edit
+
+                                    </a>
+
+
+                                    <!-- ACTIVATE / DEACTIVATE -->
+                                    <button type="submit"
+                                            formaction="@Url.Action("ToggleActive", new { id = u.Id })"
+                                            class="btn btn-sm btn-outline-warning">
+
+                                        @(u.IsActive
+                                            ? "Deactivate"
+                                            : "Activate")
+
+                                    </button>
+
+
+                                    <!-- DELETE -->
+                                    <button type="submit"
+                                            formaction="@Url.Action("Delete", new { id = u.Id })"
+                                            class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Delete this user? The user will be moved to Deleted status and can be restored later.');">
+
+                                        Delete
+
+                                    </button>
+                                }
+                                else
+                                {
+                                    <!-- =========================
+                                         DELETED USER ACTIONS
+                                         ========================= -->
+                                    <!-- EDIT DISABLED -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary deleted-action-btn"
+                                            disabled
+                                            title="Deleted users cannot be edited">
+
+                                        Edit
+
+                                    </button>
+
+
+                                    <!-- ACTIVATE DISABLED -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary deleted-action-btn"
+                                            disabled
+                                            title="Restore the user before activating">
+
+                                        Activate
+
+                                    </button>
+
+
+                                    <!-- DELETE DISABLED -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary deleted-action-btn"
+                                            disabled
+                                            title="This user is already deleted">
+
+                                        Delete
+
+                                    </button>
+
+
+                                    <!-- RESTORE -->
+                                    <button type="submit"
+                                            formaction="@Url.Action("Restore", new { id = u.Id })"
+                                            class="btn btn-sm btn-outline-success restore-btn"
+                                            onclick="return confirm('Restore this user? The user will become active again.');">
+
+                                        Restore
+
+                                    </button>
+
+                                }
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+
 </form>
 
+
+<!-- =========================
+     JAVASCRIPT
+     ========================= -->
 @section Scripts {
+
     <script>
-        const selectAll = document.getElementById('selectAll');
-        const bulkBar = document.getElementById('bulkBar');
-        const selectedCount = document.getElementById('selectedCount');
+
+        const selectAll =
+            document.getElementById("selectAll");
+
+        const bulkBar =
+            document.getElementById("bulkBar");
+
+        const selectedCount =
+            document.getElementById("selectedCount");
+
 
         function updateBulkBar() {
-            const checked = document.querySelectorAll('.row-check:checked');
-            selectedCount.textContent = checked.length;
-            bulkBar.classList.toggle('d-none', checked.length === 0);
+
+            const checked =
+                document.querySelectorAll(".row-check:checked");
+
+            selectedCount.textContent =
+                checked.length;
+
+            bulkBar.classList.toggle(
+                "d-none",
+                checked.length === 0
+            );
+
         }
 
-        selectAll?.addEventListener('change', () => {
-            document.querySelectorAll('.row-check').forEach(c => c.checked = selectAll.checked);
-            updateBulkBar();
-        });
 
-        document.addEventListener('change', e => {
-            if (e.target.classList.contains('row-check')) updateBulkBar();
-        });
+        /*
+         * Select All
+         *
+         * Only non-deleted users have .row-check,
+         * therefore deleted users are automatically excluded.
+         */
+
+        selectAll?.addEventListener(
+            "change",
+            function() {
+
+                document
+                    .querySelectorAll(".row-check")
+                    .forEach(function(checkbox) {
+
+                        checkbox.checked =
+                            selectAll.checked;
+
+                    });
+
+                updateBulkBar();
+
+            }
+        );
+
+
+        /*
+         * Individual checkbox
+         */
+
+        document.addEventListener(
+            "change",
+            function(event) {
+
+                if (
+                    event.target.classList.contains("row-check")
+                ) {
+
+                    updateBulkBar();
+
+                }
+
+            }
+        );
+
+
+        /*
+         * Automatically update Select All state.
+         */
+
+        document.addEventListener(
+            "change",
+            function(event) {
+
+                if (
+                    !event.target.classList.contains("row-check")
+                ) {
+                    return;
+                }
+
+                const checkboxes =
+                    Array.from(
+                        document.querySelectorAll(".row-check")
+                    );
+
+                const checked =
+                    checkboxes.filter(
+                        checkbox => checkbox.checked
+                    );
+
+                if (checkboxes.length === 0) {
+
+                    selectAll.checked = false;
+                    selectAll.indeterminate = false;
+
+                    return;
+                }
+
+                selectAll.checked =
+                    checked.length === checkboxes.length;
+
+                selectAll.indeterminate =
+                    checked.length > 0 &&
+                    checked.length < checkboxes.length;
+
+            }
+        );
+
+
+        /*
+         * Prevent accidental bulk submission
+         * when no role has been selected.
+         */
+
+        document
+            .querySelector('button[formaction*="BulkChangeRole"]')
+            ?.addEventListener("click", function(event) {
+
+                const roleSelect =
+                    document.querySelector(
+                        'select[name="newRole"]'
+                    );
+
+                if (!roleSelect || !roleSelect.value) {
+
+                    event.preventDefault();
+
+                    alert("Please select a role first.");
+
+                }
+
+            });
+
     </script>
+
 }
+
+
+<!-- =========================
+     STYLING
+     ========================= -->
+
+<style>
+
+    /* =========================
+           GENERAL TABLE
+           ========================= */
+
+    .user-table {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+
+        .user-table thead th {
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+
+        .user-table tbody td {
+            vertical-align: middle;
+        }
+
+
+    /* =========================
+           USER AVATAR
+           ========================= */
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+        transition: opacity 0.2s ease;
+    }
+
+
+    /* =========================
+           ACTIVE USER
+           ========================= */
+
+    .active-user-row {
+        background-color: #fff;
+    }
+
+
+        .active-user-row:hover {
+            background-color: #f8f9fa;
+        }
+
+
+    /* =========================
+           DELETED USER
+           ========================= */
+
+    .deleted-user-row {
+        background-color: #f1f1f1 !important;
+        color: #8a8f98 !important;
+    }
+
+
+        .deleted-user-row:hover {
+            background-color: #e9e9e9 !important;
+        }
+
+
+        /*
+         * Strike only the user's information,
+         * role and created date.
+         *
+         * Actions are intentionally NOT struck through.
+         */
+
+        .deleted-user-row .user-info-text {
+            text-decoration: line-through;
+            color: #8a8f98 !important;
+        }
+
+
+        /*
+         * Deleted avatar
+         */
+
+        .deleted-user-row .user-avatar {
+            opacity: 0.55;
+            filter: grayscale(100%);
+        }
+
+
+        /*
+         * Deleted role badges
+         */
+
+        .deleted-user-row .role-badge,
+        .deleted-user-row .customer-badge {
+            background-color: #8a8f98 !important;
+            color: #fff !important;
+            opacity: 0.7;
+        }
+
+
+    /* =========================
+           ROLE BADGES
+           ========================= */
+
+    .role-badge {
+        background-color: #0d6efd;
+        color: #fff;
+        margin-right: 2px;
+    }
+
+
+    .customer-badge {
+        background-color: #6c757d;
+        color: #fff;
+    }
+
+
+    /* =========================
+           DELETED STATUS
+           ========================= */
+
+    .deleted-badge {
+        background-color: #343a40;
+        color: #fff;
+        font-weight: 500;
+    }
+
+
+    /* =========================
+           DELETED CHECKBOX
+           ========================= */
+
+    .deleted-checkbox {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+
+    /* =========================
+           DISABLED ACTION BUTTONS
+           ========================= */
+
+    .deleted-action-btn {
+        opacity: 0.45;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+
+
+    /*
+         * Restore remains fully active.
+         */
+
+    .restore-btn {
+        font-weight: 600;
+    }
+
+
+        .restore-btn:hover {
+            color: #fff;
+        }
+
+
+    /* =========================
+           BULK BAR
+           ========================= */
+
+    #bulkBar {
+        min-height: 46px;
+    }
+
+
+    .bulk-role-select {
+        min-width: 180px;
+    }
+
+
+    /* =========================
+           SUMMARY CARD
+           ========================= */
+
+    .user-summary-card {
+        border: 1px solid #e5e7eb;
+    }
+
+
+    /* =========================
+           MOBILE
+           ========================= */
+
+    @@media (max-width: 768px) {
+
+        .user-table {
+            min-width: 950px;
+        }
+
+        #bulkBar > div {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+
+        .bulk-role-select {
+            width: 100% !important;
+        }
+    }
+
+</style>
