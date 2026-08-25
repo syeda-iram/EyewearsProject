@@ -69,6 +69,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 BrandId = model.BrandId,
                 Price = model.Price,
                 DiscountPrice = model.DiscountPrice,
+                TryOnOverlayImageUrl = model.TryOnOverlayImageUrl,
                 IsActive = model.IsActive
             };
 
@@ -97,6 +98,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 BrandId = product.BrandId,
                 Price = product.Price,
                 DiscountPrice = product.DiscountPrice,
+                TryOnOverlayImageUrl = product.TryOnOverlayImageUrl,
                 IsActive = product.IsActive
             };
 
@@ -124,6 +126,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
             product.Description = model.Description;
             product.CategoryId = model.CategoryId;
             product.BrandId = model.BrandId;
+            product.TryOnOverlayImageUrl = model.TryOnOverlayImageUrl;
             product.Price = model.Price;
             product.DiscountPrice = model.DiscountPrice;
             product.IsActive = model.IsActive;
