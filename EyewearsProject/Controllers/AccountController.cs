@@ -482,6 +482,74 @@ namespace EyewearsProject.Controllers
         }
 
         // =========================
+        // PROFILE
+        // =========================
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return RedirectToAction(nameof(Login));
+
+            var model = new ProfileViewModel
+            {
+                FirstName = user.FirstName ?? "",
+                LastName = user.LastName ?? "",
+                Email = user.Email ?? "",
+                Phone = user.PhoneNumber,
+                DateOfBirth = user.DateOfBirth,
+                Gender = user.Gender,
+                ProfileImage = user.ProfileImage
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(ProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return RedirectToAction(nameof(Login));
+
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.Email = model.Email;
+            user.PhoneNumber = model.Phone;
+            user.DateOfBirth = model.DateOfBirth;
+            user.Gender = model.Gender;
+            user.ProfileImage = model.ProfileImage;
+
+            user.FullName = $"{model.FirstName} {model.LastName}".Trim();
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+
+                return View(model);
+            }
+
+            TempData["Success"] = "Profile updated successfully.";
+
+            return RedirectToAction(nameof(Profile));
+        }
+
+        // =========================
         // LOGOUT
         // =========================
 
