@@ -31,12 +31,21 @@ namespace EyewearsProject.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Brand model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
+
+            model.CreatedAt = DateTime.UtcNow;
+            model.UpdatedAt = DateTime.UtcNow;
 
             _context.Brands.Add(model);
             await _context.SaveChangesAsync();
 
-            await _auditLogger.LogAsync("Create", "Brand", model.Id.ToString(), $"Created brand {model.Name}");
+            await _auditLogger.LogAsync(
+                "Create",
+                "Brand",
+                model.Id.ToString(),
+                $"Created brand {model.Name}"
+            );
 
             TempData["Success"] = "Brand created.";
             return RedirectToAction(nameof(Index));
@@ -53,13 +62,34 @@ namespace EyewearsProject.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Brand model)
         {
-            if (id != model.Id) return NotFound();
-            if (!ModelState.IsValid) return View(model);
+            if (id != model.Id)
+                return NotFound();
 
-            _context.Update(model);
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var brand = await _context.Brands.FindAsync(id);
+
+            if (brand == null)
+                return NotFound();
+
+            brand.Name = model.Name;
+            brand.Slug = model.Slug;
+            brand.LogoUrl = model.LogoUrl;
+            brand.Description = model.Description;
+            brand.Website = model.Website;
+            brand.Country = model.Country;
+            brand.IsActive = model.IsActive;
+            brand.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
 
-            await _auditLogger.LogAsync("Update", "Brand", model.Id.ToString(), $"Updated brand {model.Name}");
+            await _auditLogger.LogAsync(
+                "Update",
+                "Brand",
+                brand.Id.ToString(),
+                $"Updated brand {brand.Name}"
+            );
 
             TempData["Success"] = "Brand updated.";
             return RedirectToAction(nameof(Index));

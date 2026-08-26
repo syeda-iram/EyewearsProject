@@ -143,7 +143,7 @@ namespace EyewearsProject.Controllers
                 FullName = defaultAddress?.FullName ?? user?.FullName ?? "",
                 Email = user?.Email ?? "",
                 Phone = defaultAddress?.Phone ?? "",
-                ShippingAddressLine = defaultAddress?.AddressLine ?? "",
+                ShippingAddressLine = defaultAddress?.AddressLine1 ?? "",
                 ShippingCity = defaultAddress?.City ?? "",
                 ShippingPostalCode = defaultAddress?.PostalCode ?? "",
                 ShippingCountry = defaultAddress?.Country ?? "Pakistan"

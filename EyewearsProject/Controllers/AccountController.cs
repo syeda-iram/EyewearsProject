@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using EyewearsProject.Services.Email;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 namespace EyewearsProject.Controllers
 {
@@ -257,6 +259,226 @@ namespace EyewearsProject.Controllers
                     : "Invalid login attempt.");
 
             return View(model);
+        }
+
+        // =========================
+        // FORGOT PASSWORD
+        // =========================
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            // Do not reveal whether the email exists
+            if (user == null || user.IsDeleted || !user.IsActive)
+            {
+                return RedirectToAction(nameof(ForgotPasswordConfirmation));
+            }
+
+            // Generate Identity password reset token
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Encode token so it is safe to put inside a URL
+            var encodedToken = WebEncoders.Base64UrlEncode(
+                Encoding.UTF8.GetBytes(token));
+
+            var resetUrl = Url.Action(
+                nameof(ResetPassword),
+                "Account",
+                new
+                {
+                    userId = user.Id,
+                    token = encodedToken
+                },
+                Request.Scheme);
+
+            var emailBody = $"""
+        <h2>Reset Your EyeCraft Password</h2>
+
+        <p>Hello {user.FullName},</p>
+
+        <p>
+            We received a request to reset your EyeCraft account password.
+        </p>
+
+        <p>
+            <a href="{resetUrl}"
+               style="
+                   display:inline-block;
+                   padding:10px 20px;
+                   background:#212529;
+                   color:white;
+                   text-decoration:none;
+                   border-radius:5px;
+               ">
+                Reset Your Password
+            </a>
+        </p>
+
+        <p>
+            If you did not request this, you can safely ignore this email.
+        </p>
+
+        <p>
+            Regards,<br/>
+            EyeCraft Team
+        </p>
+        """;
+
+            await _emailService.SendEmailAsync(
+                user.Email!,
+                "Reset Your EyeCraft Password",
+                emailBody);
+
+            return RedirectToAction(nameof(ForgotPasswordConfirmation));
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPasswordConfirmation()
+        {
+            return View();
+        }
+
+        // =========================
+        // RESET PASSWORD
+        // =========================
+
+        [HttpGet]
+        public IActionResult ResetPassword(string? userId, string? token)
+        {
+            if (string.IsNullOrEmpty(userId) ||
+                string.IsNullOrEmpty(token))
+            {
+                return RedirectToAction(nameof(ResetPasswordFailed));
+            }
+
+            return View(new ResetPasswordViewModel
+            {
+                UserId = userId,
+                Token = token
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(
+            ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.FindByIdAsync(model.UserId);
+
+            if (user == null ||
+                user.IsDeleted ||
+                !user.IsActive)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Invalid password reset request.");
+
+                return View(model);
+            }
+
+            string decodedToken;
+
+            try
+            {
+                // Decode the URL-safe token back to the original Identity token
+                decodedToken = Encoding.UTF8.GetString(
+                    WebEncoders.Base64UrlDecode(model.Token));
+            }
+            catch
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Invalid or corrupted password reset link.");
+
+                return View(model);
+            }
+
+            var result = await _userManager.ResetPasswordAsync(
+                user,
+                decodedToken,
+                model.Password);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        $"Reset failed: {error.Code} - {error.Description}");
+                }
+
+                return View(model);
+            }
+
+            // Password reset succeeded.
+            // Now send confirmation email.
+            try
+            {
+                var confirmationEmailBody = $"""
+            <h2>Password Reset Successfully</h2>
+
+            <p>Hello {user.FullName},</p>
+
+            <p>
+                Your EyeCraft account password has been successfully reset.
+            </p>
+
+            <p>
+                You can now log in using your new password.
+            </p>
+
+            <p>
+                If you did not make this change, please contact EyeCraft support immediately.
+            </p>
+
+            <p>
+                Regards,<br/>
+                EyeCraft Team
+            </p>
+            """;
+
+                await _emailService.SendEmailAsync(
+                    user.Email!,
+                    "EyeCraft Password Reset Successful",
+                    confirmationEmailBody);
+            }
+            catch
+            {
+                // The password was already successfully changed.
+                // Email failure should not undo the password reset.
+            }
+
+            return RedirectToAction(
+                nameof(ResetPasswordConfirmation));
+        }
+
+        [HttpGet]
+        public IActionResult ResetPasswordConfirmation()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ResetPasswordFailed()
+        {
+            return View();
         }
 
         // =========================

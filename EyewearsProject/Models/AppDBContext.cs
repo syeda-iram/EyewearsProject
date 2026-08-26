@@ -32,5 +32,34 @@ namespace EyewearsProject.Models
         public DbSet<Inventory> Inventories { get; set; } = null!;
         public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
         public DbSet<Prescription> Prescriptions { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Explicit self-referencing relationship for Category → SubCategories.
+            // Restrict (not Cascade) means deleting a parent category is blocked
+            // while it still has subcategories, rather than silently wiping them out.
+            modelBuilder.Entity<Category>()
+                .HasOne(c => c.ParentCategory)
+                .WithMany(c => c.SubCategories)
+                .HasForeignKey(c => c.ParentCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Apply a consistent precision/scale to every decimal property in the model,
+            // rather than annotating each one individually. 18,2 covers currency amounts
+            // (up to 16 digits before the decimal point, 2 after).
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
+                    {
+                        property.SetPrecision(18);
+                        property.SetScale(2);
+                    }
+                }
+            }
+        }
     }
 }

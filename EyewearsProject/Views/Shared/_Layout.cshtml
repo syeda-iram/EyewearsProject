@@ -10,8 +10,10 @@
 
 @{
     var categories = await DbContext.Categories
-        .OrderBy(c => c.Name)
-        .ToListAsync();
+    .Include(c => c.SubCategories)
+    .Where(c => c.ParentCategoryId == null)
+    .OrderBy(c => c.Name)
+    .ToListAsync();
 
     ApplicationUser? currentUser = null;
 
@@ -60,6 +62,9 @@
     <link rel="stylesheet"
           href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
+    <link rel="stylesheet" 
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
     <!-- Main site CSS -->
     <link rel="stylesheet"
           href="~/css/site.css"
@@ -81,8 +86,8 @@
     <style>
 
             /* =========================================================
-                       EYECraft HEADER
-                       ========================================================= */
+                                   EYECraft HEADER
+                                   ========================================================= */
 
             :root {
                 --evw-ink: #14213D;
@@ -105,12 +110,12 @@
 
 
             /*
-                       Three-part desktop header:
+                                   Three-part desktop header:
 
-                       LEFT   = Logo
-                       CENTER = Search
-                       RIGHT  = Navigation
-                    */
+                                   LEFT   = Logo
+                                   CENTER = Search
+                                   RIGHT  = Navigation
+                                */
 
             .evw-header {
                 width: 100%;
@@ -122,8 +127,8 @@
 
 
             /* =========================================================
-                       LOGO / BRAND
-                       ========================================================= */
+                                   LOGO / BRAND
+                                   ========================================================= */
 
             .evw-logo-btn {
                 display: flex;
@@ -196,8 +201,8 @@
 
 
             /* =========================================================
-                       SEARCH BAR
-                       ========================================================= */
+                                   SEARCH BAR
+                                   ========================================================= */
 
             .evw-search-form {
                 width: 100%;
@@ -270,8 +275,8 @@
 
 
             /* =========================================================
-                       NAVIGATION
-                       ========================================================= */
+                                   NAVIGATION
+                                   ========================================================= */
 
             .topbar-links {
                 flex-shrink: 0;
@@ -315,8 +320,8 @@
 
 
             /* =========================================================
-                       HEADER ICONS
-                       ========================================================= */
+                                   HEADER ICONS
+                                   ========================================================= */
 
             .evw-icon-btn {
                 width: 38px;
@@ -358,13 +363,13 @@
 
 
             /* =========================================================
-                       SIDEBAR
-                       ========================================================= */
+                                   SIDEBAR
+                                   ========================================================= */
 
             /*
-                       Bootstrap normally gives the offcanvas a fairly large
-                       width. !important ensures our narrower width wins.
-                    */
+                                   Bootstrap normally gives the offcanvas a fairly large
+                                   width. !important ensures our narrower width wins.
+                                */
 
             .offcanvas.offcanvas-start {
                 width: 280px !important;
@@ -444,6 +449,37 @@
                         }
 
 
+            /* Expandable category groups in the sidebar */
+
+            .sidebar-cat-toggle {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                cursor: pointer;
+            }
+
+                .sidebar-cat-toggle i {
+                    transition: transform .2s ease;
+                }
+
+                .sidebar-cat-toggle[aria-expanded="true"] i {
+                    transform: rotate(180deg);
+                }
+
+            .sidebar-subnav {
+                padding-left: 8px;
+            }
+
+                .sidebar-subnav li a {
+                    font-size: 13px;
+                    color: var(--evw-muted);
+                }
+
+                    .sidebar-subnav li a:hover {
+                        color: var(--evw-ink);
+                    }
+
+
             .offcanvas hr {
                 margin: 16px 0;
                 border-color: #E9E6DF;
@@ -457,8 +493,8 @@
 
 
             /* =========================================================
-                       FOOTER
-                       ========================================================= */
+                                   FOOTER
+                                   ========================================================= */
 
             .evw-footer {
                 background: var(--evw-ink);
@@ -501,8 +537,8 @@
 
 
             /* =========================================================
-                       RESPONSIVE HEADER
-                       ========================================================= */
+                                   RESPONSIVE HEADER
+                                   ========================================================= */
 
             @@media (max-width: 1200px) {
 
@@ -988,29 +1024,47 @@
             <ul class="sidebar-nav">
 
                 <li>
-
-                    <a asp-controller="Products"
-                       asp-action="Index">
-
-                        All Products
-
-                    </a>
-
+                    <a asp-controller="Products" asp-action="Index">All Products</a>
                 </li>
-
 
                 @foreach (var cat in categories)
                 {
                     <li>
-
-                        <a asp-controller="Products"
-                           asp-action="Index"
-                           asp-route-category="@cat.Name">
+                        <a href="#cat-@cat.Id"
+                           data-bs-toggle="collapse"
+                           class="sidebar-cat-toggle"
+                           role="button"
+                           aria-expanded="false"
+                           aria-controls="cat-@cat.Id">
 
                             @cat.Name
 
+                            @if (cat.SubCategories.Any())
+                            {
+                                <i class="bi bi-chevron-down small"></i>
+                            }
                         </a>
 
+                        @if (cat.SubCategories.Any())
+                        {
+                            <div class="collapse sidebar-subnav" id="cat-@cat.Id">
+                                <ul class="sidebar-nav">
+                                    <li>
+                                        <a asp-controller="Products" asp-action="Index" asp-route-category="@cat.Name">
+                                            All @cat.Name
+                                        </a>
+                                    </li>
+                                    @foreach (var sub in cat.SubCategories.OrderBy(s => s.Name))
+                                    {
+                                        <li>
+                                            <a asp-controller="Products" asp-action="Index" asp-route-category="@sub.Name">
+                                                @sub.Name
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
                     </li>
                 }
 
