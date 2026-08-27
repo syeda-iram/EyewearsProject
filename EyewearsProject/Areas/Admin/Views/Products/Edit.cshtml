@@ -1,74 +1,252 @@
 ﻿@model ProductFormViewModel
+
 <h4>Edit Product</h4>
+
 <form asp-action="Edit" asp-route-id="@Model.Id" method="post" style="max-width:520px;">
     <input type="hidden" asp-for="Id" />
+
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
     <div class="mb-3">
         <label asp-for="Name" class="form-label"></label>
         <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="Sku" class="form-label">SKU</label>
         <input asp-for="Sku" class="form-control" />
+        <span asp-validation-for="Sku" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
+        <label asp-for="ShortDescription" class="form-label">Short Description</label>
+        <textarea asp-for="ShortDescription"
+                  class="form-control"
+                  rows="2"
+                  placeholder="Short summary shown on product listings"></textarea>
+        <span asp-validation-for="ShortDescription" class="text-danger"></span>
     </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label">Description</label>
+        <textarea asp-for="Description"
+                  class="form-control"
+                  rows="5"
+                  placeholder="Detailed product description"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ProductType" class="form-label">Product Type</label>
+        <select asp-for="ProductType" class="form-select">
+            <option value="">-- Select Product Type --</option>
+            <option value="Eyeglasses">Eyeglasses</option>
+            <option value="Sunglasses">Sunglasses</option>
+            <option value="Contact Lenses">Contact Lenses</option>
+            <option value="Accessories">Accessories</option>
+        </select>
+        <span asp-validation-for="ProductType" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Gender" class="form-label">Gender</label>
+        <select asp-for="Gender" class="form-select">
+            <option value="">-- Select Gender --</option>
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+            <option value="Unisex">Unisex</option>
+            <option value="Kids">Kids</option>
+        </select>
+        <span asp-validation-for="Gender" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Material" class="form-label">Material</label>
+        <input asp-for="Material"
+               class="form-control"
+               placeholder="e.g. Acetate, Titanium, Plastic" />
+        <span asp-validation-for="Material" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Shape" class="form-label">Shape</label>
+        <select asp-for="Shape" class="form-select">
+            <option value="">-- Select Shape --</option>
+            <option value="Round">Round</option>
+            <option value="Square">Square</option>
+            <option value="Rectangle">Rectangle</option>
+            <option value="Oval">Oval</option>
+            <option value="Cat Eye">Cat Eye</option>
+            <option value="Aviator">Aviator</option>
+            <option value="Wayfarer">Wayfarer</option>
+            <option value="Geometric">Geometric</option>
+            <option value="Other">Other</option>
+        </select>
+        <span asp-validation-for="Shape" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Color" class="form-label">Color</label>
+        <input asp-for="Color"
+               class="form-control"
+               placeholder="e.g. Black, Gold, Tortoise" />
+        <span asp-validation-for="Color" class="text-danger"></span>
+    </div>
+
     <div class="mb-3">
         <label asp-for="CategoryId" class="form-label">Category</label>
-        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+        <select asp-for="CategoryId"
+                class="form-select"
+                asp-items="ViewBag.Categories">
             <option value="">-- Select --</option>
         </select>
+        <span asp-validation-for="CategoryId" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="BrandId" class="form-label">Brand</label>
-        <select asp-for="BrandId" class="form-select" asp-items="ViewBag.Brands">
+        <select asp-for="BrandId"
+                class="form-select"
+                asp-items="ViewBag.Brands">
             <option value="">-- Select --</option>
         </select>
+        <span asp-validation-for="BrandId" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
-        <label asp-for="Price" class="form-label"></label>
-        <input asp-for="Price" class="form-control" />
+        <label asp-for="Price" class="form-label">Price</label>
+        <input asp-for="Price"
+               class="form-control"
+               type="number"
+               step="0.01" />
+        <span asp-validation-for="Price" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
-        <label asp-for="DiscountPrice" class="form-label"></label>
-        <input asp-for="DiscountPrice" class="form-control" />
+        <label asp-for="DiscountPrice" class="form-label">Discount Price</label>
+        <input asp-for="DiscountPrice"
+               class="form-control"
+               type="number"
+               step="0.01" />
+        <span asp-validation-for="DiscountPrice" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
-        <label asp-for="TryOnOverlayImageUrl" class="form-label"></label>
-        <input type="file" id="tryOnFileInput" class="form-control mb-2" accept="image/png" />
-        <input asp-for="TryOnOverlayImageUrl" type="hidden" id="TryOnOverlayImageUrl" />
-        <img id="tryOnPreview" src="@Model.TryOnOverlayImageUrl" style="max-height:120px; display:@(string.IsNullOrEmpty(Model.TryOnOverlayImageUrl) ? "none" : "block");" class="mt-2 rounded border" />
-        <span asp-validation-for="TryOnOverlayImageUrl" class="text-danger"></span>
-        <div class="form-text">Upload a transparent PNG of just the glasses (no face, no background) — used for the Virtual Try-On feature.</div>
+        <label asp-for="CostPrice" class="form-label">Cost Price</label>
+        <input asp-for="CostPrice"
+               class="form-control"
+               type="number"
+               step="0.01" />
+        <span asp-validation-for="CostPrice" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
-        <label asp-for="TryOn3DModelUrl" class="form-label"></label>
-        <input asp-for="TryOn3DModelUrl" class="form-control" placeholder="/models/aviator.glb" />
-        <div class="form-text">Paste a real Jeeliz SKU that matches this product's style (e.g. <code>rayban_aviator_or_vertFlash</code>). Browse available styles in the project's <code>glassesSKU.csv</code>. Leave blank to use the simpler 2D try-on for this product instead.</div>
+        <label asp-for="Weight" class="form-label">Weight</label>
+        <input asp-for="Weight"
+               class="form-control"
+               type="number"
+               step="0.01"
+               placeholder="e.g. 22.5" />
+        <span asp-validation-for="Weight" class="text-danger"></span>
     </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="IsFeatured" class="form-check-input" />
+        <label asp-for="IsFeatured" class="form-check-label">
+            Featured Product
+        </label>
+    </div>
+
     <div class="mb-3 form-check">
         <input asp-for="IsActive" class="form-check-input" />
         <label asp-for="IsActive" class="form-check-label"></label>
     </div>
+
+    <div class="mb-3">
+        <label asp-for="TryOnOverlayImageUrl" class="form-label"></label>
+
+        <input type="file"
+               id="tryOnFileInput"
+               class="form-control mb-2"
+               accept="image/png" />
+
+        <input asp-for="TryOnOverlayImageUrl"
+               type="hidden"
+               id="TryOnOverlayImageUrl" />
+
+        <img id="tryOnPreview"
+             src="@Model.TryOnOverlayImageUrl"
+             style="max-height:120px; display:@(string.IsNullOrEmpty(Model.TryOnOverlayImageUrl) ? "none" : "block");"
+             class="mt-2 rounded border" />
+
+        <span asp-validation-for="TryOnOverlayImageUrl"
+              class="text-danger"></span>
+
+        <div class="form-text">
+            Upload a transparent PNG of just the glasses
+            (no face, no background) for Virtual Try-On.
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="TryOn3DModelUrl" class="form-label"></label>
+
+        <input asp-for="TryOn3DModelUrl"
+               class="form-control"
+               placeholder="rayban_aviator_or_vertFlash" />
+
+        <span asp-validation-for="TryOn3DModelUrl"
+              class="text-danger"></span>
+
+        <div class="form-text">
+            Paste a real Jeeliz SKU that matches this product's style.
+            Leave blank to use the simpler 2D try-on.
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-md-6 mb-3">
             <label asp-for="TryOnOverlayScale" class="form-label"></label>
-            <input asp-for="TryOnOverlayScale" type="number" step="0.1" class="form-control" />
+            <input asp-for="TryOnOverlayScale"
+                   type="number"
+                   step="0.1"
+                   class="form-control" />
+            <span asp-validation-for="TryOnOverlayScale"
+                  class="text-danger"></span>
         </div>
+
         <div class="col-md-6 mb-3">
             <label asp-for="TryOnOverlayVerticalOffset" class="form-label"></label>
-            <input asp-for="TryOnOverlayVerticalOffset" type="number" step="0.05" class="form-control" />
+            <input asp-for="TryOnOverlayVerticalOffset"
+                   type="number"
+                   step="0.05"
+                   class="form-control" />
+            <span asp-validation-for="TryOnOverlayVerticalOffset"
+                  class="text-danger"></span>
         </div>
     </div>
-    <button class="btn btn-dark">Save</button>
+
+    <button type="submit" class="btn btn-dark">Save</button>
 </form>
+
 @section Scripts {
-    <form id="tryOnAntiforgeryForm">@Html.AntiForgeryToken()</form>
+    <form id="tryOnAntiforgeryForm">
+        @Html.AntiForgeryToken()
+    </form>
+
     <script>
-        const tryOnToken = document.querySelector('#tryOnAntiforgeryForm input[name="__RequestVerificationToken"]').value;
-        wireImageUpload('tryOnFileInput', 'TryOnOverlayImageUrl', 'tryOnPreview',
-            '@Url.Action("Image", "Upload", new { area = "Admin" })', tryOnToken);
+        const tryOnToken =
+            document.querySelector(
+                '#tryOnAntiforgeryForm input[name="__RequestVerificationToken"]'
+            ).value;
+
+        wireImageUpload(
+            'tryOnFileInput',
+            'TryOnOverlayImageUrl',
+            'tryOnPreview',
+            '@Url.Action("Image", "Upload", new { area = "Admin" })',
+            tryOnToken
+        );
     </script>
 }

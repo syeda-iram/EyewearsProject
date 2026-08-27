@@ -1,6 +1,7 @@
 ﻿@using EyewearsProject.Extensions
 @using EyewearsProject.Models
 @model CheckoutViewModel
+
 @{
     ViewData["Title"] = "Checkout";
     var savedAddresses = (List<Address>)(ViewBag.SavedAddresses ?? new List<Address>());
@@ -9,218 +10,754 @@
 <h1 class="mb-4">Checkout</h1>
 
 <div class="row">
+
+    <!-- =========================================================
+         CHECKOUT FORM
+         ========================================================= -->
+
     <div class="col-md-7">
+
         <form asp-action="Checkout" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger"></div>
+
+
+            <!-- =================================================
+                 CONTACT DETAILS
+                 ================================================= -->
 
             <h5 class="mt-2">Contact Details</h5>
+
             <div class="mb-3">
-                <label asp-for="FullName" class="form-label"></label>
-                <input asp-for="FullName" class="form-control" />
-                <span asp-validation-for="FullName" class="text-danger"></span>
+
+                <label asp-for="FullName"
+                       class="form-label">
+                </label>
+
+                <input asp-for="FullName"
+                       class="form-control" />
+
+                <span asp-validation-for="FullName"
+                      class="text-danger">
+                </span>
+
             </div>
+
+
             <div class="row">
+
                 <div class="col-md-6 mb-3">
-                    <label asp-for="Email" class="form-label"></label>
-                    <input asp-for="Email" class="form-control" />
-                    <span asp-validation-for="Email" class="text-danger"></span>
+
+                    <label asp-for="Email"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="Email"
+                           class="form-control" />
+
+                    <span asp-validation-for="Email"
+                          class="text-danger">
+                    </span>
+
                 </div>
+
+
                 <div class="col-md-6 mb-3">
-                    <label asp-for="Phone" class="form-label"></label>
-                    <input asp-for="Phone" class="form-control" />
-                    <span asp-validation-for="Phone" class="text-danger"></span>
+
+                    <label asp-for="Phone"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="Phone"
+                           class="form-control" />
+
+                    <span asp-validation-for="Phone"
+                          class="text-danger">
+                    </span>
+
                 </div>
+
             </div>
+
+
+            <!-- =================================================
+                 SHIPPING ADDRESS
+                 ================================================= -->
 
             <h5 class="mt-4">Shipping Address</h5>
 
+
+            <!-- SAVED ADDRESSES -->
             @if (savedAddresses.Any())
             {
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Use a saved address</label>
-                    <select id="savedAddressSelect" class="form-select">
-                        <option value="">-- Enter address manually --</option>
+
+                    <label class="form-label fw-bold">
+                        Use a saved address
+                    </label>
+
+                    <select id="savedAddressSelect"
+                            class="form-select">
+
+                        <option value="">
+                            -- Enter address manually --
+                        </option>
+
                         @foreach (var addr in savedAddresses)
                         {
                             <option value="@addr.Id"
                                     data-fullname="@addr.FullName"
                                     data-phone="@addr.Phone"
-                                    data-line="@addr.AddressLine"
+                                    data-line1="@addr.AddressLine1"
+                                    data-line2="@addr.AddressLine2"
                                     data-city="@addr.City"
+                                    data-state="@addr.State"
                                     data-postal="@addr.PostalCode"
                                     data-country="@addr.Country"
                                     selected="@(addr.IsDefault ? "selected" : null)">
-                                @addr.Label — @addr.AddressLine, @addr.City @(addr.IsDefault ? "(Default)" : "")
+
+                                @addr.AddressType Address
+                                —
+                                @addr.AddressLine1,
+                                @addr.City
+
+                                @(addr.IsDefault ? "(Default)" : "")
+
                             </option>
                         }
+
                     </select>
+
                 </div>
             }
 
+
+            <!-- ADDRESS LINE 1 -->
+
             <div class="mb-3">
-                <label asp-for="ShippingAddressLine" class="form-label"></label>
-                <input asp-for="ShippingAddressLine" class="form-control" placeholder="House #, Street, Area" />
-                <span asp-validation-for="ShippingAddressLine" class="text-danger"></span>
+
+                <label asp-for="ShippingAddressLine"
+                       class="form-label">
+                </label>
+
+                <input asp-for="ShippingAddressLine"
+                       class="form-control"
+                       placeholder="House #, Street, Area" />
+
+                <span asp-validation-for="ShippingAddressLine"
+                      class="text-danger">
+                </span>
+
             </div>
+
+
+            <!-- CITY / STATE / POSTAL -->
+
             <div class="row">
+
                 <div class="col-md-4 mb-3">
-                    <label asp-for="ShippingCity" class="form-label"></label>
-                    <input asp-for="ShippingCity" class="form-control" />
-                    <span asp-validation-for="ShippingCity" class="text-danger"></span>
+
+                    <label asp-for="ShippingCity"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="ShippingCity"
+                           class="form-control" />
+
+                    <span asp-validation-for="ShippingCity"
+                          class="text-danger">
+                    </span>
+
                 </div>
+
+
+                @*
+                   Only include this if CheckoutViewModel
+                   contains ShippingState.
+                *@
+
+                @if (ViewData.ModelMetadata.Properties
+                    .Any(p => p.PropertyName == "ShippingState"))
+                {
+                    <div class="col-md-4 mb-3">
+
+                        <label asp-for="ShippingState"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="ShippingState"
+                               class="form-control" />
+
+                        <span asp-validation-for="ShippingState"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+                }
+
+
                 <div class="col-md-4 mb-3">
-                    <label asp-for="ShippingPostalCode" class="form-label"></label>
-                    <input asp-for="ShippingPostalCode" class="form-control" />
-                    <span asp-validation-for="ShippingPostalCode" class="text-danger"></span>
+
+                    <label asp-for="ShippingPostalCode"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="ShippingPostalCode"
+                           class="form-control" />
+
+                    <span asp-validation-for="ShippingPostalCode"
+                          class="text-danger">
+                    </span>
+
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label asp-for="ShippingCountry" class="form-label"></label>
-                    <input asp-for="ShippingCountry" class="form-control" />
-                    <span asp-validation-for="ShippingCountry" class="text-danger"></span>
-                </div>
+
             </div>
+
+
+            <!-- COUNTRY -->
+
+            <div class="mb-3">
+
+                <label asp-for="ShippingCountry"
+                       class="form-label">
+                </label>
+
+                <input asp-for="ShippingCountry"
+                       class="form-control" />
+
+                <span asp-validation-for="ShippingCountry"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <!-- =================================================
+                 BILLING ADDRESS
+                 ================================================= -->
 
             <h5 class="mt-4">Billing Address</h5>
+
             <div class="form-check mb-3">
-                <input asp-for="BillingSameAsShipping" class="form-check-input" id="billingSameCheck" />
-                <label asp-for="BillingSameAsShipping" class="form-check-label"></label>
+
+                <input asp-for="BillingSameAsShipping"
+                       class="form-check-input"
+                       id="billingSameCheck" />
+
+                <label asp-for="BillingSameAsShipping"
+                       class="form-check-label">
+                </label>
+
             </div>
 
-            <div id="billingFields" style="display:none;">
+
+            <div id="billingFields"
+                 style="display:none;">
+
                 <div class="mb-3">
-                    <label asp-for="BillingAddressLine" class="form-label"></label>
-                    <input asp-for="BillingAddressLine" class="form-control" />
-                    <span asp-validation-for="BillingAddressLine" class="text-danger"></span>
+
+                    <label asp-for="BillingAddressLine"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="BillingAddressLine"
+                           class="form-control" />
+
+                    <span asp-validation-for="BillingAddressLine"
+                          class="text-danger">
+                    </span>
+
                 </div>
+
+
                 <div class="row">
+
                     <div class="col-md-4 mb-3">
-                        <label asp-for="BillingCity" class="form-label"></label>
-                        <input asp-for="BillingCity" class="form-control" />
-                        <span asp-validation-for="BillingCity" class="text-danger"></span>
+
+                        <label asp-for="BillingCity"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="BillingCity"
+                               class="form-control" />
+
+                        <span asp-validation-for="BillingCity"
+                              class="text-danger">
+                        </span>
+
                     </div>
+
+
                     <div class="col-md-4 mb-3">
-                        <label asp-for="BillingPostalCode" class="form-label"></label>
-                        <input asp-for="BillingPostalCode" class="form-control" />
-                        <span asp-validation-for="BillingPostalCode" class="text-danger"></span>
+
+                        <label asp-for="BillingPostalCode"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="BillingPostalCode"
+                               class="form-control" />
+
+                        <span asp-validation-for="BillingPostalCode"
+                              class="text-danger">
+                        </span>
+
                     </div>
+
+
                     <div class="col-md-4 mb-3">
-                        <label asp-for="BillingCountry" class="form-label"></label>
-                        <input asp-for="BillingCountry" class="form-control" />
-                        <span asp-validation-for="BillingCountry" class="text-danger"></span>
+
+                        <label asp-for="BillingCountry"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="BillingCountry"
+                               class="form-control" />
+
+                        <span asp-validation-for="BillingCountry"
+                              class="text-danger">
+                        </span>
+
                     </div>
+
                 </div>
+
             </div>
+
+
+            <!-- =================================================
+                 COUPON
+                 ================================================= -->
 
             <h5 class="mt-4">Coupon</h5>
+
             <div class="mb-3 d-flex gap-2">
-                <input type="text" id="couponInput" asp-for="CouponCode" class="form-control" placeholder="Enter coupon code" style="max-width:250px;" />
-                <button type="button" id="applyCouponBtn" class="btn btn-outline-dark">Apply</button>
+
+                <input type="text"
+                       id="couponInput"
+                       asp-for="CouponCode"
+                       class="form-control"
+                       placeholder="Enter coupon code"
+                       style="max-width:250px;" />
+
+                <button type="button"
+                        id="applyCouponBtn"
+                        class="btn btn-outline-dark">
+                    Apply
+                </button>
+
             </div>
-            <div id="couponMessage" class="mb-3"></div>
-            <input type="hidden" asp-for="DiscountAmount" id="discountAmountField" />
+
+            <div id="couponMessage"
+                 class="mb-3">
+            </div>
+
+            <input type="hidden"
+                   asp-for="DiscountAmount"
+                   id="discountAmountField" />
+
+
+            <!-- =================================================
+                 PAYMENT
+                 ================================================= -->
 
             <h5 class="mt-4">Payment</h5>
+
             <div class="mb-3">
-                <label asp-for="PaymentMethod" class="form-label"></label>
-                <select asp-for="PaymentMethod" class="form-select">
+
+                <label asp-for="PaymentMethod"
+                       class="form-label">
+                </label>
+
+                <select asp-for="PaymentMethod"
+                        class="form-select">
+
                     <option>Cash on Delivery</option>
                     <option>Card</option>
+
                 </select>
+
             </div>
 
-            <button class="btn btn-success btn-lg mt-2">Place Order</button>
+
+            <button type="submit"
+                    class="btn btn-success btn-lg mt-2">
+                Place Order
+            </button>
+
         </form>
+
     </div>
 
+
+    <!-- =========================================================
+         ORDER SUMMARY
+         ========================================================= -->
+
     <div class="col-md-5">
+
         <div class="card p-3">
+
             <h5>Order Summary</h5>
+
             @foreach (var item in Model.Items)
             {
                 <div class="d-flex justify-content-between mb-2">
+
                     <span>
-                        @item.ProductName (@item.Color) x@(item.Quantity)
+
+                        @item.ProductName
+                        (@item.Color)
+                        x@(item.Quantity)
+
                         @if (!string.IsNullOrEmpty(item.LensType))
                         {
-                            <br /><small class="text-muted">@item.LensType@(item.Coating != "None" && !string.IsNullOrEmpty(item.Coating) ? " + " + item.Coating : "")</small>
+                            <br />
+
+                            <small class="text-muted">
+
+                                @item.LensType
+
+                                @(item.Coating != "None" &&
+                                  !string.IsNullOrEmpty(item.Coating)
+                                    ? " + " + item.Coating
+                                    : "")
+
+                            </small>
                         }
+
                     </span>
-                    <span>@item.TotalPrice.ToPkr()</span>
+
+                    <span>
+                        @item.TotalPrice.ToPkr()
+                    </span>
+
                 </div>
             }
+
             <hr />
-            <div class="d-flex justify-content-between"><span>Subtotal</span><span id="subtotalDisplay">@Model.Subtotal.ToPkr()</span></div>
-            <div class="d-flex justify-content-between text-success" id="discountRow" style="display:none;">
-                <span>Discount</span><span id="discountDisplay"></span>
+
+            <div class="d-flex justify-content-between">
+
+                <span>Subtotal</span>
+
+                <span id="subtotalDisplay">
+                    @Model.Subtotal.ToPkr()
+                </span>
+
             </div>
-            <div class="d-flex justify-content-between"><span>Shipping</span><span>@Model.ShippingAmount.ToPkr()</span></div>
-            <div class="d-flex justify-content-between fw-bold"><span>Total</span><span id="grandTotalDisplay">@Model.GrandTotal.ToPkr()</span></div>
+
+
+            <div class="d-flex justify-content-between text-success"
+                 id="discountRow"
+                 style="display:none;">
+
+                <span>Discount</span>
+
+                <span id="discountDisplay"></span>
+
+            </div>
+
+
+            <div class="d-flex justify-content-between">
+
+                <span>Shipping</span>
+
+                <span>
+                    @Model.ShippingAmount.ToPkr()
+                </span>
+
+            </div>
+
+
+            <div class="d-flex justify-content-between fw-bold">
+
+                <span>Total</span>
+
+                <span id="grandTotalDisplay">
+                    @Model.GrandTotal.ToPkr()
+                </span>
+
+            </div>
+
         </div>
+
     </div>
+
 </div>
 
+
 @section Scripts {
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
     <script>
-        const checkbox = document.getElementById('billingSameCheck');
-        const billingFields = document.getElementById('billingFields');
+
+        // =========================================================
+        // BILLING ADDRESS TOGGLE
+        // =========================================================
+
+        const checkbox =
+            document.getElementById('billingSameCheck');
+
+        const billingFields =
+            document.getElementById('billingFields');
 
         function toggleBilling() {
-            billingFields.style.display = checkbox.checked ? 'none' : 'block';
+
+            if (!checkbox || !billingFields)
+                return;
+
+            billingFields.style.display =
+                checkbox.checked ? 'none' : 'block';
         }
 
-        checkbox.addEventListener('change', toggleBilling);
-        toggleBilling();
+        if (checkbox) {
 
-        const savedAddressSelect = document.getElementById('savedAddressSelect');
+            checkbox.addEventListener(
+                'change',
+                toggleBilling
+            );
+
+            toggleBilling();
+        }
+
+
+        // =========================================================
+        // SAVED ADDRESS AUTO-FILL
+        // =========================================================
+
+        const savedAddressSelect =
+            document.getElementById('savedAddressSelect');
+
         if (savedAddressSelect) {
-            function applySelectedAddress() {
-                const opt = savedAddressSelect.options[savedAddressSelect.selectedIndex];
-                if (!opt.value) return; // "Enter manually" chosen — leave fields as-is
 
-                document.querySelector('[name="FullName"]').value = opt.dataset.fullname || '';
-                document.querySelector('[name="Phone"]').value = opt.dataset.phone || '';
-                document.querySelector('[name="ShippingAddressLine"]').value = opt.dataset.line || '';
-                document.querySelector('[name="ShippingCity"]').value = opt.dataset.city || '';
-                document.querySelector('[name="ShippingPostalCode"]').value = opt.dataset.postal || '';
-                document.querySelector('[name="ShippingCountry"]').value = opt.dataset.country || '';
+            function applySelectedAddress() {
+
+                const opt =
+                    savedAddressSelect.options[
+                    savedAddressSelect.selectedIndex
+                    ];
+
+                if (!opt || !opt.value)
+                    return;
+
+
+                const fullName =
+                    document.querySelector(
+                        '[name="FullName"]'
+                    );
+
+                const phone =
+                    document.querySelector(
+                        '[name="Phone"]'
+                    );
+
+                const shippingAddress =
+                    document.querySelector(
+                        '[name="ShippingAddressLine"]'
+                    );
+
+                const shippingCity =
+                    document.querySelector(
+                        '[name="ShippingCity"]'
+                    );
+
+                const shippingPostal =
+                    document.querySelector(
+                        '[name="ShippingPostalCode"]'
+                    );
+
+                const shippingCountry =
+                    document.querySelector(
+                        '[name="ShippingCountry"]'
+                    );
+
+
+                if (fullName)
+                    fullName.value =
+                        opt.dataset.fullname || '';
+
+
+                if (phone)
+                    phone.value =
+                        opt.dataset.phone || '';
+
+
+                if (shippingAddress)
+                    shippingAddress.value =
+                        opt.dataset.line1 || '';
+
+
+                if (shippingCity)
+                    shippingCity.value =
+                        opt.dataset.city || '';
+
+
+                if (shippingPostal)
+                    shippingPostal.value =
+                        opt.dataset.postal || '';
+
+
+                if (shippingCountry)
+                    shippingCountry.value =
+                        opt.dataset.country || '';
+
+
+                // If CheckoutViewModel has ShippingState,
+                // automatically fill it too.
+
+                const shippingState =
+                    document.querySelector(
+                        '[name="ShippingState"]'
+                    );
+
+                if (shippingState)
+                    shippingState.value =
+                        opt.dataset.state || '';
             }
 
-            savedAddressSelect.addEventListener('change', applySelectedAddress);
-            // Auto-fill from the default address on first page load too.
+
+            savedAddressSelect.addEventListener(
+                'change',
+                applySelectedAddress
+            );
+
+
+            // Automatically apply default address
+            // when checkout loads.
+
             applySelectedAddress();
+
         }
+
+
+        // =========================================================
+        // COUPON
+        // =========================================================
 
         const subtotal = @Model.Subtotal;
         const shipping = @Model.ShippingAmount;
 
-        document.getElementById('applyCouponBtn').addEventListener('click', async function() {
-            const code = document.getElementById('couponInput').value.trim();
-            const messageDiv = document.getElementById('couponMessage');
-            if (!code) return;
 
-            const response = await fetch('@Url.Action("ApplyCoupon", "Cart")', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'code=' + encodeURIComponent(code)
-            });
-            const data = await response.json();
+        const applyCouponButton =
+            document.getElementById('applyCouponBtn');
 
-            if (data.success) {
-                messageDiv.innerHTML = '<span class="text-success">' + data.message + '</span>';
-                document.getElementById('discountAmountField').value = data.discountAmount;
-                document.getElementById('discountRow').style.display = 'flex';
-                document.getElementById('discountDisplay').textContent = '-' + data.discountText;
 
-                const newTotal = subtotal - data.discountAmount + shipping;
-                document.getElementById('grandTotalDisplay').textContent = 'Rs ' + newTotal.toLocaleString('en-PK', { maximumFractionDigits: 0 });
-            } else {
-                messageDiv.innerHTML = '<span class="text-danger">' + data.message + '</span>';
-                document.getElementById('discountAmountField').value = 0;
-                document.getElementById('discountRow').style.display = 'none';
-            }
-        });
+        if (applyCouponButton) {
+
+            applyCouponButton.addEventListener(
+                'click',
+                async function() {
+
+                    const code =
+                        document.getElementById(
+                            'couponInput'
+                        ).value.trim();
+
+
+                    const messageDiv =
+                        document.getElementById(
+                            'couponMessage'
+                        );
+
+
+                    if (!code)
+                        return;
+
+
+                    const response =
+                        await fetch(
+                            '@Url.Action("ApplyCoupon", "Cart")',
+                            {
+                                method: 'POST',
+
+                                headers: {
+                                    'Content-Type':
+                                        'application/x-www-form-urlencoded'
+                                },
+
+                                body:
+                                    'code=' +
+                                    encodeURIComponent(code)
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (data.success) {
+
+                        messageDiv.innerHTML =
+                            '<span class="text-success">' +
+                            data.message +
+                            '</span>';
+
+
+                        document.getElementById(
+                            'discountAmountField'
+                        ).value =
+                            data.discountAmount;
+
+
+                        document.getElementById(
+                            'discountRow'
+                        ).style.display =
+                            'flex';
+
+
+                        document.getElementById(
+                            'discountDisplay'
+                        ).textContent =
+                            '-' + data.discountText;
+
+
+                        const newTotal =
+                            subtotal -
+                            data.discountAmount +
+                            shipping;
+
+
+                        document.getElementById(
+                            'grandTotalDisplay'
+                        ).textContent =
+                            'Rs ' +
+                            newTotal.toLocaleString(
+                                'en-PK',
+                                {
+                                    maximumFractionDigits: 0
+                                }
+                            );
+
+                    }
+                    else {
+
+                        messageDiv.innerHTML =
+                            '<span class="text-danger">' +
+                            data.message +
+                            '</span>';
+
+
+                        document.getElementById(
+                            'discountAmountField'
+                        ).value = 0;
+
+
+                        document.getElementById(
+                            'discountRow'
+                        ).style.display =
+                            'none';
+
+                    }
+
+                }
+            );
+
+        }
+
     </script>
 }

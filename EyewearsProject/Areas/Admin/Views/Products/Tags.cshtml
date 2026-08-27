@@ -1,0 +1,64 @@
+﻿@model List<ProductTag>
+
+<div class="d-flex justify-content-between mb-3">
+    <h4>Tags — @ViewBag.ProductName</h4>
+
+    <a asp-action="CreateTag"
+       asp-route-productId="@ViewBag.ProductId"
+       class="btn btn-dark">
+        + Add Tag
+    </a>
+</div>
+
+<table class="table table-bordered bg-white">
+    <thead>
+        <tr>
+            <th>Tag</th>
+            <th style="width:180px;">Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var tag in Model)
+        {
+            <tr>
+                <td>
+                    <span class="badge bg-secondary">
+                        @tag.Name
+                    </span>
+                </td>
+
+                <td class="d-flex gap-1">
+                    <a asp-action="EditTag"
+                       asp-route-id="@tag.Id"
+                       class="btn btn-sm btn-outline-primary">
+                        Edit
+                    </a>
+
+                    <form asp-action="DeleteTag"
+                          asp-route-id="@tag.Id"
+                          asp-route-productId="@ViewBag.ProductId"
+                          method="post"
+                          onsubmit="return confirm('Delete this tag?');">
+
+                        <button class="btn btn-sm btn-outline-danger">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">
+        No tags yet.
+    </p>
+}
+
+<a asp-action="Index"
+   class="btn btn-outline-secondary mt-2">
+    Back to Products
+</a>

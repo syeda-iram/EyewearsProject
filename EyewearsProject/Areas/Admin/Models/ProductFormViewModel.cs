@@ -12,7 +12,21 @@ namespace EyewearsProject.Areas.Admin.Models
         [Required]
         public string Sku { get; set; } = "";
 
+        [Display(Name = "Short Description")]
+        public string? ShortDescription { get; set; }
+
         public string? Description { get; set; }
+
+        [Display(Name = "Product Type")]
+        public string? ProductType { get; set; }
+
+        public string? Gender { get; set; }
+
+        public string? Material { get; set; }
+
+        public string? Shape { get; set; }
+
+        public string? Color { get; set; }
 
         [Required, Display(Name = "Category")]
         public int CategoryId { get; set; }
@@ -25,6 +39,15 @@ namespace EyewearsProject.Areas.Admin.Models
 
         [Display(Name = "Discount Price")]
         public decimal? DiscountPrice { get; set; }
+
+        [Display(Name = "Cost Price")]
+        public decimal? CostPrice { get; set; }
+
+        [Display(Name = "Weight")]
+        public decimal? Weight { get; set; }
+
+        [Display(Name = "Featured Product")]
+        public bool IsFeatured { get; set; } = false;
 
         public bool IsActive { get; set; } = true;
 

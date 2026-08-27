@@ -18,6 +18,11 @@
                 <input asp-for="Password" class="form-control" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
+            <div class="mb-3">
+                <a asp-action="ForgotPassword">
+                    Forgot Password?
+                </a>
+            </div>
             <div class="form-check mb-3">
                 <input asp-for="RememberMe" class="form-check-input" />
                 <label asp-for="RememberMe" class="form-check-label"></label>

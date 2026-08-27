@@ -1,0 +1,65 @@
+﻿@model List<ProductAttribute>
+
+<div class="d-flex justify-content-between mb-3">
+    <h4>Attributes — @ViewBag.ProductName</h4>
+
+    <a asp-action="CreateAttribute"
+       asp-route-productId="@ViewBag.ProductId"
+       class="btn btn-dark">
+        + Add Attribute
+    </a>
+</div>
+
+<table class="table table-bordered bg-white">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Order</th>
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Value</td>
+                <td>@item.SortOrder</td>
+
+                <td class="d-flex gap-1">
+                    <a asp-action="EditAttribute"
+                       asp-route-id="@item.Id"
+                       class="btn btn-sm btn-outline-primary">
+                        Edit
+                    </a>
+
+                    <form asp-action="DeleteAttribute"
+                          asp-route-id="@item.Id"
+                          asp-route-productId="@ViewBag.ProductId"
+                          method="post"
+                          onsubmit="return confirm('Delete this attribute?');">
+
+                        <button type="submit"
+                                class="btn btn-sm btn-outline-danger">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">
+        No attributes yet — e.g. Frame Width, Bridge Width, Temple Length.
+    </p>
+}
+
+<a asp-action="Index"
+   class="btn btn-outline-secondary mt-2">
+    Back to Products
+</a>
