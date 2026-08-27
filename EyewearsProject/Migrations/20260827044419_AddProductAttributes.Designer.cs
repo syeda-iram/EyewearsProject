@@ -4,6 +4,7 @@ using EyewearsProject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EyewearsProject.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827044419_AddProductAttributes")]
+    partial class AddProductAttributes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -931,28 +934,6 @@ namespace EyewearsProject.Migrations
                     b.ToTable("ProductSpecifications");
                 });
 
-            modelBuilder.Entity("EyewearsProject.Models.ProductTag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductTags");
-                });
-
             modelBuilder.Entity("EyewearsProject.Models.ProductVariant", b =>
                 {
                     b.Property<int>("Id")
@@ -1574,17 +1555,6 @@ namespace EyewearsProject.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("EyewearsProject.Models.ProductTag", b =>
-                {
-                    b.HasOne("EyewearsProject.Models.Product", "Product")
-                        .WithMany("Tags")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("EyewearsProject.Models.ProductVariant", b =>
                 {
                     b.HasOne("EyewearsProject.Models.Product", "Product")
@@ -1771,8 +1741,6 @@ namespace EyewearsProject.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("Specifications");
-
-                    b.Navigation("Tags");
 
                     b.Navigation("Variants");
                 });

@@ -4,6 +4,7 @@ using EyewearsProject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EyewearsProject.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827040317_AddProductSchemaFields")]
+    partial class AddProductSchemaFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -843,35 +846,6 @@ namespace EyewearsProject.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("EyewearsProject.Models.ProductAttribute", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductAttributes");
-                });
-
             modelBuilder.Entity("EyewearsProject.Models.ProductImage", b =>
                 {
                     b.Property<int>("Id")
@@ -929,28 +903,6 @@ namespace EyewearsProject.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductSpecifications");
-                });
-
-            modelBuilder.Entity("EyewearsProject.Models.ProductTag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductTags");
                 });
 
             modelBuilder.Entity("EyewearsProject.Models.ProductVariant", b =>
@@ -1537,17 +1489,6 @@ namespace EyewearsProject.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("EyewearsProject.Models.ProductAttribute", b =>
-                {
-                    b.HasOne("EyewearsProject.Models.Product", "Product")
-                        .WithMany("Attributes")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("EyewearsProject.Models.ProductImage", b =>
                 {
                     b.HasOne("EyewearsProject.Models.Product", null)
@@ -1567,17 +1508,6 @@ namespace EyewearsProject.Migrations
                 {
                     b.HasOne("EyewearsProject.Models.Product", "Product")
                         .WithMany("Specifications")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("EyewearsProject.Models.ProductTag", b =>
-                {
-                    b.HasOne("EyewearsProject.Models.Product", "Product")
-                        .WithMany("Tags")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1766,13 +1696,9 @@ namespace EyewearsProject.Migrations
 
             modelBuilder.Entity("EyewearsProject.Models.Product", b =>
                 {
-                    b.Navigation("Attributes");
-
                     b.Navigation("Images");
 
                     b.Navigation("Specifications");
-
-                    b.Navigation("Tags");
 
                     b.Navigation("Variants");
                 });
