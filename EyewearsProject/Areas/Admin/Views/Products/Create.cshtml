@@ -97,7 +97,7 @@
     <div class="mb-3">
         <label asp-for="BrandId" class="form-label">Brand</label>
         <select asp-for="BrandId" class="form-select" asp-items="ViewBag.Brands">
-            <option value="">-- Select --</option>
+            <option value="">-- No Brand (Unbranded) --</option>
         </select>
         <span asp-validation-for="BrandId" class="text-danger"></span>
     </div>

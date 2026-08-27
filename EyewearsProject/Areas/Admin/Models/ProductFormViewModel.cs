@@ -31,8 +31,8 @@ namespace EyewearsProject.Areas.Admin.Models
         [Required, Display(Name = "Category")]
         public int CategoryId { get; set; }
 
-        [Required, Display(Name = "Brand")]
-        public int BrandId { get; set; }
+        [Display(Name = "Brand")]
+        public int? BrandId { get; set; }
 
         [Required, Range(0, double.MaxValue)]
         public decimal Price { get; set; }

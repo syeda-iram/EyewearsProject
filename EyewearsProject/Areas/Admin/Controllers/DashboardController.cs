@@ -68,8 +68,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
             vm.TopBrands = await _context.OrderItems
                 .Where(oi => oi.Order.PaymentStatus == PaymentStatus.Paid)
                 .Include(oi => oi.Product)
-                .GroupBy(oi => oi.Product.Brand.Name)
-                .Select(g => new TopBrandRow
+                .GroupBy(oi => oi.Product.Brand != null ? oi.Product.Brand.Name : "No Brand").Select(g => new TopBrandRow
                 {
                     BrandName = g.Key,
                     UnitsSold = g.Sum(oi => oi.Quantity),

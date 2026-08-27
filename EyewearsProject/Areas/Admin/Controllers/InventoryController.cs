@@ -130,8 +130,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 Sku = i.ProductVariant.Sku,
 
                 CategoryName = i.ProductVariant.Product.Category.Name,
-                BrandName = i.ProductVariant.Product.Brand.Name,
-
+                BrandName = i.ProductVariant.Product.Brand != null ? i.ProductVariant.Product.Brand.Name : "No Brand",
                 Color = i.ProductVariant.Color,
                 Size = i.ProductVariant.Size,
 
@@ -325,8 +324,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     Csv(i.ProductVariant.Product.Name),
                     Csv(i.ProductVariant.Sku),
                     Csv(i.ProductVariant.Product.Category.Name),
-                    Csv(i.ProductVariant.Product.Brand.Name),
-                    Csv($"{i.ProductVariant.Color} {(i.ProductVariant.Size ?? "")}".Trim()),
+                    Csv(i.ProductVariant.Product.Brand != null ? i.ProductVariant.Product.Brand.Name : "No Brand"), Csv($"{i.ProductVariant.Color} {(i.ProductVariant.Size ?? "")}".Trim()),
                     i.QuantityOnHand,
                     i.ReservedQuantity,
                     available,
