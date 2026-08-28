@@ -1,5 +1,6 @@
 ﻿using EyewearsProject.Extensions;
 using EyewearsProject.Models;
+using EyewearsProject.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,12 +12,14 @@ namespace EyewearsProject.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IInventoryService _inventoryService;
         private const string CartSessionKey = "Cart";
 
-        public LensController(AppDbContext context, UserManager<ApplicationUser> userManager)
+        public LensController(AppDbContext context, UserManager<ApplicationUser> userManager, IInventoryService inventoryService)
         {
             _context = context;
             _userManager = userManager;
+            _inventoryService = inventoryService;
         }
 
         public async Task<IActionResult> Customize(int productId, int variantId)
@@ -29,7 +32,11 @@ namespace EyewearsProject.Controllers
             if (product == null) return NotFound();
 
             var variant = product.Variants.FirstOrDefault(v => v.Id == variantId);
-            if (variant == null) return NotFound();
+            if (variant == null)
+            {
+                TempData["Error"] = "This product isn't available for purchase yet — no options have been set up.";
+                return RedirectToAction("Details", "Products", new { id = productId });
+            }
 
             ViewBag.Product = product;
             ViewBag.Variant = variant;
@@ -71,6 +78,15 @@ namespace EyewearsProject.Controllers
 
             var variant = product.Variants.FirstOrDefault(v => v.Id == variantId);
             if (variant == null) return NotFound();
+
+            var available = await _inventoryService.GetAvailableQuantityAsync(variantId);
+            if (available < quantity)
+            {
+                TempData["Error"] = available == 0
+                    ? $"Sorry, {product.Name} ({variant.Color}) is currently out of stock."
+                    : $"Sorry, only {available} left in stock for {product.Name} ({variant.Color}).";
+                return RedirectToAction("Customize", new { productId, variantId });
+            }
 
             decimal lensPrice = LensOptions.LensTypes.TryGetValue(lensType, out var lp) ? lp : 0;
             decimal coatingPrice = LensOptions.Coatings.TryGetValue(coating, out var cp) ? cp : 0;

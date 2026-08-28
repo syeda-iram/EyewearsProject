@@ -40,6 +40,7 @@ namespace EyewearsProject.Controllers
         }
 
         // POST: /Cart/Add  (plain add, no lens customization)
+        // POST: /Cart/Add  (plain add, no lens customization)
         [HttpPost]
         public async Task<IActionResult> Add(int productId, int variantId, int quantity = 1)
         {
@@ -52,6 +53,15 @@ namespace EyewearsProject.Controllers
 
             var variant = product.Variants.FirstOrDefault(v => v.Id == variantId);
             if (variant == null) return NotFound();
+
+            var available = await _inventoryService.GetAvailableQuantityAsync(variantId);
+            if (available < quantity)
+            {
+                TempData["Error"] = available == 0
+                    ? $"Sorry, {product.Name} ({variant.Color}) is currently out of stock."
+                    : $"Sorry, only {available} left in stock for {product.Name} ({variant.Color}).";
+                return RedirectToAction("Details", "Products", new { id = productId });
+            }
 
             var cart = GetCart();
 

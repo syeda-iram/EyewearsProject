@@ -8,6 +8,10 @@
     var primaryImage = Model.Images.FirstOrDefault(i => i.IsPrimary)
                        ?? Model.Images.FirstOrDefault();
 }
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
 
 <div class="row">
 
@@ -156,85 +160,52 @@
             </div>
         }
 
-        <!-- ADD TO CART -->
-        <form asp-controller="Cart"
-              asp-action="Add"
-              method="post"
-              class="mt-4">
+        @if (!Model.Variants.Any())
+        {
+            <div class="alert alert-warning mt-2">
+                This product isn't available for purchase yet — no options have been set up.
+                <a asp-controller="Products" asp-action="Index">Browse other products</a> instead.
+            </div>
+        }
+        else
+        {
+            <form asp-controller="Cart" asp-action="Add" method="post">
+                <input type="hidden" name="productId" value="@Model.Id" />
 
-            <input type="hidden"
-                   name="productId"
-                   value="@Model.Id" />
-
-            <!-- VARIANTS -->
-            @if (Model.Variants.Any())
-            {
                 <div class="mb-3">
-
-                    <label class="form-label fw-bold">
-                        Color / Size
-                    </label>
-
-                    <select name="variantId"
-                            class="form-select"
-                            style="max-width:300px;">
-
+                    <label class="form-label fw-bold">Color</label>
+                    <select name="variantId" class="form-select" style="max-width:250px;">
                         @foreach (var variant in Model.Variants)
                         {
-                            <option value="@variant.Id"
-                                    disabled="@(variant.StockQuantity <= 0)">
-
-                                @variant.Color
-
-                                @(variant.Size != null
-                                    ? $" - {variant.Size}"
-                                    : "")
-
-                                (@(variant.StockQuantity > 0
-                                    ? "In stock"
-                                    : "Out of stock"))
-
+                            <option value="@variant.Id">
+                                @variant.Color @(variant.Size != null ? $"- {variant.Size}" : "")
+                                (@(variant.StockQuantity > 0 ? "In stock" : "Out of stock"))
                             </option>
                         }
-
                     </select>
-
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Quantity</label>
+                    <input type="number" name="quantity" value="1" min="1" class="form-control" style="max-width:100px;" />
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg mt-2">Add to Cart</button>
+            </form>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form asp-controller="Wishlist" asp-action="Add" method="post" class="mt-2">
+                    <input type="hidden" name="productId" value="@Model.Id" />
+                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                    <button type="submit" class="btn btn-outline-danger">&hearts; Add to Wishlist</button>
+                </form>
             }
 
-            <!-- QUANTITY -->
-            <div class="mb-3">
-
-                <label class="form-label fw-bold">
-                    Quantity
-                </label>
-
-                <input type="number"
-                       name="quantity"
-                       value="1"
-                       min="1"
-                       class="form-control"
-                       style="max-width:100px;" />
-
+            <div class="mt-2">
+                <a class="btn btn-outline-primary btn-lg" id="selectLensesBtn" href="#">Select Lenses</a>
             </div>
-
-            <button type="submit"
-                    class="btn btn-primary btn-lg mt-2">
-                Add to Cart
-            </button>
-
-        </form>
-
-        <!-- LENS CUSTOMIZATION -->
-        <div class="mt-2">
-
-            <a class="btn btn-outline-primary btn-lg"
-               id="selectLensesBtn"
-               href="#">
-                Select Lenses
-            </a>
-
-        </div>
+        }
 
         <!-- VIRTUAL TRY ON -->
         <div class="mt-2">
