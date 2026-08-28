@@ -1,0 +1,83 @@
+﻿@model EyewearsProject.ViewModels.TwoFactorAuthenticationViewModel
+
+@{
+    ViewData["Title"] = "Two-Factor Authentication";
+}
+
+<div class="container mt-5 mb-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-6">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h3 class="mb-3">
+                        Two-Factor Authentication
+                    </h3>
+
+                    <p class="text-muted">
+                        Choose where you want to receive your verification code.
+                    </p>
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["Error"]
+                        </div>
+                    }
+
+                    @if (Model.EmailAvailable)
+                    {
+                        <form asp-action="SendTwoFactorCode"
+                              method="post"
+                              class="mb-3">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="method"
+                                   value="Email" />
+
+                            <button type="submit"
+                                    class="btn btn-outline-primary w-100">
+
+                                📧 Send code to my email
+
+                            </button>
+
+                        </form>
+                    }
+
+                    @if (Model.PhoneAvailable)
+                    {
+                        <form asp-action="SendTwoFactorCode"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="method"
+                                   value="SMS" />
+
+                            <button type="submit"
+                                    class="btn btn-outline-dark w-100">
+
+                                📱 Send code by SMS
+
+                            </button>
+
+                        </form>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

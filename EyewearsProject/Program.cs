@@ -65,6 +65,9 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     EyewearsProject.Services.Email.IEmailService,
     EyewearsProject.Services.Email.EmailService>();
+builder.Services.AddScoped<
+    EyewearsProject.Services.Sms.ISmsService,
+    EyewearsProject.Services.Sms.SmsService>();
 
 var app = builder.Build();
 

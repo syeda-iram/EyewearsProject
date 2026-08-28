@@ -1,0 +1,212 @@
+﻿@using EyewearsProject.Models
+@model ApplicationUser
+
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row">
+
+        <!-- SETTINGS SIDEBAR -->
+        <div class="col-md-3 mb-4">
+
+            <div class="list-group">
+
+                <a asp-controller="Account"
+                   asp-action="Profile"
+                   class="list-group-item list-group-item-action">
+                    Profile
+                </a>
+
+                <a asp-controller="Account"
+                   asp-action="Settings"
+                   class="list-group-item list-group-item-action active">
+                    Settings
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- SETTINGS CONTENT -->
+        <div class="col-md-9">
+
+            <h2 class="mb-4">Settings</h2>
+
+
+            <!-- MANAGE PROFILE -->
+            <div class="card shadow-sm mb-3">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Manage Profile
+                    </h5>
+
+                    <p class="text-muted">
+                        Update your name, email, phone number and other
+                        personal information.
+                    </p>
+
+                    <a asp-controller="Account"
+                       asp-action="Profile"
+                       class="btn btn-outline-primary">
+                        Manage Profile
+                    </a>
+
+                </div>
+
+            </div>
+
+            <!-- CHANGE PASSWORD -->
+            <div class="card shadow-sm mb-3">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Change Password
+                    </h5>
+
+                    <p class="text-muted">
+                        Change your account password to keep your account secure.
+                    </p>
+
+                    <a asp-controller="Account"
+                       asp-action="ChangePassword"
+                       class="btn btn-outline-dark">
+                        Change Password
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- TWO FACTOR AUTHENTICATION -->
+            <div class="card shadow-sm mb-3">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Two-Factor Authentication
+                    </h5>
+
+                    <p class="text-muted">
+                        Add an extra layer of security to your EyeCraft account.
+                    </p>
+
+                    @if (Model.TwoFactorEnabled)
+                    {
+                        <span class="badge bg-success mb-3">
+                            Enabled
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary mb-3">
+                            Disabled
+                        </span>
+                    }
+
+                    <div>
+                        <a asp-controller="Account"
+                           asp-action="TwoFactorAuthentication"
+                           class="btn btn-outline-primary">
+
+                            Manage Two-Factor Authentication
+
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ADDRESSES -->
+            <div class="card shadow-sm mb-3">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Addresses
+                    </h5>
+
+                    <p class="text-muted">
+                        Manage your delivery and billing addresses.
+                    </p>
+
+                    <a asp-controller="Addresses"
+                       asp-action="Index"
+                       class="btn btn-outline-primary">
+                        Manage Addresses
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- LOGOUT -->
+            <div class="card shadow-sm mb-3">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Logout
+                    </h5>
+
+                    <p class="text-muted">
+                        Sign out of your EyeCraft account on this device.
+                    </p>
+
+                    <form asp-controller="Account"
+                          asp-action="Logout"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit"
+                                class="btn btn-outline-dark">
+                            Logout
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+
+            <!-- DELETE ACCOUNT -->
+            <div class="card border-danger shadow-sm mt-4">
+
+                <div class="card-body">
+
+                    <h5 class="card-title text-danger">
+                        Delete Account
+                    </h5>
+
+                    <p class="text-muted">
+                        Permanently delete your account and associated
+                        account information. This action cannot be undone.
+                    </p>
+
+                    <a asp-controller="Account"
+                       asp-action="DeleteAccount"
+                       class="btn btn-outline-danger">
+                        <span class="text-danger fw-semibold">
+                            Delete Account
+                        </span>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>

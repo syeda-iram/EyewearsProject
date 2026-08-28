@@ -1,0 +1,213 @@
+﻿@model EyewearsProject.ViewModels.VerifyTwoFactorOtpViewModel
+
+@{
+    ViewData["Title"] = "Verify Two-Factor Authentication";
+}
+
+<div class="container mt-5 mb-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-5">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body p-4 text-center">
+
+                    <h3 class="mb-3">
+                        Verify Your Identity
+                    </h3>
+
+                    @if (Model.Method == "SMS")
+                    {
+                        <p class="text-muted">
+                            We sent a 6-digit verification code to your
+                            phone number.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">
+                            We sent a 6-digit verification code to your
+                            email address.
+                        </p>
+                    }
+
+                    <!-- VALIDATION ERRORS -->
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+
+                    <!-- VERIFY FORM -->
+                    <form asp-controller="Account"
+                          asp-action="VerifyTwoFactor"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <!-- Keep selected method -->
+                        <input type="hidden"
+                               asp-for="Method" />
+
+                        <div class="mb-3">
+
+                            <label asp-for="Otp"
+                                   class="form-label fw-bold">
+                                Enter Verification Code
+                            </label>
+
+                            <input asp-for="Otp"
+                                   class="form-control text-center"
+                                   maxlength="6"
+                                   inputmode="numeric"
+                                   autocomplete="one-time-code"
+                                   autofocus
+                                   style="
+                            font-size:24px;
+                            letter-spacing:8px;
+                            max-width:250px;
+                            margin:auto;
+                            " />
+
+                            <span asp-validation-for="Otp"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <!-- TIMER -->
+                        <p class="text-muted mb-3">
+
+                            Code expires in
+
+                            <strong id="otpTimer">
+                                05:00
+                            </strong>
+
+                        </p>
+
+                        <button type="submit"
+                                id="verifyButton"
+                                class="btn btn-primary w-100">
+
+                            Verify Code
+
+                        </button>
+
+                    </form>
+
+                    <!-- EXPIRED MESSAGE -->
+                    <div id="expiredMessage"
+                         class="alert alert-danger mt-3 d-none">
+
+                        Your verification code has expired.
+                        Please request a new code.
+
+                    </div>
+
+                    <!-- CHOOSE METHOD AGAIN -->
+                    <div class="mt-3">
+
+                        <a asp-controller="Account"
+                           asp-action="ChooseTwoFactorMethod"
+                           class="btn btn-link">
+
+                            Choose another verification method
+
+                        </a>
+
+                    </div>
+
+                    <!-- BACK TO LOGIN -->
+                    <div class="mt-2">
+
+                        <a asp-controller="Account"
+                           asp-action="Login"
+                           class="text-muted small">
+
+                            Back to Login
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        // OTP lifetime is maximum 5 minutes
+        let remainingSeconds =
+            Math.min(300, Math.max(0, @Model.RemainingSeconds));
+
+        const timerElement =
+            document.getElementById("otpTimer");
+
+        const verifyButton =
+            document.getElementById("verifyButton");
+
+        const expiredMessage =
+            document.getElementById("expiredMessage");
+
+
+        function updateTimer() {
+
+            if (remainingSeconds <= 0) {
+
+                timerElement.textContent = "Expired";
+
+                verifyButton.disabled = true;
+
+                expiredMessage.classList.remove("d-none");
+
+                return;
+            }
+
+
+            const minutes =
+                Math.floor(remainingSeconds / 60);
+
+            const seconds =
+                remainingSeconds % 60;
+
+
+            timerElement.textContent =
+                String(minutes).padStart(2, "0")
+                + ":"
+                + String(seconds).padStart(2, "0");
+
+
+            remainingSeconds--;
+        }
+
+
+        updateTimer();
+
+
+        const timer =
+            setInterval(function() {
+
+                updateTimer();
+
+                if (remainingSeconds <= 0) {
+
+                    clearInterval(timer);
+
+                }
+
+            }, 1000);
+
+    </script>
+}

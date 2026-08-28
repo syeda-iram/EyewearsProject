@@ -16,6 +16,9 @@ namespace EyewearsProject.Models
         public bool EmailVerified => EmailConfirmed;
         public bool PhoneVerified { get; set; }
 
+        public bool TwoFactorEnabled { get; set; } = false;
+        public string? TwoFactorMethod { get; set; }
+
         public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
 

@@ -309,11 +309,11 @@
                 <a asp-controller="Products"
                    asp-action="Index"
                    class="evw-cta-primary">
-                    Shop Frames &rarr;
+                    Start Shopping &rarr;
                 </a>
 
                 <!-- SECONDARY CTA -->
-                <a asp-controller="Products"
+                <a asp-controller="TryOn"
                    asp-action="Index"
                    class="evw-cta-secondary">
                     Try Frames On
@@ -354,12 +354,20 @@
 <!-- ==========================================
      CATEGORIES
      ========================================== -->
+@{
+    var categoryCounts =
+        (Dictionary<int, int>)ViewBag.CategoryProductCounts;
+}
+
 @if (categories.Any())
 {
     <div class="row g-3 mb-5">
 
         @foreach (var cat in categories.Take(4))
         {
+            var productCount =
+                categoryCounts.GetValueOrDefault(cat.Id, 0);
+
             <div class="col-6 col-md-3">
 
                 <a asp-controller="Products"
@@ -372,7 +380,7 @@
                     </div>
 
                     <div class="text-muted small mt-1">
-                        Explore frames &rarr;
+                        @productCount @(productCount == 1 ? "Product" : "Products") &rarr;
                     </div>
 
                 </a>
@@ -382,7 +390,6 @@
 
     </div>
 }
-
 
 <!-- ==========================================
      CMS BANNER CAROUSEL

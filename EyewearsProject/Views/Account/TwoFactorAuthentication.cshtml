@@ -1,0 +1,176 @@
+﻿@model EyewearsProject.ViewModels.TwoFactorAuthenticationViewModel
+
+@{
+    ViewData["Title"] = "Two-Factor Authentication";
+}
+
+<div class="container mt-5 mb-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-7">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h2 class="mb-3">
+                        Two-Factor Authentication
+                    </h2>
+
+                    <p class="text-muted">
+                        Add an extra layer of security to your EyeCraft account.
+                        Choose how you want to receive your verification code.
+                    </p>
+
+                    @if (TempData["TwoFactorSuccess"] != null)
+                    {
+                        <div class="alert alert-success">
+                            @TempData["TwoFactorSuccess"]
+                        </div>
+                    }
+
+                    @if (TempData["TwoFactorError"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["TwoFactorError"]
+                        </div>
+                    }
+
+                    @if (Model.TwoFactorEnabled)
+                    {
+                        <div class="alert alert-success">
+
+                            <strong>Two-factor authentication is enabled.</strong>
+
+                            <div class="mt-1">
+                                Your account has an additional security layer.
+                            </div>
+
+                        </div>
+
+                        <form asp-controller="Account"
+                              asp-action="DisableTwoFactorAuthentication"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-outline-danger"
+                                    onclick="return confirm('Are you sure you want to disable two-factor authentication?');">
+                                Disable Two-Factor Authentication
+                            </button>
+
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border">
+                            Two-factor authentication is currently
+                            <strong>disabled</strong>.
+                        </div>
+
+                        <h5 class="mt-4 mb-3">
+                            Choose verification method
+                        </h5>
+
+                        <form asp-controller="Account"
+                              asp-action="SendTwoFactorOtp"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <!-- EMAIL -->
+                            @if (Model.EmailAvailable)
+                            {
+                                <div class="form-check border rounded p-3 mb-3">
+
+                                    <input class="form-check-input ms-0 me-2"
+                                           type="radio"
+                                           name="method"
+                                           value="Email"
+                                           id="emailMethod"
+                                           checked />
+
+                                    <label class="form-check-label"
+                                           for="emailMethod">
+
+                                        <strong>📧 Email</strong>
+
+                                        <div class="text-muted small mt-1">
+                                            Send OTP to @Model.MaskedEmail
+                                        </div>
+
+                                    </label>
+
+                                </div>
+                            }
+
+                            <!-- SMS -->
+                            @if (Model.PhoneAvailable)
+                            {
+                                <div class="form-check border rounded p-3 mb-3">
+
+                                    <input class="form-check-input ms-0 me-2"
+                                           type="radio"
+                                           name="method"
+                                           value="SMS"
+                                           id="smsMethod" />
+
+                                    <label class="form-check-label"
+                                           for="smsMethod">
+
+                                        <strong>📱 SMS</strong>
+
+                                        <div class="text-muted small mt-1">
+                                            Send OTP to @Model.MaskedPhone
+                                        </div>
+
+                                        <div class="text-warning small mt-1">
+                                            SMS verification will be available
+                                            after SMS service integration.
+                                        </div>
+
+                                    </label>
+
+                                </div>
+                            }
+
+                            @if (!Model.EmailAvailable && !Model.PhoneAvailable)
+                            {
+                                <div class="alert alert-warning">
+                                    Please add an email address or phone number
+                                    to your profile before enabling
+                                    two-factor authentication.
+                                </div>
+                            }
+                            else
+                            {
+                                <button type="submit"
+                                        class="btn btn-dark mt-2">
+                                    Send Verification Code
+                                </button>
+                            }
+
+                        </form>
+                    }
+
+                    <div class="mt-4">
+
+                        <a asp-controller="Account"
+                           asp-action="Settings"
+                           class="btn btn-outline-secondary">
+                            Back to Settings
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

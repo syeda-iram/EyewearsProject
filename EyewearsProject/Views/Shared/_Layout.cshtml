@@ -924,7 +924,13 @@
                                     </svg>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><span class="dropdown-item-text text-muted small">@currentUser.FullName</span></li>
+                                    <li>
+                                        <a class="dropdown-item text-muted small"
+                                           asp-controller="Account"
+                                           asp-action="Profile">
+                                            @currentUser.FullName
+                                        </a>
+                                    </li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post">
@@ -1104,17 +1110,6 @@
 
                 @if (currentUser != null)
                 {
-                    <li>
-
-                        <a asp-controller="Addresses"
-                           asp-action="Index">
-
-                            Addresses
-
-                        </a>
-
-                    </li>
-
 
                     <li>
 
@@ -1142,11 +1137,9 @@
 
                     <li>
 
-                        <a asp-controller="Addresses"
-                           asp-action="Index">
-
+                        <a asp-controller="Account"
+                           asp-action="Settings">
                             Settings
-
                         </a>
 
                     </li>
@@ -1157,7 +1150,6 @@
 
                         <a asp-controller="Account"
                            asp-action="Login">
-
                             Settings
 
                         </a>
