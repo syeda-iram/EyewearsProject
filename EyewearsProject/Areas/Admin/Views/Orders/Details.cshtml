@@ -29,6 +29,8 @@
                 <thead class="border-bottom">
                     <tr>
                         <th>Product</th>
+                        <th>Lens / Coating</th>
+                        <th>Prescription</th>
                         <th class="text-center">Qty</th>
                         <th class="text-end">Unit Price</th>
                         <th class="text-end">Total</th>
@@ -39,6 +41,30 @@
                     {
                         <tr>
                             <td>@item.ProductName</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.LensType))
+                                {
+                                    <div class="small">@item.LensType</div>
+                                    @if (!string.IsNullOrEmpty(item.Coating) && item.Coating != "None")
+                                    {
+                                        <div class="small text-muted">@item.Coating</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.PrescriptionId.HasValue)
+                                {
+                                    <a asp-controller="Prescriptions" asp-action="AdminDetails" asp-route-id="@item.PrescriptionId" class="btn btn-sm btn-outline-primary">View Rx</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">None attached</span>
+                                }
+                            </td>
                             <td class="text-center">@item.Quantity</td>
                             <td class="text-end">@item.UnitPrice.ToPkr()</td>
                             <td class="text-end">@((item.UnitPrice * item.Quantity).ToPkr())</td>

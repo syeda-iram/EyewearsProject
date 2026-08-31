@@ -329,18 +329,19 @@ namespace EyewearsProject.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var product = await _context.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
-                .Include(p => p.SubCategory)
-                .Include(p => p.Images)
-                    .ThenInclude(i => i.ProductVariant)
-                .Include(p => p.Variants)
-                .Include(p => p.Specifications)
-                .Include(p => p.Attributes)
-                .Include(p => p.ProductTags)
-                .FirstOrDefaultAsync(p =>
-                    p.Id == id &&
-                    p.IsActive);
+    .Include(p => p.Brand)
+    .Include(p => p.Category)
+    .Include(p => p.SubCategory)
+    .Include(p => p.Images)
+        .ThenInclude(i => i.ProductVariant)
+    .Include(p => p.Variants)
+        .ThenInclude(v => v.Inventory)
+    .Include(p => p.Specifications)
+    .Include(p => p.Attributes)
+    .Include(p => p.ProductTags)
+    .FirstOrDefaultAsync(p =>
+        p.Id == id &&
+        p.IsActive);
 
             if (product == null)
                 return NotFound();

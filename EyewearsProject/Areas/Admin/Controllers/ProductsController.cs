@@ -547,142 +547,151 @@ namespace EyewearsProject.Areas.Admin.Controllers
             // START TRANSACTION
             // =====================================================
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+            // =====================================================
+            // TRANSACTION — wrapped in EF's retry-aware execution
+            // strategy, required once EnableRetryOnFailure is on
+            // =====================================================
 
-            try
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
             {
-                // =================================================
-                // PRODUCT INFORMATION
-                // =================================================
+                await using var transaction =
+                    await _context.Database.BeginTransactionAsync();
 
-                product.Name =
-                    model.Name.Trim();
+                try
+                {
+                    // =================================================
+                    // PRODUCT INFORMATION
+                    // =================================================
 
-                product.Sku =
-                    newProductSku;
+                    product.Name =
+                        model.Name.Trim();
 
-                product.Description =
-                    model.Description;
+                    product.Sku =
+                        newProductSku;
 
-                product.CategoryId =
-                    model.CategoryId;
+                    product.Description =
+                        model.Description;
 
-                product.SubCategoryId =
-                    model.SubCategoryId;
+                    product.CategoryId =
+                        model.CategoryId;
 
-                product.BrandId =
-                    model.BrandId;
+                    product.SubCategoryId =
+                        model.SubCategoryId;
 
-                product.Gender =
-                    model.Gender;
+                    product.BrandId =
+                        model.BrandId;
 
-                product.Material =
-                    model.Material;
+                    product.Gender =
+                        model.Gender;
 
-                product.Shape =
-                    model.Shape;
+                    product.Material =
+                        model.Material;
 
-                // =================================================
-                // PRICING
-                // =================================================
+                    product.Shape =
+                        model.Shape;
 
-                product.Price =
-                    model.Price;
+                    // =================================================
+                    // PRICING
+                    // =================================================
 
-                product.DiscountPrice =
-                    model.DiscountPrice;
+                    product.Price =
+                        model.Price;
 
-                product.CostPrice =
-                    model.CostPrice;
+                    product.DiscountPrice =
+                        model.DiscountPrice;
 
-                product.Weight =
-                    model.Weight;
+                    product.CostPrice =
+                        model.CostPrice;
 
-                // =================================================
-                // SETTINGS
-                // =================================================
+                    product.Weight =
+                        model.Weight;
 
-                product.IsActive =
-                    model.IsActive;
+                    // =================================================
+                    // SETTINGS
+                    // =================================================
 
-                product.IsFeatured =
-                    model.IsFeatured;
+                    product.IsActive =
+                        model.IsActive;
 
-                // =================================================
-                // VIRTUAL TRY-ON
-                // =================================================
+                    product.IsFeatured =
+                        model.IsFeatured;
 
-                product.TryOnOverlayImageUrl =
-                    model.TryOnOverlayImageUrl;
+                    // =================================================
+                    // VIRTUAL TRY-ON
+                    // =================================================
 
-                product.TryOn3DModelUrl =
-                    model.TryOn3DModelUrl;
+                    product.TryOnOverlayImageUrl =
+                        model.TryOnOverlayImageUrl;
 
-                product.TryOnOverlayScale =
-                    model.TryOnOverlayScale;
+                    product.TryOn3DModelUrl =
+                        model.TryOn3DModelUrl;
 
-                product.TryOnOverlayVerticalOffset =
-                    model.TryOnOverlayVerticalOffset;
+                    product.TryOnOverlayScale =
+                        model.TryOnOverlayScale;
 
-                product.UpdatedAt =
-                    DateTime.UtcNow;
+                    product.TryOnOverlayVerticalOffset =
+                        model.TryOnOverlayVerticalOffset;
 
-                // =================================================
-                // VARIANTS
-                // =================================================
+                    product.UpdatedAt =
+                        DateTime.UtcNow;
 
-                await SaveVariantsAsync(
-                    product,
-                    model);
+                    // =================================================
+                    // VARIANTS
+                    // =================================================
 
-                // =================================================
-                // IMAGES
-                // =================================================
+                    await SaveVariantsAsync(
+                        product,
+                        model);
 
-                await SaveImagesAsync(
-                    product,
-                    model);
+                    // =================================================
+                    // IMAGES
+                    // =================================================
 
-                // =================================================
-                // SPECIFICATIONS
-                // =================================================
+                    await SaveImagesAsync(
+                        product,
+                        model);
 
-                await SaveSpecificationsAsync(
-                    product,
-                    model);
+                    // =================================================
+                    // SPECIFICATIONS
+                    // =================================================
 
-                // =================================================
-                // ATTRIBUTES
-                // =================================================
+                    await SaveSpecificationsAsync(
+                        product,
+                        model);
 
-                await SaveAttributesAsync(
-                    product,
-                    model);
+                    // =================================================
+                    // ATTRIBUTES
+                    // =================================================
 
-                // =================================================
-                // TAGS
-                // =================================================
+                    await SaveAttributesAsync(
+                        product,
+                        model);
 
-                await SaveTagsAsync(
-                    product,
-                    model);
+                    // =================================================
+                    // TAGS
+                    // =================================================
 
-                // =================================================
-                // FINAL SAVE
-                // =================================================
+                    await SaveTagsAsync(
+                        product,
+                        model);
 
-                await _context.SaveChangesAsync();
+                    // =================================================
+                    // FINAL SAVE
+                    // =================================================
 
-                await transaction.CommitAsync();
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
+                    await _context.SaveChangesAsync();
 
-                throw;
-            }
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
 
+                    throw;
+                }
+            });
             // =====================================================
             // AUDIT
             // =====================================================

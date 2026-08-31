@@ -1,0 +1,84 @@
+﻿@model Prescription
+
+@{
+    ViewData["Title"] = $"Prescription — {Model.PatientName}";
+}
+
+<h4>Prescription — @Model.PatientName</h4>
+<p class="text-muted">
+    Customer: @Model.User.FullName (@Model.User.Email)
+</p>
+
+<div class="row g-3 mb-3">
+    @if (!string.IsNullOrEmpty(Model.PrescribedBy))
+    {
+        <div class="col-auto"><strong>Prescribed By:</strong> @Model.PrescribedBy</div>
+    }
+    @if (Model.IssuedDate.HasValue)
+    {
+        <div class="col-auto"><strong>Issued:</strong> @Model.IssuedDate.Value.ToString("dd MMM yyyy")</div>
+    }
+    @if (Model.ExpiryDate.HasValue)
+    {
+        <div class="col-auto"><strong>Expires:</strong> @Model.ExpiryDate.Value.ToString("dd MMM yyyy")</div>
+    }
+</div>
+
+@if (Model.RightSphere.HasValue || Model.LeftSphere.HasValue)
+{
+    <table class="table" style="max-width:700px;">
+        <thead>
+            <tr>
+                <th>Eye</th>
+                <th>SPH</th>
+                <th>CYL</th>
+                <th>Axis</th>
+                <th>Add</th>
+                <th>PD</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Right (OD)</td>
+                <td>@Model.RightSphere</td>
+                <td>@Model.RightCylinder</td>
+                <td>@Model.RightAxis</td>
+                <td>@Model.RightAdd</td>
+                <td>@Model.RightPd</td>
+            </tr>
+            <tr>
+                <td>Left (OS)</td>
+                <td>@Model.LeftSphere</td>
+                <td>@Model.LeftCylinder</td>
+                <td>@Model.LeftAxis</td>
+                <td>@Model.LeftAdd</td>
+                <td>@Model.LeftPd</td>
+            </tr>
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No manually entered values on file for this prescription — see the uploaded file below, if any.</p>
+}
+
+@if (!string.IsNullOrEmpty(Model.Notes))
+{
+    <p><strong>Notes:</strong> @Model.Notes</p>
+}
+
+@if (!string.IsNullOrEmpty(Model.UploadedFileUrl))
+{
+    <div class="mb-3">
+        <strong>Uploaded File:</strong>
+        <a href="@Model.UploadedFileUrl" target="_blank" class="btn btn-sm btn-outline-primary ms-2">Open Original</a>
+        @if (Model.UploadedFileUrl.EndsWith(".jpg") || Model.UploadedFileUrl.EndsWith(".jpeg") || Model.UploadedFileUrl.EndsWith(".png"))
+        {
+            <div class="mt-2">
+                <img src="@Model.UploadedFileUrl" style="max-width:400px;" class="rounded border" />
+            </div>
+        }
+    </div>
+}
+
+<a asp-controller="Orders" asp-action="Index" class="btn btn-secondary mt-3">Back to Orders</a>

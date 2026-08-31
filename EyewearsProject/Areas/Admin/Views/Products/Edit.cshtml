@@ -499,15 +499,13 @@
                                     <input type="text"
                                            name="Variants[@i].Color"
                                            value="@Model.Variants[i].Color"
-                                           class="form-control variant-edit-field"
-                                           disabled />
+                                           class="form-control variant-edit-field variant-locked" />
                                 </td>
 
                                 <!-- SIZE -->
                                 <td>
                                     <select name="Variants[@i].Size"
-                                            class="form-select variant-edit-field"
-                                            disabled>
+                                            class="form-select variant-edit-field variant-locked">
 
                                         <option value="">-- Select --</option>
 
@@ -539,8 +537,7 @@
                                     <input type="text"
                                            name="Variants[@i].Sku"
                                            value="@Model.Variants[i].Sku"
-                                           class="form-control variant-edit-field"
-                                           disabled />
+                                           class="form-control variant-edit-field variant-locked" />
                                 </td>
 
                                 <!-- STOCK -->
@@ -728,6 +725,16 @@
 
 
 <style>
+
+    /* =========================================================
+       VARIANT LOCK STYLING
+       ========================================================= */
+
+    .variant-locked {
+        pointer-events: none;
+        background-color: #e9ecef;
+        opacity: 0.85;
+    }
 
     /* =========================================================
        IMAGES SECTION
@@ -989,7 +996,7 @@
                 target.getBoundingClientRect();
 
             const before =
-                e.clientX <
+                e.clientX 
                 rect.left + rect.width / 2;
 
 
@@ -2298,7 +2305,7 @@
             if (!isEditing) {
 
                 fields.forEach(function (field) {
-                    field.disabled = false;
+                    field.classList.remove("variant-locked");
                 });
 
                 row.classList.add("editing");
@@ -2313,7 +2320,7 @@
             else {
 
                 fields.forEach(function (field) {
-                    field.disabled = true;
+                    field.classList.add("variant-locked");
                 });
 
                 row.classList.remove("editing");
@@ -2516,504 +2523,6 @@
             });
 
         }
-
-    });
-
-</script>
-
-<script>
-
-    document.addEventListener("DOMContentLoaded", function () {
-
-        const container =
-            document.getElementById(
-                "productImagesContainer"
-            );
-
-        const uploadBox =
-            document.getElementById(
-                "uploadMoreImages"
-            );
-
-        const fileInput =
-            document.getElementById(
-                "productImagesInput"
-            );
-
-
-        // =====================================================
-        // UPLOAD MORE
-        // =====================================================
-
-        uploadBox.addEventListener(
-            "click",
-            function () {
-
-                fileInput.click();
-
-            }
-        );
-
-
-        fileInput.addEventListener(
-            "change",
-            async function () {
-
-                const files =
-                    Array.from(fileInput.files);
-
-                if (!files.length)
-                    return;
-
-
-                for (const file of files) {
-
-                    await uploadImage(file);
-
-                }
-
-
-                fileInput.value = "";
-
-                updateImageIndexes();
-
-            }
-        );
-
-
-        // =====================================================
-        // UPLOAD IMAGE
-        // =====================================================
-
-        async function uploadImage(file) {
-
-            const formData =
-                new FormData();
-
-            formData.append(
-                "file",
-                file
-            );
-
-
-            const token =
-                document.querySelector(
-                    'input[name="__RequestVerificationToken"]'
-                ).value;
-
-
-            const response =
-                await fetch(
-                    '@Url.Action("Image", "Upload", new { area = "Admin" })',
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "RequestVerificationToken":
-                                token
-                        },
-
-                        body: formData
-                    }
-                );
-
-
-            if (!response.ok) {
-
-                alert(
-                    "Image upload failed."
-                );
-
-                return;
-
-            }
-
-
-            const result =
-                await response.json();
-
-
-            if (!result.url) {
-
-                alert(
-                    "Image upload failed."
-                );
-
-                return;
-
-            }
-
-
-            addImageToList(
-                result.url
-            );
-
-        }
-
-
-        // =====================================================
-        // ADD IMAGE TO UI
-        // =====================================================
-
-        function addImageToList(imageUrl) {
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-            item.className =
-                "product-image-item";
-
-            item.draggable = true;
-
-
-            item.innerHTML = `
-
-                <input type="hidden"
-                       class="image-id"
-                       value="0" />
-
-                <input type="hidden"
-                       class="image-url"
-                       value="${escapeHtml(imageUrl)}" />
-
-                <input type="hidden"
-                       class="image-variant-id"
-                       value="" />
-
-                <input type="hidden"
-                       class="image-sort-order"
-                       value="0" />
-
-                <input type="hidden"
-                       class="image-primary"
-                       value="false" />
-
-
-                <div class="product-image-preview">
-
-                    <img src="${escapeHtml(imageUrl)}"
-                         alt="Product image" />
-
-                    <button type="button"
-                            class="image-remove-btn"
-                            title="Remove image">
-
-                        <i class="bi bi-x"></i>
-
-                    </button>
-
-                </div>
-            `;
-
-
-            container.insertBefore(
-                item,
-                uploadBox
-            );
-
-
-            updateImageIndexes();
-
-        }
-
-
-        // =====================================================
-        // REMOVE IMAGE
-        // =====================================================
-
-        container.addEventListener(
-            "click",
-            function (event) {
-
-                const removeButton =
-                    event.target.closest(
-                        ".image-remove-btn"
-                    );
-
-                if (!removeButton)
-                    return;
-
-
-                const item =
-                    removeButton.closest(
-                        ".product-image-item"
-                    );
-
-                if (!item)
-                    return;
-
-
-                item.remove();
-
-
-                updateImageIndexes();
-
-            }
-        );
-
-
-        // =====================================================
-        // DRAG & DROP
-        // =====================================================
-
-        let draggedItem = null;
-
-
-        container.addEventListener(
-            "dragstart",
-            function (event) {
-
-                const item =
-                    event.target.closest(
-                        ".product-image-item"
-                    );
-
-                if (!item)
-                    return;
-
-
-                draggedItem = item;
-
-                item.classList.add(
-                    "dragging"
-                );
-
-            }
-        );
-
-
-        container.addEventListener(
-            "dragend",
-            function (event) {
-
-                const item =
-                    event.target.closest(
-                        ".product-image-item"
-                    );
-
-                if (!item)
-                    return;
-
-
-                item.classList.remove(
-                    "dragging"
-                );
-
-                draggedItem = null;
-
-                updateImageIndexes();
-
-            }
-        );
-
-
-        container.addEventListener(
-            "dragover",
-            function (event) {
-
-                event.preventDefault();
-
-
-                const target =
-                    event.target.closest(
-                        ".product-image-item"
-                    );
-
-
-                if (!target ||
-                    !draggedItem ||
-                    target === draggedItem)
-                    return;
-
-
-                const rect =
-                    target.getBoundingClientRect();
-
-
-                const middle =
-                    rect.left +
-                    rect.width / 2;
-
-
-                if (event.clientX < middle) {
-
-                    container.insertBefore(
-                        draggedItem,
-                        target
-                    );
-
-                }
-                else {
-
-                    container.insertBefore(
-                        draggedItem,
-                        target.nextSibling
-                    );
-
-                }
-
-            }
-        );
-
-
-        // =====================================================
-        // UPDATE INDEXES
-        // FIRST IMAGE = PRIMARY
-        // =====================================================
-
-        function updateImageIndexes() {
-
-            const items =
-                container.querySelectorAll(
-                    ".product-image-item"
-                );
-
-
-            items.forEach(
-                function (item, index) {
-
-                    const idInput =
-                        item.querySelector(
-                            ".image-id"
-                        );
-
-                    const urlInput =
-                        item.querySelector(
-                            ".image-url"
-                        );
-
-                    const variantInput =
-                        item.querySelector(
-                            ".image-variant-id"
-                        );
-
-                    const sortInput =
-                        item.querySelector(
-                            ".image-sort-order"
-                        );
-
-                    const primaryInput =
-                        item.querySelector(
-                            ".image-primary"
-                        );
-
-
-                    if (idInput) {
-
-                        idInput.name =
-                            `ExistingImages[${index}].Id`;
-
-                    }
-
-
-                    if (urlInput) {
-
-                        urlInput.name =
-                            `ExistingImages[${index}].ImageUrl`;
-
-                    }
-
-
-                    if (variantInput) {
-
-                        variantInput.name =
-                            `ExistingImages[${index}].ProductVariantId`;
-
-                    }
-
-
-                    if (sortInput) {
-
-                        sortInput.name =
-                            `ExistingImages[${index}].SortOrder`;
-
-                        sortInput.value =
-                            index;
-
-                    }
-
-
-                    if (primaryInput) {
-
-                        primaryInput.name =
-                            `ExistingImages[${index}].IsPrimary`;
-
-                        primaryInput.value =
-                            index === 0
-                                ? "true"
-                                : "false";
-
-                    }
-
-
-                    // Remove old badge
-
-                    const oldBadge =
-                        item.querySelector(
-                            ".image-primary-badge"
-                        );
-
-                    if (oldBadge)
-                        oldBadge.remove();
-
-
-                    // First image = Primary
-
-                    if (index === 0) {
-
-                        const preview =
-                            item.querySelector(
-                                ".product-image-preview"
-                            );
-
-                        if (preview) {
-
-                            const badge =
-                                document.createElement(
-                                    "span"
-                                );
-
-                            badge.className =
-                                "image-primary-badge";
-
-                            badge.innerText =
-                                "Primary";
-
-                            preview.appendChild(
-                                badge
-                            );
-
-                        }
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        // =====================================================
-        // HTML ESCAPE
-        // =====================================================
-
-        function escapeHtml(value) {
-
-            return String(value)
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll('"', "&quot;")
-                .replaceAll("'", "&#039;");
-
-        }
-
-
-        // Initial state
-
-        updateImageIndexes();
 
     });
 
