@@ -14,22 +14,468 @@
     var specs = ViewBag.AllSpecs;
 }
 
-<h1 class="mb-4">Shop Eyewear</h1>
+<style>
+
+    /* =========================================================
+       SHOP PAGE
+    ========================================================= */
+
+    .shop-title {
+        color: #071b49;
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 22px;
+    }
+
+
+    /* =========================================================
+       FILTER PANEL
+    ========================================================= */
+
+    .filter-panel {
+        background: #ffffff;
+        border: 1px solid #dfe5ee;
+        border-radius: 20px;
+        padding: 20px 17px;
+        box-shadow: 0 4px 15px rgba(20, 40, 80, 0.06);
+    }
+
+    .filter-title {
+        color: #071b49;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .filter-group {
+        margin-bottom: 18px !important;
+    }
+
+    .filter-label {
+        display: block;
+        color: #4d6288;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 7px;
+    }
+
+    .filter-panel .form-select,
+    .filter-panel .form-control {
+        border-color: #d7dfeb;
+        border-radius: 10px;
+        font-size: 13px;
+        color: #263b61;
+    }
+
+    .filter-panel .form-select:focus,
+    .filter-panel .form-control:focus {
+        border-color: #172c5f;
+        box-shadow: 0 0 0 0.15rem rgba(23, 44, 95, 0.10);
+    }
+
+
+    /* =========================================================
+       PRODUCTS HEADER
+    ========================================================= */
+
+    .products-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .products-count {
+        color: #64748b;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .products-count strong {
+        color: #071b49;
+    }
+
+
+    /* =========================================================
+       PRODUCT GRID
+    ========================================================= */
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+
+    /* =========================================================
+       PRODUCT CARD
+    ========================================================= */
+
+    .product-card {
+        background: #ffffff;
+        border: 1px solid #dce3ed;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: transform 0.2s ease,
+                    box-shadow 0.2s ease;
+        height: auto;
+    }
+
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 9px 22px rgba(20, 40, 80, 0.10);
+    }
+
+
+    /* =========================================================
+       PRODUCT IMAGE
+    ========================================================= */
+
+    .product-image-wrapper {
+        position: relative;
+        height: 175px;
+        margin: 12px 12px 0;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #f8f6ef;
+    }
+
+    .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+
+    /* =========================================================
+       FEATURED / SALE BADGES
+    ========================================================= */
+
+    .featured-badge {
+        position: absolute;
+        top: 9px;
+        left: 9px;
+        background: #ffffff;
+        color: #172c5f;
+        border: 1px solid #d8dfeb;
+        border-radius: 20px;
+        padding: 4px 8px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .sale-badge {
+        position: absolute;
+        top: 9px;
+        right: 9px;
+        background: #ffffff;
+        color: #d93025;
+        border: 1px solid #f0d1cf;
+        border-radius: 20px;
+        padding: 4px 8px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+
+    /* =========================================================
+       WISHLIST BUTTON
+    ========================================================= */
+
+    .wishlist-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+
+        width: 32px;
+        height: 32px;
+
+        border: none;
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.95);
+
+        color: #172c5f;
+        font-size: 20px;
+        line-height: 1;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+
+        transition: transform 0.15s ease,
+                    background 0.15s ease;
+    }
+
+    .wishlist-btn:hover {
+        background: #ffffff;
+        transform: scale(1.06);
+    }
+
+
+    /* =========================================================
+       PRODUCT INFORMATION
+    ========================================================= */
+
+    .product-info {
+        padding: 11px 13px 14px;
+    }
+
+    .product-brand {
+        color: #6b7c9d;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+
+        margin-bottom: 3px;
+    }
+
+    .product-name {
+        display: block;
+
+        color: #071b49;
+        font-size: 15px;
+        font-weight: 600;
+
+        text-decoration: none;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        margin-bottom: 5px;
+    }
+
+    .product-name:hover {
+        color: #172c5f;
+    }
+
+
+    /* =========================================================
+       CATEGORY
+    ========================================================= */
+
+    .product-category {
+        color: #7a879d;
+        font-size: 11px;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        margin-bottom: 6px;
+    }
+
+
+    /* =========================================================
+       GENDER
+    ========================================================= */
+
+    .product-gender {
+        display: inline-block;
+
+        background: #f7f8fa;
+        border: 1px solid #e1e6ee;
+        border-radius: 12px;
+
+        color: #5c6c87;
+
+        font-size: 10px;
+        padding: 3px 7px;
+
+        margin-bottom: 6px;
+    }
+
+
+    /* =========================================================
+       TAGS
+    ========================================================= */
+
+    .product-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+
+        margin-bottom: 7px;
+    }
+
+    .product-tag {
+        background: #f5f7fa;
+        color: #61718c;
+
+        border: 1px solid #e0e5ec;
+        border-radius: 10px;
+
+        font-size: 9px;
+        padding: 3px 6px;
+    }
+
+
+    /* =========================================================
+       PRICE
+    ========================================================= */
+
+    .product-price-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        margin-top: 5px;
+    }
+
+    .product-current-price {
+        color: #071b49;
+        font-size: 17px;
+        font-weight: 700;
+    }
+
+    .product-old-price {
+        color: #7d8797;
+        font-size: 10px;
+        text-decoration: line-through;
+    }
+
+    .product-discount {
+        color: #e53935;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+
+    /* =========================================================
+       VIEW DETAILS
+    ========================================================= */
+
+    .product-details-btn {
+        width: 100%;
+
+        border: 1px solid #172c5f;
+        border-radius: 9px;
+
+        background: #172c5f;
+        color: #ffffff;
+
+        font-size: 12px;
+        font-weight: 600;
+
+        padding: 7px 10px;
+
+        margin-top: 10px;
+
+        text-decoration: none;
+        display: block;
+        text-align: center;
+
+        transition: background 0.2s ease;
+    }
+
+    .product-details-btn:hover {
+        background: #071b49;
+        color: #ffffff;
+    }
+
+
+    /* =========================================================
+       EMPTY STATE
+    ========================================================= */
+
+    .empty-products {
+        border: 1px solid #dfe5ee;
+        border-radius: 16px;
+        padding: 35px;
+        text-align: center;
+        color: #6b778c;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @@media (max-width: 1100px) {
+
+        .products-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+    }
+
+    @@media (max-width: 767px) {
+
+        .shop-title {
+            font-size: 27px;
+        }
+
+        .products-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .product-image-wrapper {
+            height: 150px;
+            margin: 9px 9px 0;
+        }
+
+        .product-info {
+            padding: 9px 10px 11px;
+        }
+
+        .product-current-price {
+            font-size: 15px;
+        }
+
+        .product-name {
+            font-size: 13px;
+        }
+
+        .product-details-btn {
+            font-size: 11px;
+        }
+
+    }
+
+    @@media (max-width: 480px) {
+
+        .products-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+</style>
+
+
+<h1 class="shop-title">
+    All Frames
+</h1>
+
 
 <div class="row">
 
-    <!-- FILTERS -->
-    <div class="col-md-3">
+    <!-- =========================================================
+         FILTERS
+    ========================================================= -->
+
+    <div class="col-md-3 mb-4">
 
         <div class="filter-panel">
 
-            <h6 class="filter-title">Filters</h6>
+            <h6 class="filter-title">
+                Filters
+            </h6>
 
             <form asp-controller="Products"
                   asp-action="Index"
                   method="get">
 
+
                 <!-- Preserve Category -->
+
                 @if (!string.IsNullOrEmpty((string)ViewBag.SelectedCategory))
                 {
                     <input type="hidden"
@@ -37,10 +483,14 @@
                            value="@ViewBag.SelectedCategory" />
                 }
 
-                <!-- SUBCATEGORY -->
+
+                <!-- =================================================
+                     SUBCATEGORY
+                ================================================= -->
+
                 @if (subCategories.Any())
                 {
-                    <div class="filter-group mb-3">
+                    <div class="filter-group">
 
                         <label class="filter-label">
                             Subcategory
@@ -58,7 +508,9 @@
                             {
                                 <option value="@subCategory.Id"
                                         selected="@(ViewBag.SelectedSubCategoryId == subCategory.Id ? "selected" : null)">
+
                                     @subCategory.Name
+
                                 </option>
                             }
 
@@ -67,8 +519,12 @@
                     </div>
                 }
 
-                <!-- BRAND -->
-                <div class="filter-group mb-3">
+
+                <!-- =================================================
+                     BRAND
+                ================================================= -->
+
+                <div class="filter-group">
 
                     <label class="filter-label">
                         Brand
@@ -86,7 +542,9 @@
                         {
                             <option value="@brand.Id"
                                     selected="@(ViewBag.SelectedBrandId == brand.Id ? "selected" : null)">
+
                                 @brand.Name
+
                             </option>
                         }
 
@@ -94,10 +552,14 @@
 
                 </div>
 
-                <!-- GENDER -->
+
+                <!-- =================================================
+                     GENDER
+                ================================================= -->
+
                 @if (genders.Any())
                 {
-                    <div class="filter-group mb-3">
+                    <div class="filter-group">
 
                         <label class="filter-label">
                             Gender
@@ -115,7 +577,9 @@
                             {
                                 <option value="@gender"
                                         selected="@(((string)ViewBag.SelectedGender) == gender ? "selected" : null)">
+
                                     @gender
+
                                 </option>
                             }
 
@@ -124,10 +588,14 @@
                     </div>
                 }
 
-                <!-- COLOR -->
+
+                <!-- =================================================
+                     COLOR
+                ================================================= -->
+
                 @if (colors.Any())
                 {
-                    <div class="filter-group mb-3">
+                    <div class="filter-group">
 
                         <label class="filter-label">
                             Color
@@ -145,7 +613,9 @@
                             {
                                 <option value="@color"
                                         selected="@(((string)ViewBag.SelectedColor) == color ? "selected" : null)">
+
                                     @color
+
                                 </option>
                             }
 
@@ -154,10 +624,14 @@
                     </div>
                 }
 
-                <!-- MATERIAL -->
+
+                <!-- =================================================
+                     MATERIAL
+                ================================================= -->
+
                 @if (materials.Any())
                 {
-                    <div class="filter-group mb-3">
+                    <div class="filter-group">
 
                         <label class="filter-label">
                             Material
@@ -175,7 +649,9 @@
                             {
                                 <option value="@material"
                                         selected="@(((string)ViewBag.SelectedMaterial) == material ? "selected" : null)">
+
                                     @material
+
                                 </option>
                             }
 
@@ -184,10 +660,14 @@
                     </div>
                 }
 
-                <!-- SHAPE -->
+
+                <!-- =================================================
+                     SHAPE
+                ================================================= -->
+
                 @if (shapes.Any())
                 {
-                    <div class="filter-group mb-3">
+                    <div class="filter-group">
 
                         <label class="filter-label">
                             Shape
@@ -205,7 +685,9 @@
                             {
                                 <option value="@shape"
                                         selected="@(((string)ViewBag.SelectedShape) == shape ? "selected" : null)">
+
                                     @shape
+
                                 </option>
                             }
 
@@ -214,8 +696,12 @@
                     </div>
                 }
 
-                <!-- PRICE -->
-                <div class="filter-group mb-3">
+
+                <!-- =================================================
+                     PRICE
+                ================================================= -->
+
+                <div class="filter-group">
 
                     <label class="filter-label">
                         Price Range (Rs)
@@ -239,11 +725,15 @@
 
                 </div>
 
-                <!-- SPECIFICATIONS -->
+
+                <!-- =================================================
+                     SPECIFICATIONS
+                ================================================= -->
+
                 @if (specs != null &&
                      ((IEnumerable<dynamic>)specs).Any())
                 {
-                    <div class="filter-group mb-3">
+                    <div class="filter-group">
 
                         <label class="filter-label">
                             Specifications
@@ -264,7 +754,9 @@
 
                                 <option value="@value"
                                         selected="@(((string)ViewBag.SelectedSpec) == value ? "selected" : null)">
+
                                     @spec.Name: @spec.Value
+
                                 </option>
                             }
 
@@ -273,18 +765,30 @@
                     </div>
                 }
 
-                <!-- APPLY -->
+
+                <!-- =================================================
+                     APPLY
+                ================================================= -->
+
                 <button type="submit"
                         class="btn btn-primary btn-sm w-100 mt-2">
+
                     Apply Filters
+
                 </button>
 
-                <!-- CLEAR -->
+
+                <!-- =================================================
+                     CLEAR
+                ================================================= -->
+
                 <a asp-controller="Products"
                    asp-action="Index"
                    asp-route-category="@ViewBag.SelectedCategory"
                    class="btn btn-outline-secondary btn-sm w-100 mt-2">
+
                     Clear Filters
+
                 </a>
 
             </form>
@@ -293,162 +797,253 @@
 
     </div>
 
-    <!-- PRODUCTS -->
+
+    <!-- =========================================================
+         PRODUCTS
+    ========================================================= -->
+
     <div class="col-md-9">
 
+
         <!-- CATEGORY -->
+
         @if (!string.IsNullOrEmpty((string)ViewBag.SelectedCategory))
         {
-            <p class="text-muted">
-                Showing:
-                <strong>
-                    @ViewBag.SelectedCategory
-                </strong>
-            </p>
+            <div class="mb-3">
+
+                <span class="products-count">
+
+                    Showing:
+                    <strong>
+                        @ViewBag.SelectedCategory
+                    </strong>
+
+                </span>
+
+            </div>
         }
 
-        <!-- PRODUCT GRID -->
-        <div class="row row-cols-1 row-cols-md-3 g-4">
 
-            @foreach (var product in Model)
-            {
-                var primaryImage =
-                    product.Images.FirstOrDefault(i => i.IsPrimary)
-                    ?? product.Images.FirstOrDefault();
+        <!-- PRODUCT COUNT -->
 
-                <div class="col">
+        <div class="products-header">
 
-                    <div class="card h-100 shadow-sm">
+            <p class="products-count">
 
-                        <!-- IMAGE -->
-                        <div class="position-relative">
+                <strong>@Model.Count()</strong>
+                @(Model.Count() == 1 ? "frame" : "frames")
 
-                            <img src="@(primaryImage?.ImageUrl ?? "/images/placeholder.jpg")"
-                                 class="card-img-top"
-                                 alt="@product.Name"
-                                 style="height:220px; object-fit:cover;" />
+            </p>
+
+        </div>
+
+
+        <!-- =====================================================
+             PRODUCT GRID
+        ===================================================== -->
+
+        @if (Model.Any())
+        {
+            <div class="products-grid">
+
+                @foreach (var product in Model)
+                {
+                    var primaryImage =
+                        product.Images.FirstOrDefault(i => i.IsPrimary)
+                        ?? product.Images.FirstOrDefault();
+
+
+                    <div class="product-card">
+
+
+                        <!-- =========================================
+                             IMAGE
+                        ========================================== -->
+
+                        <div class="product-image-wrapper">
+
+                            <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@product.Id">
+
+                                <img src="@(primaryImage?.ImageUrl ?? "/images/placeholder.jpg")"
+                                     class="product-image"
+                                     alt="@product.Name" />
+
+                            </a>
+
 
                             <!-- FEATURED -->
+
                             @if (product.IsFeatured)
                             {
-                                <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">
+                                <span class="featured-badge">
                                     Featured
                                 </span>
                             }
 
+
                             <!-- SALE -->
+
                             @if (product.DiscountPrice.HasValue &&
                                  product.DiscountPrice.Value < product.Price)
                             {
-                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                <span class="sale-badge">
                                     Sale
                                 </span>
                             }
 
+
+                            <!-- WISHLIST -->
+
+                            <button type="button"
+                                    class="wishlist-btn"
+                                    title="Add to wishlist">
+
+                                ♡
+
+                            </button>
+
                         </div>
 
-                        <!-- DETAILS -->
-                        <div class="card-body d-flex flex-column">
 
-                            <h5 class="card-title">
-                                @product.Name
-                            </h5>
+                        <!-- =========================================
+                             PRODUCT INFO
+                        ========================================== -->
 
-                            <!-- BRAND + CATEGORY -->
-                            <p class="text-muted mb-1">
+                        <div class="product-info">
+
+
+                            <!-- BRAND -->
+
+                            <div class="product-brand">
 
                                 @(product.Brand?.Name ?? "Unbranded")
-                                &middot;
+
+                            </div>
+
+
+                            <!-- PRODUCT NAME -->
+
+                            <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@product.Id"
+                               class="product-name">
+
+                                @product.Name
+
+                            </a>
+
+
+                            <!-- CATEGORY -->
+
+                            <div class="product-category">
+
                                 @product.Category?.Name
 
                                 @if (product.SubCategory != null)
                                 {
                                     <span>
-                                        &middot;
-                                        @product.SubCategory.Name
+                                        · @product.SubCategory.Name
                                     </span>
                                 }
 
-                            </p>
+                            </div>
+
 
                             <!-- GENDER -->
+
                             @if (!string.IsNullOrWhiteSpace(product.Gender))
                             {
-                                <span class="badge bg-light text-dark border me-1 mb-2">
+                                <span class="product-gender">
+
                                     @product.Gender
+
                                 </span>
                             }
 
-                            <!-- TAGS -->
-                            @if (product.ProductTags != null &&
-                                 product.ProductTags.Any())
-                            {
-                                <div class="d-flex flex-wrap gap-1 mb-2">
 
-                                    @foreach (var tag in product.ProductTags
-                                        .OrderBy(t => t.Name)
-                                        .Take(3))
-                                    {
-                                        <span class="badge bg-secondary">
-                                            @tag.Name
-                                        </span>
-                                    }
+                        
 
-                                </div>
-                            }
+                            <!-- =====================================
+                                 PRICE
+                            ====================================== -->
 
-                            <div class="mt-auto">
+                            <div class="product-price-row">
 
-                                <!-- PRICE -->
                                 @if (product.DiscountPrice.HasValue &&
                                      product.DiscountPrice.Value < product.Price)
                                 {
-                                    <p class="mb-2">
+                                    var discountPercentage = (int)Math.Round(
+                                        ((product.Price - product.DiscountPrice.Value)
+                                        / product.Price) * 100
+                                    );
 
-                                        <span class="text-decoration-line-through text-muted">
-                                            @product.Price.ToPkr()
-                                        </span>
+                                    <span class="product-current-price">
+                                        @product.DiscountPrice.Value.ToPkr()
+                                    </span>
 
-                                        <span class="fw-bold text-danger ms-2">
-                                            @product.DiscountPrice.Value.ToPkr()
-                                        </span>
+                                    <span class="product-old-price">
+                                        @product.Price.ToPkr()
+                                    </span>
 
-                                    </p>
+                                    <span class="product-discount">
+                                        @discountPercentage% off
+                                    </span>
                                 }
                                 else
                                 {
-                                    <p class="fw-bold mb-2">
+                                    <span class="product-current-price">
                                         @product.Price.ToPkr()
-                                    </p>
+                                    </span>
                                 }
 
-                                <!-- VIEW DETAILS -->
-                                <a asp-controller="Products"
-                                   asp-action="Details"
-                                   asp-route-id="@product.Id"
-                                   class="btn btn-primary w-100">
-                                    View Details
-                                </a>
-
                             </div>
+
+
+                            <!-- =====================================
+                                 DETAILS BUTTON
+                            ====================================== -->
+
+                            <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@product.Id"
+                               class="product-details-btn">
+
+                                View Details
+
+                            </a>
 
                         </div>
 
                     </div>
 
-                </div>
-            }
+                }
 
-        </div>
+            </div>
+        }
 
-        <!-- EMPTY STATE -->
-        @if (!Model.Any())
+
+        <!-- =====================================================
+             EMPTY STATE
+        ===================================================== -->
+
+        else
         {
-            <div class="alert alert-light border mt-4">
+            <div class="empty-products">
 
-                <p class="text-muted mb-0">
+                <p class="mb-2">
                     No products match these filters.
                 </p>
+
+                <a asp-controller="Products"
+                   asp-action="Index"
+                   asp-route-category="@ViewBag.SelectedCategory"
+                   class="btn btn-outline-primary btn-sm">
+
+                    Clear Filters
+
+                </a>
 
             </div>
         }

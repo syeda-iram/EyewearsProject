@@ -117,48 +117,13 @@
                         </td>
 
                         <td>
-                            <div class="d-flex flex-wrap gap-1">
-
+                            <div class="d-flex flex-wrap align-items-center" style="gap:6px;">
                                 <!-- EDIT -->
                                 <a asp-action="Edit"
                                    asp-route-id="@p.Id"
-                                   class="btn btn-sm btn-outline-primary">
-                                    Edit
-                                </a>
-
-                                <!-- VARIANTS -->
-                                <a asp-action="Variants"
-                                   asp-route-id="@p.Id"
-                                   class="btn btn-sm btn-outline-secondary">
-                                    Variants
-                                </a>
-
-                                <!-- IMAGES -->
-                                <a asp-action="Images"
-                                   asp-route-id="@p.Id"
-                                   class="btn btn-sm btn-outline-secondary">
-                                    Images
-                                </a>
-
-                                <!-- SPECIFICATIONS -->
-                                <a asp-action="Specifications"
-                                   asp-route-id="@p.Id"
-                                   class="btn btn-sm btn-outline-secondary">
-                                    Specs
-                                </a>
-
-                                <!-- ATTRIBUTES -->
-                                <a asp-action="Attributes"
-                                   asp-route-id="@p.Id"
-                                   class="btn btn-sm btn-outline-secondary">
-                                    Attributes
-                                </a>
-
-                                <!-- TAGS -->
-                                <a asp-action="Tags"
-                                   asp-route-id="@p.Id"
-                                   class="btn btn-sm btn-outline-secondary">
-                                    Tags
+                                   class="btn btn-sm btn-outline-primary btn-icon-circle"
+                                   title="Edit Product">
+                                    <i class="bi bi-pencil"></i>
                                 </a>
 
                                 <!-- ACTIVATE / DEACTIVATE -->
@@ -169,12 +134,12 @@
 
                                     @Html.AntiForgeryToken()
 
-                                    <button type="submit"
-                                            class="btn btn-sm btn-outline-warning">
-                                        @(p.IsActive
-                                            ? "Deactivate"
-                                            : "Activate")
-                                    </button>
+                                    <label class="toggle-switch" title="@(p.IsActive ? "Deactivate" : "Activate")">
+                                        <input type="checkbox"
+                                               checked="@(p.IsActive ? "checked" : null)"
+                                               onchange="this.form.submit()" />
+                                        <span class="toggle-slider"></span>
+                                    </label>
                                 </form>
 
                             </div>

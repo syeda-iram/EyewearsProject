@@ -99,7 +99,15 @@ namespace EyewearsProject.Areas.Admin.Controllers
         {
             await PopulateDropdownsAsync();
 
-            return View(new ProductFormViewModel());
+            var model = new ProductFormViewModel
+            {
+                IsActive = true,
+                IsFeatured = false,
+                TryOnOverlayScale = 1,
+                TryOnOverlayVerticalOffset = 0
+            };
+
+            return View(model);
         }
 
         // POST: /Admin/Products/Create
@@ -107,24 +115,51 @@ namespace EyewearsProject.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductFormViewModel model)
         {
+            // ---------------------------------------------------------
+            // Normalize basic values
+            // ---------------------------------------------------------
+
+            model.Name = model.Name?.Trim();
+            model.Sku = model.Sku?.Trim();
+
+            // ---------------------------------------------------------
+            // Basic ModelState validation
+            // ---------------------------------------------------------
+
             if (!ModelState.IsValid)
             {
                 await PopulateDropdownsAsync(
                     model.CategoryId,
-                    null,
+                    model.SubCategoryId,
                     model.BrandId);
 
                 return View(model);
             }
 
-            var productSku = model.Sku.Trim();
+            // ---------------------------------------------------------
+            // SKU required
+            // ---------------------------------------------------------
 
-            // -----------------------------------------------------
+            if (string.IsNullOrWhiteSpace(model.Sku))
+            {
+                ModelState.AddModelError(
+                    nameof(model.Sku),
+                    "SKU is required.");
+
+                await PopulateDropdownsAsync(
+                    model.CategoryId,
+                    model.SubCategoryId,
+                    model.BrandId);
+
+                return View(model);
+            }
+
+            // ---------------------------------------------------------
             // Product SKU uniqueness
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
 
             var skuExists = await _context.Products
-                .AnyAsync(p => p.Sku == productSku);
+                .AnyAsync(p => p.Sku == model.Sku);
 
             if (skuExists)
             {
@@ -134,15 +169,15 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
                 await PopulateDropdownsAsync(
                     model.CategoryId,
-                    null,
+                    model.SubCategoryId,
                     model.BrandId);
 
                 return View(model);
             }
 
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
             // Discount validation
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
 
             if (model.DiscountPrice.HasValue &&
                 model.DiscountPrice.Value >= model.Price)
@@ -153,81 +188,378 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
                 await PopulateDropdownsAsync(
                     model.CategoryId,
-                    null,
+                    model.SubCategoryId,
                     model.BrandId);
 
                 return View(model);
             }
 
-            // -----------------------------------------------------
-            // Create product
-            // -----------------------------------------------------
+            // =========================================================
+            // TRANSACTION
+            // =========================================================
 
-            var product = new Product
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                Name = model.Name.Trim(),
+                // =====================================================
+                // CREATE PRODUCT
+                // =====================================================
 
-                Sku = productSku,
+                var product = new Product
+                {
+                    Name = model.Name ?? "",
 
-                Description = model.Description,
+                    Sku = model.Sku,
 
-                CategoryId = model.CategoryId,
+                    Description = model.Description,
 
-                SubCategoryId = model.SubCategoryId,
+                    CategoryId = model.CategoryId,
 
-                BrandId = model.BrandId,
+                    SubCategoryId = model.SubCategoryId,
 
-                Gender = model.Gender,
+                    BrandId = model.BrandId,
 
-                Material = model.Material,
+                    Gender = model.Gender,
 
-                Shape = model.Shape,
+                    Material = model.Material,
 
-                Price = model.Price,
+                    Shape = model.Shape,
 
-                DiscountPrice = model.DiscountPrice,
+                    Price = model.Price,
 
-                CostPrice = model.CostPrice,
+                    DiscountPrice = model.DiscountPrice,
 
-                Weight = model.Weight,
+                    CostPrice = model.CostPrice,
 
-                IsFeatured = model.IsFeatured,
+                    Weight = model.Weight,
 
-                IsActive = model.IsActive,
+                    IsFeatured = model.IsFeatured,
 
-                TryOnOverlayImageUrl =
-                    model.TryOnOverlayImageUrl,
+                    IsActive = model.IsActive,
 
-                TryOn3DModelUrl =
-                    model.TryOn3DModelUrl,
+                    TryOnOverlayImageUrl =
+                        model.TryOnOverlayImageUrl,
 
-                TryOnOverlayScale =
-                    model.TryOnOverlayScale,
+                    TryOn3DModelUrl =
+                        model.TryOn3DModelUrl,
 
-                TryOnOverlayVerticalOffset =
-                    model.TryOnOverlayVerticalOffset,
+                    TryOnOverlayScale =
+                        model.TryOnOverlayScale,
 
-                CreatedAt = DateTime.UtcNow,
+                    TryOnOverlayVerticalOffset =
+                        model.TryOnOverlayVerticalOffset,
 
-                UpdatedAt = DateTime.UtcNow
-            };
+                    CreatedAt = DateTime.UtcNow,
 
-            _context.Products.Add(product);
+                    UpdatedAt = DateTime.UtcNow
+                };
 
-            await _context.SaveChangesAsync();
+                _context.Products.Add(product);
 
-            await _auditLogger.LogAsync(
-                "Create",
-                "Product",
-                product.Id.ToString(),
-                $"Created product {product.Name} (SKU: {product.Sku})");
+                // Product ID required for child records.
+                await _context.SaveChangesAsync();
 
-            TempData["Success"] =
-                "Product created. You can now add variants, images, specifications, attributes and tags.";
+                // =====================================================
+                // VARIANTS + INVENTORY
+                // =====================================================
 
-            return RedirectToAction(
-                nameof(Edit),
-                new { id = product.Id });
+                await CreateVariantsAsync(
+                    product,
+                    model);
+
+                // =====================================================
+                // IMAGES
+                // =====================================================
+
+                await CreateImagesAsync(
+                    product,
+                    model);
+
+                // =====================================================
+                // SPECIFICATIONS
+                // =====================================================
+
+                await CreateSpecificationsAsync(
+                    product,
+                    model);
+
+                // =====================================================
+                // ATTRIBUTES
+                // =====================================================
+
+                await CreateAttributesAsync(
+                    product,
+                    model);
+
+                // =====================================================
+                // TAGS
+                // =====================================================
+
+                await CreateTagsAsync(
+                    product,
+                    model);
+
+                // =====================================================
+                // FINAL SAVE
+                // =====================================================
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                // =====================================================
+                // AUDIT
+                // =====================================================
+
+                await _auditLogger.LogAsync(
+                    "Create",
+                    "Product",
+                    product.Id.ToString(),
+                    $"Created product {product.Name} (SKU: {product.Sku}) including variants, inventory, images, specifications, attributes and tags.");
+
+                TempData["Success"] =
+                    "Product created successfully.";
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        // =========================================================
+        // CREATE VARIANTS
+        // =========================================================
+
+        private async Task CreateVariantsAsync(
+            Product product,
+            ProductFormViewModel model)
+        {
+            // NOTE:
+            // Product SKU is handled at product level.
+            // Variants only contain Color + Size.
+            // Inventory is maintained separately.
+
+            if (model.Variants == null)
+                return;
+
+            foreach (var variantModel in model.Variants)
+            {
+                if (string.IsNullOrWhiteSpace(
+                        variantModel.Color))
+                {
+                    continue;
+                }
+
+                var variant = new ProductVariant
+                {
+                    ProductId = product.Id,
+
+                    Color = variantModel.Color.Trim(),
+
+                    Size = string.IsNullOrWhiteSpace(
+                        variantModel.Size)
+                        ? null
+                        : variantModel.Size.Trim()
+                };
+
+                _context.ProductVariants.Add(variant);
+
+                // Need variant ID before creating inventory.
+                await _context.SaveChangesAsync();
+
+                await _inventoryService
+                    .EnsureInventoryExistsAsync(
+                        variant.Id);
+
+                if (variantModel.StockQuantity > 0)
+                {
+                    await _inventoryService
+                        .AdjustToQuantityAsync(
+                            variant.Id,
+                            variantModel.StockQuantity,
+                            $"Initial stock added while creating variant ({variant.Color})");
+                }
+
+                await _auditLogger.LogAsync(
+                    "Create",
+                    "ProductVariant",
+                    variant.Id.ToString(),
+                    $"Added variant {variant.Color}" +
+                    (string.IsNullOrWhiteSpace(variant.Size)
+                        ? ""
+                        : $" / {variant.Size}") +
+                    $" to product #{product.Id}");
+            }
+        }
+
+        // =========================================================
+        // CREATE IMAGES
+        // =========================================================
+
+        private async Task CreateImagesAsync(
+            Product product,
+            ProductFormViewModel model)
+        {
+            if (model.ExistingImages == null)
+                return;
+
+            var images = model.ExistingImages
+                .Where(i =>
+                    !string.IsNullOrWhiteSpace(i.ImageUrl))
+                .OrderBy(i => i.SortOrder)
+                .ToList();
+
+            for (var index = 0;
+                 index < images.Count;
+                 index++)
+            {
+                var imageModel = images[index];
+
+                var image = new ProductImage
+                {
+                    ProductId = product.Id,
+
+                    ImageUrl = imageModel.ImageUrl.Trim(),
+
+                    IsPrimary = index == 0,
+
+                    ProductVariantId =
+                        imageModel.ProductVariantId
+                };
+
+                _context.ProductImages.Add(image);
+
+                await _auditLogger.LogAsync(
+                    "Create",
+                    "ProductImage",
+                    "New",
+                    $"Added image {image.ImageUrl} to product #{product.Id}");
+            }
+        }
+
+        // =========================================================
+        // CREATE SPECIFICATIONS
+        // =========================================================
+
+        private async Task CreateSpecificationsAsync(
+            Product product,
+            ProductFormViewModel model)
+        {
+            if (model.Specifications == null)
+                return;
+
+            foreach (var specificationModel
+                     in model.Specifications)
+            {
+                if (string.IsNullOrWhiteSpace(
+                        specificationModel.Name) ||
+                    string.IsNullOrWhiteSpace(
+                        specificationModel.Value))
+                {
+                    continue;
+                }
+
+                var specification =
+                    new ProductSpecification
+                    {
+                        ProductId = product.Id,
+
+                        Name =
+                            specificationModel.Name.Trim(),
+
+                        Value =
+                            specificationModel.Value.Trim(),
+
+                        SortOrder =
+                            specificationModel.SortOrder
+                    };
+
+                _context.ProductSpecifications
+                    .Add(specification);
+            }
+
+            await Task.CompletedTask;
+        }
+
+        // =========================================================
+        // CREATE ATTRIBUTES
+        // =========================================================
+
+        private async Task CreateAttributesAsync(
+            Product product,
+            ProductFormViewModel model)
+        {
+            if (model.Attributes == null)
+                return;
+
+            foreach (var attributeModel
+                     in model.Attributes)
+            {
+                if (string.IsNullOrWhiteSpace(
+                        attributeModel.Name) ||
+                    string.IsNullOrWhiteSpace(
+                        attributeModel.Value))
+                {
+                    continue;
+                }
+
+                var attribute =
+                    new ProductAttribute
+                    {
+                        ProductId = product.Id,
+
+                        Name =
+                            attributeModel.Name.Trim(),
+
+                        Value =
+                            attributeModel.Value.Trim(),
+
+                        SortOrder =
+                            attributeModel.SortOrder
+                    };
+
+                _context.ProductAttributes
+                    .Add(attribute);
+            }
+
+            await Task.CompletedTask;
+        }
+
+        // =========================================================
+        // CREATE TAGS
+        // =========================================================
+
+        private async Task CreateTagsAsync(
+            Product product,
+            ProductFormViewModel model)
+        {
+            if (model.Tags == null)
+                return;
+
+            var cleanTags = model.Tags
+                .Where(t =>
+                    !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Trim())
+                .Distinct(
+                    StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var tagName in cleanTags)
+            {
+                _context.ProductTags.Add(
+                    new ProductTag
+                    {
+                        ProductId = product.Id,
+                        Name = tagName
+                    });
+            }
+
+            await Task.CompletedTask;
         }
 
         // =========================================================
@@ -346,8 +678,6 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
                             Size = v.Size,
 
-                            Sku = v.Sku,
-
                             StockQuantity =
                                 v.Inventory?.QuantityOnHand ?? 0,
 
@@ -454,16 +784,23 @@ namespace EyewearsProject.Areas.Admin.Controllers
             int id,
             ProductEditViewModel model)
         {
-            // -----------------------------------------------------
-            // ID check
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
+            // ID validation
+            // ---------------------------------------------------------
 
             if (id != model.Id)
                 return NotFound();
 
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
+            // Normalize
+            // ---------------------------------------------------------
+
+            model.Name = model.Name?.Trim();
+            model.Sku = model.Sku?.Trim();
+
+            // ---------------------------------------------------------
             // Load complete product
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
 
             var product = await _context.Products
 
@@ -483,9 +820,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
             if (product == null)
                 return NotFound();
 
-            // -----------------------------------------------------
-            // Validation
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
+            // Model validation
+            // ---------------------------------------------------------
 
             if (!ModelState.IsValid)
             {
@@ -497,9 +834,27 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 return View(model);
             }
 
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
+            // SKU required
+            // ---------------------------------------------------------
+
+            if (string.IsNullOrWhiteSpace(model.Sku))
+            {
+                ModelState.AddModelError(
+                    nameof(model.Sku),
+                    "SKU is required.");
+
+                await PopulateDropdownsAsync(
+                    model.CategoryId,
+                    model.SubCategoryId,
+                    model.BrandId);
+
+                return View(model);
+            }
+
+            // ---------------------------------------------------------
             // Discount validation
-            // -----------------------------------------------------
+            // ---------------------------------------------------------
 
             if (model.DiscountPrice.HasValue &&
                 model.DiscountPrice.Value >= model.Price)
@@ -516,18 +871,15 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 return View(model);
             }
 
-            // -----------------------------------------------------
-            // Product SKU validation
-            // -----------------------------------------------------
-
-            var newProductSku =
-                model.Sku.Trim();
+            // ---------------------------------------------------------
+            // Product SKU uniqueness
+            // ---------------------------------------------------------
 
             var duplicateProductSku =
                 await _context.Products
                     .AnyAsync(p =>
                         p.Id != product.Id &&
-                        p.Sku == newProductSku);
+                        p.Sku == model.Sku);
 
             if (duplicateProductSku)
             {
@@ -543,24 +895,24 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 return View(model);
             }
 
-            // =====================================================
-            // START TRANSACTION
-            // =====================================================
+            // =========================================================
+            // TRANSACTION
+            // =========================================================
 
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // =================================================
+                // =====================================================
                 // PRODUCT INFORMATION
-                // =================================================
+                // =====================================================
 
                 product.Name =
-                    model.Name.Trim();
+                    model.Name ?? "";
 
                 product.Sku =
-                    newProductSku;
+                    model.Sku;
 
                 product.Description =
                     model.Description;
@@ -583,9 +935,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 product.Shape =
                     model.Shape;
 
-                // =================================================
+                // =====================================================
                 // PRICING
-                // =================================================
+                // =====================================================
 
                 product.Price =
                     model.Price;
@@ -599,9 +951,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 product.Weight =
                     model.Weight;
 
-                // =================================================
+                // =====================================================
                 // SETTINGS
-                // =================================================
+                // =====================================================
 
                 product.IsActive =
                     model.IsActive;
@@ -609,9 +961,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 product.IsFeatured =
                     model.IsFeatured;
 
-                // =================================================
+                // =====================================================
                 // VIRTUAL TRY-ON
-                // =================================================
+                // =====================================================
 
                 product.TryOnOverlayImageUrl =
                     model.TryOnOverlayImageUrl;
@@ -628,49 +980,54 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 product.UpdatedAt =
                     DateTime.UtcNow;
 
-                // =================================================
+                // =====================================================
                 // VARIANTS
-                // =================================================
+                // =====================================================
 
-                await SaveVariantsAsync(
-                    product,
-                    model);
+                var variantsOk = await SaveVariantsAsync(product, model);
 
-                // =================================================
+                if (!variantsOk)
+                {
+                    await transaction.RollbackAsync();
+                    await PopulateDropdownsAsync(model.CategoryId, model.SubCategoryId, model.BrandId);
+                    return View(model);
+                }
+
+                // =====================================================
                 // IMAGES
-                // =================================================
+                // =====================================================
 
                 await SaveImagesAsync(
                     product,
                     model);
 
-                // =================================================
+                // =====================================================
                 // SPECIFICATIONS
-                // =================================================
+                // =====================================================
 
                 await SaveSpecificationsAsync(
                     product,
                     model);
 
-                // =================================================
+                // =====================================================
                 // ATTRIBUTES
-                // =================================================
+                // =====================================================
 
                 await SaveAttributesAsync(
                     product,
                     model);
 
-                // =================================================
+                // =====================================================
                 // TAGS
-                // =================================================
+                // =====================================================
 
                 await SaveTagsAsync(
                     product,
                     model);
 
-                // =================================================
+                // =====================================================
                 // FINAL SAVE
-                // =================================================
+                // =====================================================
 
                 await _context.SaveChangesAsync();
 
@@ -679,13 +1036,12 @@ namespace EyewearsProject.Areas.Admin.Controllers
             catch
             {
                 await transaction.RollbackAsync();
-
                 throw;
             }
 
-            // =====================================================
+            // =========================================================
             // AUDIT
-            // =====================================================
+            // =========================================================
 
             await _auditLogger.LogAsync(
                 "Update",
@@ -696,17 +1052,14 @@ namespace EyewearsProject.Areas.Admin.Controllers
             TempData["Success"] =
                 "Product updated successfully.";
 
-            // Go back to Edit so manager immediately sees saved data.
-            return RedirectToAction(
-                nameof(Edit),
-                new { id = product.Id });
+            return RedirectToAction(nameof(Index));
         }
 
         // =========================================================
         // SAVE VARIANTS
         // =========================================================
 
-        private async Task SaveVariantsAsync(
+        private async Task<bool> SaveVariantsAsync(
             Product product,
             ProductEditViewModel model)
         {
@@ -714,69 +1067,66 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 model.Variants ??
                 new List<ProductEditVariantViewModel>();
 
-            // -----------------------------------------------------
-            // Clean / validate submitted SKU list
-            // -----------------------------------------------------
+            // =====================================================
+            // VALIDATE VARIANTS
+            // =====================================================
 
-            var variantSkuList =
-                submittedVariants
-                    .Where(v =>
-                        !string.IsNullOrWhiteSpace(v.Sku))
-                    .Select(v => new
-                    {
-                        Id = v.Id,
-
-                        Sku = v.Sku.Trim()
-                    })
-                    .ToList();
-
-            // -----------------------------------------------------
-            // Duplicate SKUs inside submitted form
-            // -----------------------------------------------------
-
-            var duplicateSubmittedSku =
-                variantSkuList
-                    .GroupBy(
-                        v => v.Sku,
-                        StringComparer.OrdinalIgnoreCase)
-                    .FirstOrDefault(g => g.Count() > 1);
-
-            if (duplicateSubmittedSku != null)
+            foreach (var variantModel in submittedVariants)
             {
-                ModelState.AddModelError(
-                    "",
-                    $"Variant SKU '{duplicateSubmittedSku.Key}' is used more than once.");
+                if (variantModel.Id == 0 &&
+                    string.IsNullOrWhiteSpace(
+                        variantModel.Color))
+                {
+                    continue;
+                }
 
-                throw new InvalidOperationException(
-                    "Duplicate variant SKU.");
-            }
-
-            // -----------------------------------------------------
-            // Check DB uniqueness
-            // -----------------------------------------------------
-
-            foreach (var variantSku in variantSkuList)
-            {
-                var exists =
-                    await _context.ProductVariants
-                        .AnyAsync(v =>
-                            v.Id != variantSku.Id &&
-                            v.Sku == variantSku.Sku);
-
-                if (exists)
+                if (variantModel.Id > 0 &&
+                    string.IsNullOrWhiteSpace(
+                        variantModel.Color))
                 {
                     ModelState.AddModelError(
                         "",
-                        $"Variant SKU '{variantSku.Sku}' is already in use.");
+                        "Variant color is required.");
 
-                    throw new InvalidOperationException(
-                        "Duplicate variant SKU.");
+                    return false;
                 }
             }
 
-            // -----------------------------------------------------
-            // IDs currently submitted
-            // -----------------------------------------------------
+            // =====================================================
+            // PREVENT DUPLICATE COLOR + SIZE COMBINATIONS
+            // =====================================================
+
+            var duplicateVariant =
+                submittedVariants
+                    .Where(v =>
+                        !string.IsNullOrWhiteSpace(v.Color))
+                    .GroupBy(v => new
+                    {
+                        Color = v.Color!.Trim(),
+                        Size = string.IsNullOrWhiteSpace(v.Size)
+                            ? null
+                            : v.Size.Trim()
+                    })
+                    .FirstOrDefault(g => g.Count() > 1);
+
+            if (duplicateVariant != null)
+            {
+                var display =
+                    duplicateVariant.Key.Color +
+                    (duplicateVariant.Key.Size == null
+                        ? ""
+                        : $" / {duplicateVariant.Key.Size}");
+
+                ModelState.AddModelError(
+                    "",
+                    $"Variant '{display}' already exists.");
+
+                return false;
+            }
+
+            // =====================================================
+            // SUBMITTED EXISTING IDs
+            // =====================================================
 
             var submittedIds =
                 submittedVariants
@@ -784,9 +1134,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     .Select(v => v.Id)
                     .ToHashSet();
 
-            // -----------------------------------------------------
-            // Delete removed variants
-            // -----------------------------------------------------
+            // =====================================================
+            // DELETE REMOVED VARIANTS
+            // =====================================================
 
             var variantsToDelete =
                 product.Variants
@@ -803,8 +1153,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                         "",
                         $"Variant '{variant.Color}' cannot be deleted because it has reserved stock.");
 
-                    throw new InvalidOperationException(
-                        "Variant has reserved inventory.");
+                    return false;
                 }
 
                 await _auditLogger.LogAsync(
@@ -816,30 +1165,29 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 _context.ProductVariants.Remove(variant);
             }
 
-            // -----------------------------------------------------
-            // Create / update variants
-            // -----------------------------------------------------
+            // =====================================================
+            // CREATE / UPDATE VARIANTS
+            // =====================================================
 
             foreach (var variantModel in submittedVariants)
             {
+                // -------------------------------------------------
+                // Skip completely empty new rows
+                // -------------------------------------------------
+
+                if (variantModel.Id == 0 &&
+                    string.IsNullOrWhiteSpace(
+                        variantModel.Color))
+                {
+                    continue;
+                }
+
                 // =================================================
                 // NEW VARIANT
                 // =================================================
 
                 if (variantModel.Id == 0)
                 {
-                    if (string.IsNullOrWhiteSpace(
-                            variantModel.Color))
-                    {
-                        continue;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(
-                            variantModel.Sku))
-                    {
-                        continue;
-                    }
-
                     var newVariant =
                         new ProductVariant
                         {
@@ -847,21 +1195,19 @@ namespace EyewearsProject.Areas.Admin.Controllers
                                 product.Id,
 
                             Color =
-                                variantModel.Color.Trim(),
+                                variantModel.Color!.Trim(),
 
                             Size =
                                 string.IsNullOrWhiteSpace(
                                     variantModel.Size)
                                     ? null
-                                    : variantModel.Size.Trim(),
-
-                            Sku =
-                                variantModel.Sku.Trim()
+                                    : variantModel.Size.Trim()
                         };
 
                     _context.ProductVariants.Add(
                         newVariant);
 
+                    // Need ID for inventory.
                     await _context.SaveChangesAsync();
 
                     await _inventoryService
@@ -881,7 +1227,12 @@ namespace EyewearsProject.Areas.Admin.Controllers
                         "Create",
                         "ProductVariant",
                         newVariant.Id.ToString(),
-                        $"Added variant {newVariant.Color} to product #{product.Id}");
+                        $"Added variant {newVariant.Color}" +
+                        (string.IsNullOrWhiteSpace(
+                            newVariant.Size)
+                            ? ""
+                            : $" / {newVariant.Size}") +
+                        $" to product #{product.Id}");
 
                     continue;
                 }
@@ -907,12 +1258,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                         ? null
                         : variantModel.Size.Trim();
 
-                variant.Sku =
-                    variantModel.Sku?.Trim() ?? "";
-
-                // -------------------------------------------------
-                // Inventory
-                // -------------------------------------------------
+                // =================================================
+                // INVENTORY
+                // =================================================
 
                 if (variant.Inventory == null)
                 {
@@ -927,6 +1275,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
                                 variant.Id);
                 }
 
+                // -------------------------------------------------
+                // Cannot reduce stock below reserved quantity
+                // -------------------------------------------------
+
                 if (variantModel.StockQuantity <
                     variant.Inventory.ReservedQuantity)
                 {
@@ -934,9 +1286,12 @@ namespace EyewearsProject.Areas.Admin.Controllers
                         "",
                         $"Stock for variant '{variant.Color}' cannot be lower than reserved quantity ({variant.Inventory.ReservedQuantity}).");
 
-                    throw new InvalidOperationException(
-                        "Stock below reserved quantity.");
+                    return false;
                 }
+
+                // -------------------------------------------------
+                // Adjust inventory
+                // -------------------------------------------------
 
                 if (variant.Inventory.QuantityOnHand !=
                     variantModel.StockQuantity)
@@ -948,6 +1303,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                             $"Stock updated from product edit form ({variant.Color})");
                 }
             }
+            return true;
         }
 
         // =========================================================
@@ -969,9 +1325,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     .OrderBy(i => i.SortOrder)
                     .ToList();
 
-            // -----------------------------------------------------
-            // IDs submitted
-            // -----------------------------------------------------
+            // =====================================================
+            // SUBMITTED IDs
+            // =====================================================
 
             var submittedImageIds =
                 orderedImages
@@ -979,9 +1335,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     .Select(i => i.Id)
                     .ToHashSet();
 
-            // -----------------------------------------------------
-            // Delete removed images
-            // -----------------------------------------------------
+            // =====================================================
+            // DELETE REMOVED IMAGES
+            // =====================================================
 
             var imagesToDelete =
                 product.Images
@@ -1000,18 +1356,18 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 _context.ProductImages.Remove(image);
             }
 
-            // -----------------------------------------------------
-            // Reset primary
-            // -----------------------------------------------------
+            // =====================================================
+            // RESET PRIMARY
+            // =====================================================
 
             foreach (var image in product.Images)
             {
                 image.IsPrimary = false;
             }
 
-            // -----------------------------------------------------
-            // Update / create images
-            // -----------------------------------------------------
+            // =====================================================
+            // UPDATE / CREATE
+            // =====================================================
 
             for (var index = 0;
                  index < orderedImages.Count;
@@ -1098,9 +1454,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     .Select(s => s.Id)
                     .ToHashSet();
 
-            // -----------------------------------------------------
-            // Delete removed
-            // -----------------------------------------------------
+            // =====================================================
+            // DELETE REMOVED
+            // =====================================================
 
             var specificationsToDelete =
                 product.Specifications
@@ -1121,9 +1477,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     .Remove(specification);
             }
 
-            // -----------------------------------------------------
-            // Create / update
-            // -----------------------------------------------------
+            // =====================================================
+            // CREATE / UPDATE
+            // =====================================================
 
             foreach (var specificationModel
                      in submittedSpecifications)
@@ -1136,7 +1492,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     continue;
                 }
 
+                // -------------------------------------------------
                 // NEW
+                // -------------------------------------------------
+
                 if (specificationModel.Id == 0)
                 {
                     var specification =
@@ -1161,7 +1520,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     continue;
                 }
 
+                // -------------------------------------------------
                 // EXISTING
+                // -------------------------------------------------
+
                 var existingSpecification =
                     product.Specifications
                         .FirstOrDefault(s =>
@@ -1200,9 +1562,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     .Select(a => a.Id)
                     .ToHashSet();
 
-            // -----------------------------------------------------
-            // Delete removed
-            // -----------------------------------------------------
+            // =====================================================
+            // DELETE REMOVED
+            // =====================================================
 
             var attributesToDelete =
                 product.Attributes
@@ -1223,9 +1585,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     .Remove(attribute);
             }
 
-            // -----------------------------------------------------
-            // Create / update
-            // -----------------------------------------------------
+            // =====================================================
+            // CREATE / UPDATE
+            // =====================================================
 
             foreach (var attributeModel
                      in submittedAttributes)
@@ -1238,7 +1600,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     continue;
                 }
 
+                // -------------------------------------------------
                 // NEW
+                // -------------------------------------------------
+
                 if (attributeModel.Id == 0)
                 {
                     var attribute =
@@ -1263,7 +1628,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     continue;
                 }
 
+                // -------------------------------------------------
                 // EXISTING
+                // -------------------------------------------------
+
                 var existingAttribute =
                     product.Attributes
                         .FirstOrDefault(a =>
@@ -1305,9 +1673,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                         StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
-            // -----------------------------------------------------
-            // Remove old tags
-            // -----------------------------------------------------
+            // =====================================================
+            // REMOVE OLD TAGS
+            // =====================================================
 
             var oldTags =
                 product.ProductTags.ToList();
@@ -1317,9 +1685,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 _context.ProductTags.Remove(tag);
             }
 
-            // -----------------------------------------------------
-            // Add new tags
-            // -----------------------------------------------------
+            // =====================================================
+            // ADD NEW TAGS
+            // =====================================================
 
             foreach (var tagName in cleanTags)
             {
@@ -1379,52 +1747,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
         }
 
         // =========================================================
-        // DELETE PRODUCT
-        // =========================================================
-
-        // POST: /Admin/Products/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var product =
-                await _context.Products
-                    .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null)
-                return NotFound();
-
-            await _auditLogger.LogAsync(
-                "Delete",
-                "Product",
-                product.Id.ToString(),
-                product.Name);
-
-            _context.Products.Remove(product);
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] =
-                "Product deleted successfully.";
-
-            return RedirectToAction(
-                nameof(Index));
-        }
-
-        // =========================================================
         // PREVIEW
         // =========================================================
 
         // GET: /Admin/Products/Preview/18
-        //
-        // IMPORTANT:
-        // This loads the CUSTOMER-SIDE Details view directly.
-        // Therefore manager sees the product as customer sees it.
-        //
-        // Unlike customer ProductsController/Details,
-        // this does NOT require IsActive == true.
-        // =========================================================
-
         public async Task<IActionResult> Preview(int id)
         {
             var product = await _context.Products
@@ -1454,9 +1780,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
             if (product == null)
                 return NotFound();
 
-            // -----------------------------------------------------
-            // Reviews for customer Details.cshtml
-            // -----------------------------------------------------
+            // =====================================================
+            // APPROVED REVIEWS
+            // =====================================================
 
             var approvedReviews =
                 await _context.Reviews
@@ -1477,16 +1803,13 @@ namespace EyewearsProject.Areas.Admin.Controllers
                         r => r.Rating)
                     : (double?)null;
 
-            // Manager preview should not show review state
-            // for the currently logged-in admin.
-            ViewBag.UserAlreadyReviewed = false;
+            // Admin preview should not show
+            // customer's own review state.
+            ViewBag.UserAlreadyReviewed =
+                false;
 
             ViewData["Title"] =
                 $"Preview — {product.Name}";
-
-            // -----------------------------------------------------
-            // Re-use customer-side product page
-            // -----------------------------------------------------
 
             return View(
                 "~/Views/Products/Details.cshtml",

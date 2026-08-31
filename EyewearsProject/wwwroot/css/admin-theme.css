@@ -1263,3 +1263,67 @@ textarea {
         animation-iteration-count: 1 !important;
     }
 }
+
+.btn-icon-circle {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    line-height: 1;
+}
+
+    .btn-icon-circle i {
+        font-size: 14px;
+    }
+
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    cursor: pointer;
+    margin: 0;
+    vertical-align: middle;
+}
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-switch .toggle-slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #D0D5DD;
+        transition: 0.2s;
+        border-radius: 999px;
+    }
+
+        .toggle-switch .toggle-slider::before {
+            content: "";
+            position: absolute;
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #fff;
+            transition: 0.2s;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--admin-blue, #2F6FED);
+    }
+
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(16px);
+        }

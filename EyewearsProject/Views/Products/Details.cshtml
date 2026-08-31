@@ -502,9 +502,7 @@
 
             <div class="d-flex align-items-center gap-2 mb-4">
 
-                <h3 class="mb-0">
-                    Reviews
-                </h3>
+                <h3 class="mb-0">Reviews</h3>
 
                 @if (averageRating.HasValue)
                 {
@@ -512,28 +510,23 @@
                         @averageRating.Value.ToString("0.0") / 5
                     </span>
 
-                    <span class="text-warning">
+                    <span style="color:#ffc107;">
                         @{
-                            var roundedRating =
-                                (int)Math.Round(averageRating.Value);
+                            var roundedRating = (int)Math.Round(averageRating.Value);
                         }
-
                         @for (int i = 1; i <= 5; i++)
                         {
-                            @(i <= roundedRating ? "★" : "☆")
+                            <i class="bi @(i <= roundedRating ? "bi-star-fill" : "bi-star")"></i>
                         }
                     </span>
                 }
 
             </div>
 
-
             <!-- APPROVED REVIEWS -->
             @if (!reviews.Any())
             {
-                <p class="text-muted">
-                    No reviews yet. Be the first to review this product.
-                </p>
+                <p class="text-muted">No reviews yet. Be the first to review this product.</p>
             }
             else
             {
@@ -542,151 +535,108 @@
                     <div class="border-bottom pb-3 mb-3">
 
                         <div class="d-flex align-items-center gap-2">
+                            <strong>@review.User.FullName</strong>
 
-                            <strong>
-                                @review.User.FullName
-                            </strong>
-
-                            <span class="text-warning">
-
+                            <span style="color:#ffc107;">
                                 @for (int i = 1; i <= 5; i++)
                                 {
-                                    @(i <= review.Rating ? "★" : "☆")
+                                    <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star")"></i>
                                 }
-
                             </span>
-
                         </div>
 
                         @if (!string.IsNullOrWhiteSpace(review.Comment))
                         {
-                            <p class="mb-1 mt-2">
-                                @review.Comment
-                            </p>
+                            <p class="mb-1 mt-2">@review.Comment</p>
                         }
 
-                        <small class="text-muted">
-                            @review.CreatedAt.ToString("dd MMM yyyy")
-                        </small>
+                        <small class="text-muted">@review.CreatedAt.ToString("dd MMM yyyy")</small>
 
                     </div>
                 }
             }
-
 
             <!-- WRITE REVIEW -->
             @if (User.Identity?.IsAuthenticated == true)
             {
                 @if (ViewBag.UserAlreadyReviewed == true)
                 {
-                    <p class="text-muted mt-4">
-                        You've already reviewed this product.
-                    </p>
+                    <p class="text-muted mt-4">You've already reviewed this product.</p>
                 }
                 else
                 {
                     <div class="mt-5">
+                        <h5 class="mb-3">Write a Review</h5>
 
-                        <h5 class="mb-3">
-                            Write a Review
-                        </h5>
-
-                        <form asp-controller="Products"
-                              asp-action="SubmitReview"
-                              method="post">
-
+                        <form asp-controller="Products" asp-action="SubmitReview" method="post">
                             @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@Model.Id" />
 
-                            <input type="hidden"
-                                   name="productId"
-                                   value="@Model.Id" />
-
-
-                            <!-- RATING -->
+                            <!-- RATING — click-to-select stars instead of a dropdown -->
                             <div class="mb-3">
+                                <label class="form-label fw-bold d-block">Rating</label>
 
-                                <label class="form-label fw-bold">
-                                    Rating
-                                </label>
-
-                                <select name="rating"
-                                        class="form-select"
-                                        style="max-width:180px;"
-                                        required>
-
-                                    <option value="5">
-                                        5 - Excellent
-                                    </option>
-
-                                    <option value="4">
-                                        4 - Good
-                                    </option>
-
-                                    <option value="3">
-                                        3 - Average
-                                    </option>
-
-                                    <option value="2">
-                                        2 - Poor
-                                    </option>
-
-                                    <option value="1">
-                                        1 - Terrible
-                                    </option>
-
-                                </select>
-
+                                <div class="star-rating-input" style="font-size:1.5rem; color:#ffc107;">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi bi-star star-input" data-value="@i" style="cursor:pointer;"></i>
+                                    }
+                                </div>
+                                <input type="hidden" name="rating" id="ratingValue" value="5" required />
                             </div>
-
 
                             <!-- COMMENT -->
                             <div class="mb-3">
-
-                                <label class="form-label fw-bold">
-                                    Comment
-                                </label>
-
-                                <textarea name="comment"
-                                          class="form-control"
-                                          rows="4"
-                                          maxlength="1000"
+                                <label class="form-label fw-bold">Comment</label>
+                                <textarea name="comment" class="form-control" rows="4" maxlength="1000"
                                           placeholder="Share your experience with this product..."></textarea>
-
                             </div>
 
-
-                            <button type="submit"
-                                    class="btn btn-primary">
-
-                                Submit Review
-
-                            </button>
-
+                            <button type="submit" class="btn btn-primary">Submit Review</button>
                         </form>
-
                     </div>
+
+                    <script>
+                                    (function() {
+                                        const stars = document.querySelectorAll('.star-input');
+                                        const ratingInput = document.getElementById('ratingValue');
+
+                                        function paintStars(value) {
+                                            stars.forEach(s => {
+                                                const starValue = parseInt(s.dataset.value);
+                                                s.classList.toggle('bi-star-fill', starValue <= value);
+                                                s.classList.toggle('bi-star', starValue > value);
+                                            });
+                                        }
+
+                                        paintStars(5);
+
+                                        stars.forEach(star => {
+                                            star.addEventListener('click', () => {
+                                                const value = parseInt(star.dataset.value);
+                                                ratingInput.value = value;
+                                                paintStars(value);
+                                            });
+                                            star.addEventListener('mouseenter', () => paintStars(parseInt(star.dataset.value)));
+                                        });
+
+                                        document.querySelector('.star-rating-input').addEventListener('mouseleave', () => {
+                                            paintStars(parseInt(ratingInput.value));
+                                        });
+                                    })();
+                    </script>
                 }
             }
             else
             {
                 <p class="text-muted mt-4">
-
-                    <a asp-controller="Account"
-                       asp-action="Login">
-
-                        Log in
-
-                    </a>
-
-                    to leave a review.
-
+                    <a asp-controller="Account" asp-action="Login">Log in</a> to leave a review.
                 </p>
             }
 
         </div>
 
     </div>
-
 
     <!-- BACK -->
     <div class="mt-5">

@@ -19,6 +19,11 @@ namespace EyewearsProject.Controllers
             _userManager = userManager;
         }
 
+        // Categories that exist in the DB (so they show in nav/menus) but have no
+        // real products behind them yet — show a friendly placeholder instead of
+        // an empty grid. Add more names here as needed.
+        private static readonly string[] ComingSoonCategories = { "Accessories", "Contact Lenses" };
+
         // =====================================================
         // GET: /Products
         // =====================================================
@@ -36,6 +41,13 @@ namespace EyewearsProject.Controllers
             decimal? maxPrice,
             string? spec)
         {
+            if (!string.IsNullOrWhiteSpace(category) &&
+                ComingSoonCategories.Contains(category, StringComparer.OrdinalIgnoreCase))
+            {
+                ViewBag.CategoryName = category;
+                return View("ComingSoon");
+            }
+
             var query = _context.Products
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
@@ -194,11 +206,20 @@ namespace EyewearsProject.Controllers
                 .ToListAsync();
 
             // -------------------------------------------------
-            // Subcategories
+            // Subcategories — only children of the currently selected
+            // top-level category, not every subcategory in the system.
             // -------------------------------------------------
 
+            int? selectedCategoryId = null;
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                selectedCategoryId = (await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Name == category))?.Id;
+            }
+
             ViewBag.AllSubCategories = await _context.Categories
-                .Where(c => c.ParentCategoryId != null)
+                .Where(c => c.ParentCategoryId != null &&
+                            (selectedCategoryId == null || c.ParentCategoryId == selectedCategoryId))
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
@@ -335,6 +356,7 @@ namespace EyewearsProject.Controllers
                 .Include(p => p.Images)
                     .ThenInclude(i => i.ProductVariant)
                 .Include(p => p.Variants)
+                    .ThenInclude(v => v.Inventory)
                 .Include(p => p.Specifications)
                 .Include(p => p.Attributes)
                 .Include(p => p.ProductTags)
