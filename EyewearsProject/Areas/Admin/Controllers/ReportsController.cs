@@ -41,8 +41,8 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
                 TotalProducts = await _context.Products.CountAsync(),
                 ActiveProducts = await _context.Products.CountAsync(p => p.IsActive),
-                OutOfStockVariants = await _context.ProductVariants.CountAsync(v => v.StockQuantity == 0),
-                LowStockVariants = await _context.ProductVariants.CountAsync(v => v.StockQuantity > 0 && v.StockQuantity <= LowStockThreshold),
+                OutOfStockVariants = await _context.ProductVariants.CountAsync(v => v.Inventory.QuantityOnHand == 0),
+                LowStockVariants = await _context.ProductVariants.CountAsync(v => v.Inventory.QuantityOnHand > 0 && v.Inventory.QuantityOnHand <= LowStockThreshold),
 
                 ActivePromotions = await _context.Promotions.CountAsync(p => p.IsActive && p.EndDate >= DateTime.UtcNow),
                 TotalPromotionUsage = await _context.Promotions.SumAsync(p => (int?)p.UsageCount) ?? 0,

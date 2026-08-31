@@ -7,7 +7,7 @@
 
     var brands = ViewBag.AllBrands as List<Brand> ?? new List<Brand>();
     var colors = ViewBag.AllColors as List<string> ?? new List<string>();
-    var productTypes = ViewBag.AllProductTypes as List<string> ?? new List<string>();
+    var subCategories = ViewBag.AllSubCategories as List<Category> ?? new List<Category>();
     var genders = ViewBag.AllGenders as List<string> ?? new List<string>();
     var materials = ViewBag.AllMaterials as List<string> ?? new List<string>();
     var shapes = ViewBag.AllShapes as List<string> ?? new List<string>();
@@ -37,6 +37,36 @@
                            value="@ViewBag.SelectedCategory" />
                 }
 
+                <!-- SUBCATEGORY -->
+                @if (subCategories.Any())
+                {
+                    <div class="filter-group mb-3">
+
+                        <label class="filter-label">
+                            Subcategory
+                        </label>
+
+                        <select name="subCategoryId"
+                                class="form-select form-select-sm"
+                                onchange="this.form.submit()">
+
+                            <option value="">
+                                All Subcategories
+                            </option>
+
+                            @foreach (var subCategory in subCategories)
+                            {
+                                <option value="@subCategory.Id"
+                                        selected="@(ViewBag.SelectedSubCategoryId == subCategory.Id ? "selected" : null)">
+                                    @subCategory.Name
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+                }
+
                 <!-- BRAND -->
                 <div class="filter-group mb-3">
 
@@ -63,38 +93,6 @@
                     </select>
 
                 </div>
-
-
-                <!-- PRODUCT TYPE -->
-                @if (productTypes.Any())
-                {
-                    <div class="filter-group mb-3">
-
-                        <label class="filter-label">
-                            Product Type
-                        </label>
-
-                        <select name="productType"
-                                class="form-select form-select-sm"
-                                onchange="this.form.submit()">
-
-                            <option value="">
-                                All Types
-                            </option>
-
-                            @foreach (var type in productTypes)
-                            {
-                                <option value="@type"
-                                        selected="@(((string)ViewBag.SelectedProductType) == type ? "selected" : null)">
-                                    @type
-                                </option>
-                            }
-
-                        </select>
-
-                    </div>
-                }
-
 
                 <!-- GENDER -->
                 @if (genders.Any())
@@ -126,7 +124,6 @@
                     </div>
                 }
 
-
                 <!-- COLOR -->
                 @if (colors.Any())
                 {
@@ -156,7 +153,6 @@
 
                     </div>
                 }
-
 
                 <!-- MATERIAL -->
                 @if (materials.Any())
@@ -188,7 +184,6 @@
                     </div>
                 }
 
-
                 <!-- SHAPE -->
                 @if (shapes.Any())
                 {
@@ -219,7 +214,6 @@
                     </div>
                 }
 
-
                 <!-- PRICE -->
                 <div class="filter-group mb-3">
 
@@ -244,7 +238,6 @@
                     </div>
 
                 </div>
-
 
                 <!-- SPECIFICATIONS -->
                 @if (specs != null &&
@@ -280,24 +273,18 @@
                     </div>
                 }
 
-
                 <!-- APPLY -->
                 <button type="submit"
                         class="btn btn-primary btn-sm w-100 mt-2">
-
                     Apply Filters
-
                 </button>
-
 
                 <!-- CLEAR -->
                 <a asp-controller="Products"
                    asp-action="Index"
                    asp-route-category="@ViewBag.SelectedCategory"
                    class="btn btn-outline-secondary btn-sm w-100 mt-2">
-
                     Clear Filters
-
                 </a>
 
             </form>
@@ -306,7 +293,6 @@
 
     </div>
 
-
     <!-- PRODUCTS -->
     <div class="col-md-9">
 
@@ -314,15 +300,12 @@
         @if (!string.IsNullOrEmpty((string)ViewBag.SelectedCategory))
         {
             <p class="text-muted">
-
                 Showing:
                 <strong>
                     @ViewBag.SelectedCategory
                 </strong>
-
             </p>
         }
-
 
         <!-- PRODUCT GRID -->
         <div class="row row-cols-1 row-cols-md-3 g-4">
@@ -345,7 +328,6 @@
                                  alt="@product.Name"
                                  style="height:220px; object-fit:cover;" />
 
-
                             <!-- FEATURED -->
                             @if (product.IsFeatured)
                             {
@@ -353,7 +335,6 @@
                                     Featured
                                 </span>
                             }
-
 
                             <!-- SALE -->
                             @if (product.DiscountPrice.HasValue &&
@@ -366,7 +347,6 @@
 
                         </div>
 
-
                         <!-- DETAILS -->
                         <div class="card-body d-flex flex-column">
 
@@ -374,34 +354,22 @@
                                 @product.Name
                             </h5>
 
-
                             <!-- BRAND + CATEGORY -->
                             <p class="text-muted mb-1">
 
-                                @product.Brand?.Name
+                                @(product.Brand?.Name ?? "Unbranded")
                                 &middot;
                                 @product.Category?.Name
 
+                                @if (product.SubCategory != null)
+                                {
+                                    <span>
+                                        &middot;
+                                        @product.SubCategory.Name
+                                    </span>
+                                }
+
                             </p>
-
-
-                            <!-- SHORT DESCRIPTION -->
-                            @if (!string.IsNullOrWhiteSpace(product.ShortDescription))
-                            {
-                                <p class="small text-muted mb-2">
-                                    @product.ShortDescription
-                                </p>
-                            }
-
-
-                            <!-- PRODUCT TYPE -->
-                            @if (!string.IsNullOrWhiteSpace(product.ProductType))
-                            {
-                                <span class="badge bg-light text-dark border me-1 mb-2">
-                                    @product.ProductType
-                                </span>
-                            }
-
 
                             <!-- GENDER -->
                             @if (!string.IsNullOrWhiteSpace(product.Gender))
@@ -410,7 +378,6 @@
                                     @product.Gender
                                 </span>
                             }
-
 
                             <!-- TAGS -->
                             @if (product.ProductTags != null &&
@@ -429,7 +396,6 @@
 
                                 </div>
                             }
-
 
                             <div class="mt-auto">
 
@@ -456,15 +422,12 @@
                                     </p>
                                 }
 
-
                                 <!-- VIEW DETAILS -->
                                 <a asp-controller="Products"
                                    asp-action="Details"
                                    asp-route-id="@product.Id"
                                    class="btn btn-primary w-100">
-
                                     View Details
-
                                 </a>
 
                             </div>
@@ -477,7 +440,6 @@
             }
 
         </div>
-
 
         <!-- EMPTY STATE -->
         @if (!Model.Any())

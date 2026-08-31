@@ -2,11 +2,9 @@
 
 namespace EyewearsProject.Areas.Admin.Models
 {
-    public class ProductVariantFormViewModel
+    public class ProductEditVariantViewModel
     {
         public int Id { get; set; }
-
-        public int ProductId { get; set; }
 
         [Required]
         public string Color { get; set; } = "";
@@ -19,5 +17,10 @@ namespace EyewearsProject.Areas.Admin.Models
         [Range(0, int.MaxValue)]
         [Display(Name = "Stock")]
         public int StockQuantity { get; set; }
+
+        public int ReservedQuantity { get; set; }
+
+        public int AvailableQuantity =>
+            Math.Max(0, StockQuantity - ReservedQuantity);
     }
 }

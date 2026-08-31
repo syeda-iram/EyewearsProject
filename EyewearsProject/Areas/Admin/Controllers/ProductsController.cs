@@ -26,25 +26,52 @@ namespace EyewearsProject.Areas.Admin.Controllers
             _inventoryService = inventoryService;
         }
 
-        private async Task PopulateDropdownsAsync()
+        // =========================================================
+        // DROPDOWNS
+        // =========================================================
+
+        private async Task PopulateDropdownsAsync(
+            int? selectedCategoryId = null,
+            int? selectedSubCategoryId = null,
+            int? selectedBrandId = null)
         {
+            var categories = await _context.Categories
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            var parentCategories = categories
+                .Where(c => c.ParentCategoryId == null)
+                .ToList();
+
+            var subCategories = categories
+                .Where(c => c.ParentCategoryId != null)
+                .ToList();
+
+            var brands = await _context.Brands
+                .OrderBy(b => b.Name)
+                .ToListAsync();
+
             ViewBag.Categories = new SelectList(
-                await _context.Categories
-                    .OrderBy(c => c.Name)
-                    .ToListAsync(),
+                parentCategories,
                 "Id",
-                "Name");
+                "Name",
+                selectedCategoryId);
+
+            ViewBag.SubCategories = new SelectList(
+                subCategories,
+                "Id",
+                "Name",
+                selectedSubCategoryId);
 
             ViewBag.Brands = new SelectList(
-                await _context.Brands
-                    .OrderBy(b => b.Name)
-                    .ToListAsync(),
+                brands,
                 "Id",
-                "Name");
+                "Name",
+                selectedBrandId);
         }
 
         // =========================================================
-        // PRODUCTS
+        // PRODUCTS LIST
         // =========================================================
 
         // GET: /Admin/Products
@@ -52,7 +79,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
         {
             var products = await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.SubCategory)
                 .Include(p => p.Brand)
+                .Include(p => p.Images)
                 .OrderByDescending(p => p.Id)
                 .ToListAsync();
 
@@ -60,6 +89,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
             return View(products);
         }
+
+        // =========================================================
+        // CREATE
+        // =========================================================
 
         // GET: /Admin/Products/Create
         public async Task<IActionResult> Create()
@@ -76,45 +109,111 @@ namespace EyewearsProject.Areas.Admin.Controllers
         {
             if (!ModelState.IsValid)
             {
-                await PopulateDropdownsAsync();
+                await PopulateDropdownsAsync(
+                    model.CategoryId,
+                    null,
+                    model.BrandId);
+
                 return View(model);
             }
 
+            var productSku = model.Sku.Trim();
+
+            // -----------------------------------------------------
+            // Product SKU uniqueness
+            // -----------------------------------------------------
+
+            var skuExists = await _context.Products
+                .AnyAsync(p => p.Sku == productSku);
+
+            if (skuExists)
+            {
+                ModelState.AddModelError(
+                    nameof(model.Sku),
+                    "A product with this SKU already exists.");
+
+                await PopulateDropdownsAsync(
+                    model.CategoryId,
+                    null,
+                    model.BrandId);
+
+                return View(model);
+            }
+
+            // -----------------------------------------------------
+            // Discount validation
+            // -----------------------------------------------------
+
+            if (model.DiscountPrice.HasValue &&
+                model.DiscountPrice.Value >= model.Price)
+            {
+                ModelState.AddModelError(
+                    nameof(model.DiscountPrice),
+                    "Discount price must be lower than the regular price.");
+
+                await PopulateDropdownsAsync(
+                    model.CategoryId,
+                    null,
+                    model.BrandId);
+
+                return View(model);
+            }
+
+            // -----------------------------------------------------
+            // Create product
+            // -----------------------------------------------------
+
             var product = new Product
             {
-                Name = model.Name,
-                Sku = model.Sku,
+                Name = model.Name.Trim(),
 
-                ShortDescription = model.ShortDescription,
+                Sku = productSku,
+
                 Description = model.Description,
 
-                ProductType = model.ProductType,
-                Gender = model.Gender,
-                Material = model.Material,
-                Shape = model.Shape,
-                Color = model.Color,
-
                 CategoryId = model.CategoryId,
+
+                SubCategoryId = model.SubCategoryId,
+
                 BrandId = model.BrandId,
 
+                Gender = model.Gender,
+
+                Material = model.Material,
+
+                Shape = model.Shape,
+
                 Price = model.Price,
+
                 DiscountPrice = model.DiscountPrice,
+
                 CostPrice = model.CostPrice,
+
                 Weight = model.Weight,
 
                 IsFeatured = model.IsFeatured,
+
                 IsActive = model.IsActive,
 
-                TryOnOverlayImageUrl = model.TryOnOverlayImageUrl,
-                TryOn3DModelUrl = model.TryOn3DModelUrl,
-                TryOnOverlayScale = model.TryOnOverlayScale,
-                TryOnOverlayVerticalOffset = model.TryOnOverlayVerticalOffset,
+                TryOnOverlayImageUrl =
+                    model.TryOnOverlayImageUrl,
+
+                TryOn3DModelUrl =
+                    model.TryOn3DModelUrl,
+
+                TryOnOverlayScale =
+                    model.TryOnOverlayScale,
+
+                TryOnOverlayVerticalOffset =
+                    model.TryOnOverlayVerticalOffset,
 
                 CreatedAt = DateTime.UtcNow,
+
                 UpdatedAt = DateTime.UtcNow
             };
 
             _context.Products.Add(product);
+
             await _context.SaveChangesAsync();
 
             await _auditLogger.LogAsync(
@@ -123,152 +222,1174 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 product.Id.ToString(),
                 $"Created product {product.Name} (SKU: {product.Sku})");
 
-            TempData["Success"] = "Product created successfully.";
+            TempData["Success"] =
+                "Product created. You can now add variants, images, specifications, attributes and tags.";
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(
+                nameof(Edit),
+                new { id = product.Id });
         }
+
+        // =========================================================
+        // EDIT - GET
+        // =========================================================
 
         // GET: /Admin/Products/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+
+                .Include(p => p.Category)
+
+                .Include(p => p.SubCategory)
+
+                .Include(p => p.Brand)
+
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Inventory)
+
+                .Include(p => p.Images)
+
+                .Include(p => p.Specifications)
+
+                .Include(p => p.Attributes)
+
+                .Include(p => p.ProductTags)
+
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
                 return NotFound();
 
-            var model = new ProductFormViewModel
+            var model = new ProductEditViewModel
             {
                 Id = product.Id,
 
+                // =================================================
+                // BASIC INFORMATION
+                // =================================================
+
                 Name = product.Name,
+
                 Sku = product.Sku,
 
-                ShortDescription = product.ShortDescription,
                 Description = product.Description,
 
-                ProductType = product.ProductType,
-                Gender = product.Gender,
-                Material = product.Material,
-                Shape = product.Shape,
-                Color = product.Color,
+                // =================================================
+                // CATEGORY
+                // =================================================
 
                 CategoryId = product.CategoryId,
+
+                SubCategoryId = product.SubCategoryId,
+
                 BrandId = product.BrandId,
 
+                // =================================================
+                // PRODUCT DETAILS
+                // =================================================
+
+                Gender = product.Gender,
+
+                Material = product.Material,
+
+                Shape = product.Shape,
+
+                // =================================================
+                // PRICING
+                // =================================================
+
                 Price = product.Price,
+
                 DiscountPrice = product.DiscountPrice,
+
                 CostPrice = product.CostPrice,
+
                 Weight = product.Weight,
 
-                IsFeatured = product.IsFeatured,
+                // =================================================
+                // SETTINGS
+                // =================================================
+
                 IsActive = product.IsActive,
 
-                TryOnOverlayImageUrl = product.TryOnOverlayImageUrl,
-                TryOn3DModelUrl = product.TryOn3DModelUrl,
-                TryOnOverlayScale = product.TryOnOverlayScale,
-                TryOnOverlayVerticalOffset = product.TryOnOverlayVerticalOffset
+                IsFeatured = product.IsFeatured,
+
+                // =================================================
+                // TRY ON
+                // =================================================
+
+                TryOnOverlayImageUrl =
+                    product.TryOnOverlayImageUrl,
+
+                TryOn3DModelUrl =
+                    product.TryOn3DModelUrl,
+
+                TryOnOverlayScale =
+                    product.TryOnOverlayScale,
+
+                TryOnOverlayVerticalOffset =
+                    product.TryOnOverlayVerticalOffset,
+
+                // =================================================
+                // VARIANTS
+                // =================================================
+
+                Variants = product.Variants
+                    .OrderBy(v => v.Id)
+                    .Select(v =>
+                        new ProductEditVariantViewModel
+                        {
+                            Id = v.Id,
+
+                            Color = v.Color,
+
+                            Size = v.Size,
+
+                            Sku = v.Sku,
+
+                            StockQuantity =
+                                v.Inventory?.QuantityOnHand ?? 0,
+
+                            ReservedQuantity =
+                                v.Inventory?.ReservedQuantity ?? 0
+                        })
+                    .ToList(),
+
+                // =================================================
+                // IMAGES
+                // =================================================
+
+                ExistingImages = product.Images
+                    .OrderByDescending(i => i.IsPrimary)
+                    .ThenBy(i => i.Id)
+                    .Select((image, index) =>
+                        new ProductEditImageViewModel
+                        {
+                            Id = image.Id,
+
+                            ImageUrl = image.ImageUrl,
+
+                            IsPrimary = image.IsPrimary,
+
+                            ProductVariantId =
+                                image.ProductVariantId,
+
+                            SortOrder = index
+                        })
+                    .ToList(),
+
+                // =================================================
+                // SPECIFICATIONS
+                // =================================================
+
+                Specifications = product.Specifications
+                    .OrderBy(s => s.SortOrder)
+                    .ThenBy(s => s.Id)
+                    .Select(s =>
+                        new ProductEditSpecificationViewModel
+                        {
+                            Id = s.Id,
+
+                            Name = s.Name,
+
+                            Value = s.Value,
+
+                            SortOrder = s.SortOrder
+                        })
+                    .ToList(),
+
+                // =================================================
+                // ATTRIBUTES
+                // =================================================
+
+                Attributes = product.Attributes
+                    .OrderBy(a => a.SortOrder)
+                    .ThenBy(a => a.Id)
+                    .Select(a =>
+                        new ProductAttributeFormViewModel
+                        {
+                            Id = a.Id,
+
+                            ProductId = a.ProductId,
+
+                            Name = a.Name,
+
+                            Value = a.Value,
+
+                            SortOrder = a.SortOrder
+                        })
+                    .ToList(),
+
+                // =================================================
+                // TAGS
+                // =================================================
+
+                Tags = product.ProductTags
+                    .OrderBy(t => t.Name)
+                    .Select(t => t.Name)
+                    .ToList()
             };
 
-            await PopulateDropdownsAsync();
+            await PopulateDropdownsAsync(
+                product.CategoryId,
+                product.SubCategoryId,
+                product.BrandId);
+
+            ViewData["Title"] =
+                $"Edit Product — {product.Name}";
 
             return View(model);
         }
+
+        // =========================================================
+        // EDIT - POST
+        // SAVE EVERYTHING
+        // =========================================================
 
         // POST: /Admin/Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
             int id,
-            ProductFormViewModel model)
+            ProductEditViewModel model)
         {
+            // -----------------------------------------------------
+            // ID check
+            // -----------------------------------------------------
+
             if (id != model.Id)
                 return NotFound();
 
-            var product = await _context.Products.FindAsync(id);
+            // -----------------------------------------------------
+            // Load complete product
+            // -----------------------------------------------------
+
+            var product = await _context.Products
+
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Inventory)
+
+                .Include(p => p.Images)
+
+                .Include(p => p.Specifications)
+
+                .Include(p => p.Attributes)
+
+                .Include(p => p.ProductTags)
+
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
                 return NotFound();
 
+            // -----------------------------------------------------
+            // Validation
+            // -----------------------------------------------------
+
             if (!ModelState.IsValid)
             {
-                await PopulateDropdownsAsync();
+                await PopulateDropdownsAsync(
+                    model.CategoryId,
+                    model.SubCategoryId,
+                    model.BrandId);
+
                 return View(model);
             }
 
-            product.Name = model.Name;
-            product.Sku = model.Sku;
+            // -----------------------------------------------------
+            // Discount validation
+            // -----------------------------------------------------
 
-            product.ShortDescription = model.ShortDescription;
-            product.Description = model.Description;
+            if (model.DiscountPrice.HasValue &&
+                model.DiscountPrice.Value >= model.Price)
+            {
+                ModelState.AddModelError(
+                    nameof(model.DiscountPrice),
+                    "Discount price must be lower than the regular price.");
 
-            product.ProductType = model.ProductType;
-            product.Gender = model.Gender;
-            product.Material = model.Material;
-            product.Shape = model.Shape;
-            product.Color = model.Color;
+                await PopulateDropdownsAsync(
+                    model.CategoryId,
+                    model.SubCategoryId,
+                    model.BrandId);
 
-            product.CategoryId = model.CategoryId;
-            product.BrandId = model.BrandId;
+                return View(model);
+            }
 
-            product.Price = model.Price;
-            product.DiscountPrice = model.DiscountPrice;
-            product.CostPrice = model.CostPrice;
-            product.Weight = model.Weight;
+            // -----------------------------------------------------
+            // Product SKU validation
+            // -----------------------------------------------------
 
-            product.IsFeatured = model.IsFeatured;
-            product.IsActive = model.IsActive;
+            var newProductSku =
+                model.Sku.Trim();
 
-            product.TryOnOverlayImageUrl = model.TryOnOverlayImageUrl;
-            product.TryOn3DModelUrl = model.TryOn3DModelUrl;
-            product.TryOnOverlayScale = model.TryOnOverlayScale;
-            product.TryOnOverlayVerticalOffset =
-                model.TryOnOverlayVerticalOffset;
+            var duplicateProductSku =
+                await _context.Products
+                    .AnyAsync(p =>
+                        p.Id != product.Id &&
+                        p.Sku == newProductSku);
 
-            product.UpdatedAt = DateTime.UtcNow;
+            if (duplicateProductSku)
+            {
+                ModelState.AddModelError(
+                    nameof(model.Sku),
+                    "Another product already uses this SKU.");
 
-            await _context.SaveChangesAsync();
+                await PopulateDropdownsAsync(
+                    model.CategoryId,
+                    model.SubCategoryId,
+                    model.BrandId);
+
+                return View(model);
+            }
+
+            // =====================================================
+            // START TRANSACTION
+            // =====================================================
+
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // =================================================
+                // PRODUCT INFORMATION
+                // =================================================
+
+                product.Name =
+                    model.Name.Trim();
+
+                product.Sku =
+                    newProductSku;
+
+                product.Description =
+                    model.Description;
+
+                product.CategoryId =
+                    model.CategoryId;
+
+                product.SubCategoryId =
+                    model.SubCategoryId;
+
+                product.BrandId =
+                    model.BrandId;
+
+                product.Gender =
+                    model.Gender;
+
+                product.Material =
+                    model.Material;
+
+                product.Shape =
+                    model.Shape;
+
+                // =================================================
+                // PRICING
+                // =================================================
+
+                product.Price =
+                    model.Price;
+
+                product.DiscountPrice =
+                    model.DiscountPrice;
+
+                product.CostPrice =
+                    model.CostPrice;
+
+                product.Weight =
+                    model.Weight;
+
+                // =================================================
+                // SETTINGS
+                // =================================================
+
+                product.IsActive =
+                    model.IsActive;
+
+                product.IsFeatured =
+                    model.IsFeatured;
+
+                // =================================================
+                // VIRTUAL TRY-ON
+                // =================================================
+
+                product.TryOnOverlayImageUrl =
+                    model.TryOnOverlayImageUrl;
+
+                product.TryOn3DModelUrl =
+                    model.TryOn3DModelUrl;
+
+                product.TryOnOverlayScale =
+                    model.TryOnOverlayScale;
+
+                product.TryOnOverlayVerticalOffset =
+                    model.TryOnOverlayVerticalOffset;
+
+                product.UpdatedAt =
+                    DateTime.UtcNow;
+
+                // =================================================
+                // VARIANTS
+                // =================================================
+
+                await SaveVariantsAsync(
+                    product,
+                    model);
+
+                // =================================================
+                // IMAGES
+                // =================================================
+
+                await SaveImagesAsync(
+                    product,
+                    model);
+
+                // =================================================
+                // SPECIFICATIONS
+                // =================================================
+
+                await SaveSpecificationsAsync(
+                    product,
+                    model);
+
+                // =================================================
+                // ATTRIBUTES
+                // =================================================
+
+                await SaveAttributesAsync(
+                    product,
+                    model);
+
+                // =================================================
+                // TAGS
+                // =================================================
+
+                await SaveTagsAsync(
+                    product,
+                    model);
+
+                // =================================================
+                // FINAL SAVE
+                // =================================================
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+
+                throw;
+            }
+
+            // =====================================================
+            // AUDIT
+            // =====================================================
 
             await _auditLogger.LogAsync(
                 "Update",
                 "Product",
                 product.Id.ToString(),
-                $"Updated product {product.Name}");
+                $"Updated product {product.Name} including variants, inventory, images, specifications, attributes and tags.");
 
-            TempData["Success"] = "Product updated successfully.";
+            TempData["Success"] =
+                "Product updated successfully.";
 
-            return RedirectToAction(nameof(Index));
+            // Go back to Edit so manager immediately sees saved data.
+            return RedirectToAction(
+                nameof(Edit),
+                new { id = product.Id });
         }
+
+        // =========================================================
+        // SAVE VARIANTS
+        // =========================================================
+
+        private async Task SaveVariantsAsync(
+            Product product,
+            ProductEditViewModel model)
+        {
+            var submittedVariants =
+                model.Variants ??
+                new List<ProductEditVariantViewModel>();
+
+            // -----------------------------------------------------
+            // Clean / validate submitted SKU list
+            // -----------------------------------------------------
+
+            var variantSkuList =
+                submittedVariants
+                    .Where(v =>
+                        !string.IsNullOrWhiteSpace(v.Sku))
+                    .Select(v => new
+                    {
+                        Id = v.Id,
+
+                        Sku = v.Sku.Trim()
+                    })
+                    .ToList();
+
+            // -----------------------------------------------------
+            // Duplicate SKUs inside submitted form
+            // -----------------------------------------------------
+
+            var duplicateSubmittedSku =
+                variantSkuList
+                    .GroupBy(
+                        v => v.Sku,
+                        StringComparer.OrdinalIgnoreCase)
+                    .FirstOrDefault(g => g.Count() > 1);
+
+            if (duplicateSubmittedSku != null)
+            {
+                ModelState.AddModelError(
+                    "",
+                    $"Variant SKU '{duplicateSubmittedSku.Key}' is used more than once.");
+
+                throw new InvalidOperationException(
+                    "Duplicate variant SKU.");
+            }
+
+            // -----------------------------------------------------
+            // Check DB uniqueness
+            // -----------------------------------------------------
+
+            foreach (var variantSku in variantSkuList)
+            {
+                var exists =
+                    await _context.ProductVariants
+                        .AnyAsync(v =>
+                            v.Id != variantSku.Id &&
+                            v.Sku == variantSku.Sku);
+
+                if (exists)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        $"Variant SKU '{variantSku.Sku}' is already in use.");
+
+                    throw new InvalidOperationException(
+                        "Duplicate variant SKU.");
+                }
+            }
+
+            // -----------------------------------------------------
+            // IDs currently submitted
+            // -----------------------------------------------------
+
+            var submittedIds =
+                submittedVariants
+                    .Where(v => v.Id > 0)
+                    .Select(v => v.Id)
+                    .ToHashSet();
+
+            // -----------------------------------------------------
+            // Delete removed variants
+            // -----------------------------------------------------
+
+            var variantsToDelete =
+                product.Variants
+                    .Where(v =>
+                        !submittedIds.Contains(v.Id))
+                    .ToList();
+
+            foreach (var variant in variantsToDelete)
+            {
+                if (variant.Inventory != null &&
+                    variant.Inventory.ReservedQuantity > 0)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        $"Variant '{variant.Color}' cannot be deleted because it has reserved stock.");
+
+                    throw new InvalidOperationException(
+                        "Variant has reserved inventory.");
+                }
+
+                await _auditLogger.LogAsync(
+                    "Delete",
+                    "ProductVariant",
+                    variant.Id.ToString(),
+                    $"Removed variant {variant.Color} from product #{product.Id}");
+
+                _context.ProductVariants.Remove(variant);
+            }
+
+            // -----------------------------------------------------
+            // Create / update variants
+            // -----------------------------------------------------
+
+            foreach (var variantModel in submittedVariants)
+            {
+                // =================================================
+                // NEW VARIANT
+                // =================================================
+
+                if (variantModel.Id == 0)
+                {
+                    if (string.IsNullOrWhiteSpace(
+                            variantModel.Color))
+                    {
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(
+                            variantModel.Sku))
+                    {
+                        continue;
+                    }
+
+                    var newVariant =
+                        new ProductVariant
+                        {
+                            ProductId =
+                                product.Id,
+
+                            Color =
+                                variantModel.Color.Trim(),
+
+                            Size =
+                                string.IsNullOrWhiteSpace(
+                                    variantModel.Size)
+                                    ? null
+                                    : variantModel.Size.Trim(),
+
+                            Sku =
+                                variantModel.Sku.Trim()
+                        };
+
+                    _context.ProductVariants.Add(
+                        newVariant);
+
+                    await _context.SaveChangesAsync();
+
+                    await _inventoryService
+                        .EnsureInventoryExistsAsync(
+                            newVariant.Id);
+
+                    if (variantModel.StockQuantity > 0)
+                    {
+                        await _inventoryService
+                            .AdjustToQuantityAsync(
+                                newVariant.Id,
+                                variantModel.StockQuantity,
+                                $"Initial stock added while creating variant ({newVariant.Color})");
+                    }
+
+                    await _auditLogger.LogAsync(
+                        "Create",
+                        "ProductVariant",
+                        newVariant.Id.ToString(),
+                        $"Added variant {newVariant.Color} to product #{product.Id}");
+
+                    continue;
+                }
+
+                // =================================================
+                // EXISTING VARIANT
+                // =================================================
+
+                var variant =
+                    product.Variants
+                        .FirstOrDefault(v =>
+                            v.Id == variantModel.Id);
+
+                if (variant == null)
+                    continue;
+
+                variant.Color =
+                    variantModel.Color?.Trim() ?? "";
+
+                variant.Size =
+                    string.IsNullOrWhiteSpace(
+                        variantModel.Size)
+                        ? null
+                        : variantModel.Size.Trim();
+
+                variant.Sku =
+                    variantModel.Sku?.Trim() ?? "";
+
+                // -------------------------------------------------
+                // Inventory
+                // -------------------------------------------------
+
+                if (variant.Inventory == null)
+                {
+                    await _inventoryService
+                        .EnsureInventoryExistsAsync(
+                            variant.Id);
+
+                    variant.Inventory =
+                        await _context.Inventories
+                            .FirstAsync(i =>
+                                i.ProductVariantId ==
+                                variant.Id);
+                }
+
+                if (variantModel.StockQuantity <
+                    variant.Inventory.ReservedQuantity)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        $"Stock for variant '{variant.Color}' cannot be lower than reserved quantity ({variant.Inventory.ReservedQuantity}).");
+
+                    throw new InvalidOperationException(
+                        "Stock below reserved quantity.");
+                }
+
+                if (variant.Inventory.QuantityOnHand !=
+                    variantModel.StockQuantity)
+                {
+                    await _inventoryService
+                        .AdjustToQuantityAsync(
+                            variant.Id,
+                            variantModel.StockQuantity,
+                            $"Stock updated from product edit form ({variant.Color})");
+                }
+            }
+        }
+
+        // =========================================================
+        // SAVE IMAGES
+        // =========================================================
+
+        private async Task SaveImagesAsync(
+            Product product,
+            ProductEditViewModel model)
+        {
+            if (model.ExistingImages == null)
+                return;
+
+            var orderedImages =
+                model.ExistingImages
+                    .Where(i =>
+                        !string.IsNullOrWhiteSpace(
+                            i.ImageUrl))
+                    .OrderBy(i => i.SortOrder)
+                    .ToList();
+
+            // -----------------------------------------------------
+            // IDs submitted
+            // -----------------------------------------------------
+
+            var submittedImageIds =
+                orderedImages
+                    .Where(i => i.Id > 0)
+                    .Select(i => i.Id)
+                    .ToHashSet();
+
+            // -----------------------------------------------------
+            // Delete removed images
+            // -----------------------------------------------------
+
+            var imagesToDelete =
+                product.Images
+                    .Where(i =>
+                        !submittedImageIds.Contains(i.Id))
+                    .ToList();
+
+            foreach (var image in imagesToDelete)
+            {
+                await _auditLogger.LogAsync(
+                    "Delete",
+                    "ProductImage",
+                    image.Id.ToString(),
+                    image.ImageUrl);
+
+                _context.ProductImages.Remove(image);
+            }
+
+            // -----------------------------------------------------
+            // Reset primary
+            // -----------------------------------------------------
+
+            foreach (var image in product.Images)
+            {
+                image.IsPrimary = false;
+            }
+
+            // -----------------------------------------------------
+            // Update / create images
+            // -----------------------------------------------------
+
+            for (var index = 0;
+                 index < orderedImages.Count;
+                 index++)
+            {
+                var imageModel =
+                    orderedImages[index];
+
+                var isPrimary =
+                    index == 0;
+
+                // -------------------------------------------------
+                // NEW IMAGE
+                // -------------------------------------------------
+
+                if (imageModel.Id == 0)
+                {
+                    var newImage =
+                        new ProductImage
+                        {
+                            ProductId =
+                                product.Id,
+
+                            ImageUrl =
+                                imageModel.ImageUrl.Trim(),
+
+                            IsPrimary =
+                                isPrimary,
+
+                            ProductVariantId =
+                                imageModel.ProductVariantId
+                        };
+
+                    _context.ProductImages.Add(
+                        newImage);
+
+                    await _auditLogger.LogAsync(
+                        "Create",
+                        "ProductImage",
+                        "New",
+                        $"Added image {newImage.ImageUrl} to product #{product.Id}");
+
+                    continue;
+                }
+
+                // -------------------------------------------------
+                // EXISTING IMAGE
+                // -------------------------------------------------
+
+                var existingImage =
+                    product.Images
+                        .FirstOrDefault(i =>
+                            i.Id == imageModel.Id);
+
+                if (existingImage == null)
+                    continue;
+
+                existingImage.ImageUrl =
+                    imageModel.ImageUrl.Trim();
+
+                existingImage.IsPrimary =
+                    isPrimary;
+
+                existingImage.ProductVariantId =
+                    imageModel.ProductVariantId;
+            }
+        }
+
+        // =========================================================
+        // SAVE SPECIFICATIONS
+        // =========================================================
+
+        private async Task SaveSpecificationsAsync(
+            Product product,
+            ProductEditViewModel model)
+        {
+            var submittedSpecifications =
+                model.Specifications ??
+                new List<ProductEditSpecificationViewModel>();
+
+            var submittedIds =
+                submittedSpecifications
+                    .Where(s => s.Id > 0)
+                    .Select(s => s.Id)
+                    .ToHashSet();
+
+            // -----------------------------------------------------
+            // Delete removed
+            // -----------------------------------------------------
+
+            var specificationsToDelete =
+                product.Specifications
+                    .Where(s =>
+                        !submittedIds.Contains(s.Id))
+                    .ToList();
+
+            foreach (var specification
+                     in specificationsToDelete)
+            {
+                await _auditLogger.LogAsync(
+                    "Delete",
+                    "ProductSpecification",
+                    specification.Id.ToString(),
+                    specification.Name);
+
+                _context.ProductSpecifications
+                    .Remove(specification);
+            }
+
+            // -----------------------------------------------------
+            // Create / update
+            // -----------------------------------------------------
+
+            foreach (var specificationModel
+                     in submittedSpecifications)
+            {
+                if (string.IsNullOrWhiteSpace(
+                        specificationModel.Name) ||
+                    string.IsNullOrWhiteSpace(
+                        specificationModel.Value))
+                {
+                    continue;
+                }
+
+                // NEW
+                if (specificationModel.Id == 0)
+                {
+                    var specification =
+                        new ProductSpecification
+                        {
+                            ProductId =
+                                product.Id,
+
+                            Name =
+                                specificationModel.Name.Trim(),
+
+                            Value =
+                                specificationModel.Value.Trim(),
+
+                            SortOrder =
+                                specificationModel.SortOrder
+                        };
+
+                    _context.ProductSpecifications
+                        .Add(specification);
+
+                    continue;
+                }
+
+                // EXISTING
+                var existingSpecification =
+                    product.Specifications
+                        .FirstOrDefault(s =>
+                            s.Id ==
+                            specificationModel.Id);
+
+                if (existingSpecification == null)
+                    continue;
+
+                existingSpecification.Name =
+                    specificationModel.Name.Trim();
+
+                existingSpecification.Value =
+                    specificationModel.Value.Trim();
+
+                existingSpecification.SortOrder =
+                    specificationModel.SortOrder;
+            }
+        }
+
+        // =========================================================
+        // SAVE ATTRIBUTES
+        // =========================================================
+
+        private async Task SaveAttributesAsync(
+            Product product,
+            ProductEditViewModel model)
+        {
+            var submittedAttributes =
+                model.Attributes ??
+                new List<ProductAttributeFormViewModel>();
+
+            var submittedIds =
+                submittedAttributes
+                    .Where(a => a.Id > 0)
+                    .Select(a => a.Id)
+                    .ToHashSet();
+
+            // -----------------------------------------------------
+            // Delete removed
+            // -----------------------------------------------------
+
+            var attributesToDelete =
+                product.Attributes
+                    .Where(a =>
+                        !submittedIds.Contains(a.Id))
+                    .ToList();
+
+            foreach (var attribute
+                     in attributesToDelete)
+            {
+                await _auditLogger.LogAsync(
+                    "Delete",
+                    "ProductAttribute",
+                    attribute.Id.ToString(),
+                    attribute.Name);
+
+                _context.ProductAttributes
+                    .Remove(attribute);
+            }
+
+            // -----------------------------------------------------
+            // Create / update
+            // -----------------------------------------------------
+
+            foreach (var attributeModel
+                     in submittedAttributes)
+            {
+                if (string.IsNullOrWhiteSpace(
+                        attributeModel.Name) ||
+                    string.IsNullOrWhiteSpace(
+                        attributeModel.Value))
+                {
+                    continue;
+                }
+
+                // NEW
+                if (attributeModel.Id == 0)
+                {
+                    var attribute =
+                        new ProductAttribute
+                        {
+                            ProductId =
+                                product.Id,
+
+                            Name =
+                                attributeModel.Name.Trim(),
+
+                            Value =
+                                attributeModel.Value.Trim(),
+
+                            SortOrder =
+                                attributeModel.SortOrder
+                        };
+
+                    _context.ProductAttributes
+                        .Add(attribute);
+
+                    continue;
+                }
+
+                // EXISTING
+                var existingAttribute =
+                    product.Attributes
+                        .FirstOrDefault(a =>
+                            a.Id ==
+                            attributeModel.Id);
+
+                if (existingAttribute == null)
+                    continue;
+
+                existingAttribute.Name =
+                    attributeModel.Name.Trim();
+
+                existingAttribute.Value =
+                    attributeModel.Value.Trim();
+
+                existingAttribute.SortOrder =
+                    attributeModel.SortOrder;
+            }
+        }
+
+        // =========================================================
+        // SAVE TAGS
+        // =========================================================
+
+        private async Task SaveTagsAsync(
+            Product product,
+            ProductEditViewModel model)
+        {
+            var submittedTags =
+                model.Tags ??
+                new List<string>();
+
+            var cleanTags =
+                submittedTags
+                    .Where(t =>
+                        !string.IsNullOrWhiteSpace(t))
+                    .Select(t => t.Trim())
+                    .Distinct(
+                        StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+            // -----------------------------------------------------
+            // Remove old tags
+            // -----------------------------------------------------
+
+            var oldTags =
+                product.ProductTags.ToList();
+
+            foreach (var tag in oldTags)
+            {
+                _context.ProductTags.Remove(tag);
+            }
+
+            // -----------------------------------------------------
+            // Add new tags
+            // -----------------------------------------------------
+
+            foreach (var tagName in cleanTags)
+            {
+                _context.ProductTags.Add(
+                    new ProductTag
+                    {
+                        ProductId =
+                            product.Id,
+
+                        Name =
+                            tagName
+                    });
+            }
+
+            await Task.CompletedTask;
+        }
+
+        // =========================================================
+        // TOGGLE ACTIVE
+        // =========================================================
 
         // POST: /Admin/Products/ToggleActive/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product =
+                await _context.Products
+                    .FindAsync(id);
 
             if (product == null)
                 return NotFound();
 
-            product.IsActive = !product.IsActive;
-            product.UpdatedAt = DateTime.UtcNow;
+            product.IsActive =
+                !product.IsActive;
+
+            product.UpdatedAt =
+                DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
             await _auditLogger.LogAsync(
-                product.IsActive ? "Activate" : "Deactivate",
+                product.IsActive
+                    ? "Activate"
+                    : "Deactivate",
                 "Product",
                 product.Id.ToString(),
                 product.Name);
 
-            return RedirectToAction(nameof(Index));
+            TempData["Success"] =
+                product.IsActive
+                    ? "Product activated."
+                    : "Product deactivated.";
+
+            return RedirectToAction(
+                nameof(Index));
         }
+
+        // =========================================================
+        // DELETE PRODUCT
+        // =========================================================
 
         // POST: /Admin/Products/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product =
+                await _context.Products
+                    .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
                 return NotFound();
@@ -283,881 +1404,93 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Product deleted.";
+            TempData["Success"] =
+                "Product deleted successfully.";
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(
+                nameof(Index));
         }
 
         // =========================================================
-        // VARIANTS
+        // PREVIEW
         // =========================================================
 
-        // GET: /Admin/Products/Variants/5
-        public async Task<IActionResult> Variants(int id)
+        // GET: /Admin/Products/Preview/18
+        //
+        // IMPORTANT:
+        // This loads the CUSTOMER-SIDE Details view directly.
+        // Therefore manager sees the product as customer sees it.
+        //
+        // Unlike customer ProductsController/Details,
+        // this does NOT require IsActive == true.
+        // =========================================================
+
+        public async Task<IActionResult> Preview(int id)
         {
             var product = await _context.Products
-                .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (product == null)
-                return NotFound();
+                .AsNoTracking()
 
-            ViewBag.ProductName = product.Name;
-            ViewBag.ProductId = product.Id;
+                .Include(p => p.Brand)
 
-            ViewData["Title"] = $"Variants — {product.Name}";
+                .Include(p => p.Category)
 
-            return View(product.Variants.ToList());
-        }
+                .Include(p => p.SubCategory)
 
-        // GET: /Admin/Products/CreateVariant?productId=5
-        public async Task<IActionResult> CreateVariant(int productId)
-        {
-            var product = await _context.Products.FindAsync(productId);
-
-            if (product == null)
-                return NotFound();
-
-            ViewBag.ProductName = product.Name;
-
-            return View(
-                new ProductVariantFormViewModel
-                {
-                    ProductId = productId
-                });
-        }
-
-        // POST: /Admin/Products/CreateVariant
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateVariant(
-            ProductVariantFormViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                var product =
-                    await _context.Products.FindAsync(model.ProductId);
-
-                ViewBag.ProductName = product?.Name;
-
-                return View(model);
-            }
-
-            var variant = new ProductVariant
-            {
-                ProductId = model.ProductId,
-                Color = model.Color,
-                Size = model.Size,
-                Sku = model.Sku,
-                StockQuantity = 0
-            };
-
-            _context.ProductVariants.Add(variant);
-
-            await _context.SaveChangesAsync();
-
-            if (model.StockQuantity > 0)
-            {
-                await _inventoryService.RecordTransactionAsync(
-                    variant.Id,
-                    InventoryTransactionType.Purchase,
-                    model.StockQuantity,
-                    referenceType: "ProductVariantCreate",
-                    reason: $"Initial stock set while creating variant {variant.Color}");
-            }
-
-            await _auditLogger.LogAsync(
-                "Create",
-                "ProductVariant",
-                variant.Id.ToString(),
-                $"Added variant {variant.Color} to product #{model.ProductId}");
-
-            TempData["Success"] = "Variant added.";
-
-            return RedirectToAction(
-                nameof(Variants),
-                new { id = model.ProductId });
-        }
-
-        // GET: /Admin/Products/EditVariant/5
-        public async Task<IActionResult> EditVariant(int id)
-        {
-            var variant = await _context.ProductVariants
-                .Include(v => v.Product)
-                .FirstOrDefaultAsync(v => v.Id == id);
-
-            if (variant == null)
-                return NotFound();
-
-            ViewBag.ProductName = variant.Product.Name;
-
-            var model = new ProductVariantFormViewModel
-            {
-                Id = variant.Id,
-                ProductId = variant.ProductId,
-                Color = variant.Color,
-                Size = variant.Size,
-                Sku = variant.Sku,
-                StockQuantity = variant.StockQuantity
-            };
-
-            return View(model);
-        }
-
-        // POST: /Admin/Products/EditVariant/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditVariant(
-            int id,
-            ProductVariantFormViewModel model)
-        {
-            if (id != model.Id)
-                return NotFound();
-
-            var variant =
-                await _context.ProductVariants.FindAsync(id);
-
-            if (variant == null)
-                return NotFound();
-
-            if (!ModelState.IsValid)
-            {
-                var product =
-                    await _context.Products.FindAsync(model.ProductId);
-
-                ViewBag.ProductName = product?.Name;
-
-                return View(model);
-            }
-
-            variant.Color = model.Color;
-            variant.Size = model.Size;
-            variant.Sku = model.Sku;
-
-            await _context.SaveChangesAsync();
-
-            await _inventoryService.AdjustToQuantityAsync(
-                variant.Id,
-                model.StockQuantity,
-                reason: $"Stock updated via product variant edit form ({variant.Color})");
-
-            await _auditLogger.LogAsync(
-                "Update",
-                "ProductVariant",
-                variant.Id.ToString(),
-                $"Updated variant {variant.Color}");
-
-            TempData["Success"] = "Variant updated.";
-
-            return RedirectToAction(
-                nameof(Variants),
-                new { id = model.ProductId });
-        }
-
-        // POST: /Admin/Products/DeleteVariant/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteVariant(
-            int id,
-            int productId)
-        {
-            var variant =
-                await _context.ProductVariants.FindAsync(id);
-
-            if (variant == null)
-                return NotFound();
-
-            await _auditLogger.LogAsync(
-                "Delete",
-                "ProductVariant",
-                variant.Id.ToString(),
-                variant.Color);
-
-            _context.ProductVariants.Remove(variant);
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Variant deleted.";
-
-            return RedirectToAction(
-                nameof(Variants),
-                new { id = productId });
-        }
-
-        // =========================================================
-        // IMAGES
-        // =========================================================
-
-        // GET: /Admin/Products/Images/5
-        public async Task<IActionResult> Images(int id)
-        {
-            var product = await _context.Products
                 .Include(p => p.Images)
-                .ThenInclude(i => i.ProductVariant)
+                    .ThenInclude(i => i.ProductVariant)
+
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Inventory)
+
+                .Include(p => p.Specifications)
+
+                .Include(p => p.Attributes)
+
+                .Include(p => p.ProductTags)
+
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
                 return NotFound();
 
-            ViewBag.ProductName = product.Name;
-            ViewBag.ProductId = product.Id;
+            // -----------------------------------------------------
+            // Reviews for customer Details.cshtml
+            // -----------------------------------------------------
 
-            ViewData["Title"] = $"Images — {product.Name}";
-
-            return View(product.Images.ToList());
-        }
-
-        // GET: /Admin/Products/CreateImage?productId=5
-        public async Task<IActionResult> CreateImage(int productId)
-        {
-            var product =
-                await _context.Products.FindAsync(productId);
-
-            if (product == null)
-                return NotFound();
-
-            ViewBag.ProductName = product.Name;
-
-            ViewBag.Variants = new SelectList(
-                await _context.ProductVariants
-                    .Where(v => v.ProductId == productId)
-                    .ToListAsync(),
-                "Id",
-                "Color");
-
-            return View(
-                new ProductImageFormViewModel
-                {
-                    ProductId = productId
-                });
-        }
-
-        // POST: /Admin/Products/CreateImage
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateImage(
-            ProductImageFormViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                var product =
-                    await _context.Products.FindAsync(model.ProductId);
-
-                ViewBag.ProductName = product?.Name;
-
-                ViewBag.Variants = new SelectList(
-                    await _context.ProductVariants
-                        .Where(v => v.ProductId == model.ProductId)
-                        .ToListAsync(),
-                    "Id",
-                    "Color");
-
-                return View(model);
-            }
-
-            if (model.IsPrimary)
-            {
-                var existingPrimaries =
-                    await _context.ProductImages
-                        .Where(i =>
-                            i.ProductId == model.ProductId &&
-                            i.IsPrimary)
-                        .ToListAsync();
-
-                foreach (var img in existingPrimaries)
-                    img.IsPrimary = false;
-            }
-
-            var image = new ProductImage
-            {
-                ProductId = model.ProductId,
-                ImageUrl = model.ImageUrl,
-                IsPrimary = model.IsPrimary,
-                ProductVariantId = model.ProductVariantId
-            };
-
-            _context.ProductImages.Add(image);
-
-            await _context.SaveChangesAsync();
-
-            await _auditLogger.LogAsync(
-                "Create",
-                "ProductImage",
-                image.Id.ToString(),
-                $"Added image to product #{model.ProductId}");
-
-            TempData["Success"] = "Image added.";
-
-            return RedirectToAction(
-                nameof(Images),
-                new { id = model.ProductId });
-        }
-
-        // POST: /Admin/Products/SetPrimaryImage/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetPrimaryImage(
-            int id,
-            int productId)
-        {
-            var images =
-                await _context.ProductImages
-                    .Where(i => i.ProductId == productId)
+            var approvedReviews =
+                await _context.Reviews
+                    .Include(r => r.User)
+                    .Where(r =>
+                        r.ProductId == id &&
+                        r.IsApproved)
+                    .OrderByDescending(
+                        r => r.CreatedAt)
                     .ToListAsync();
 
-            foreach (var img in images)
-                img.IsPrimary = img.Id == id;
+            ViewBag.ApprovedReviews =
+                approvedReviews;
 
-            await _context.SaveChangesAsync();
+            ViewBag.AverageRating =
+                approvedReviews.Any()
+                    ? approvedReviews.Average(
+                        r => r.Rating)
+                    : (double?)null;
 
-            return RedirectToAction(
-                nameof(Images),
-                new { id = productId });
-        }
-
-        // POST: /Admin/Products/DeleteImage/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteImage(
-            int id,
-            int productId)
-        {
-            var image =
-                await _context.ProductImages.FindAsync(id);
-
-            if (image == null)
-                return NotFound();
-
-            await _auditLogger.LogAsync(
-                "Delete",
-                "ProductImage",
-                image.Id.ToString(),
-                image.ImageUrl);
-
-            _context.ProductImages.Remove(image);
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Image deleted.";
-
-            return RedirectToAction(
-                nameof(Images),
-                new { id = productId });
-        }
-
-        // =========================================================
-        // SPECIFICATIONS
-        // =========================================================
-
-        // GET: /Admin/Products/Specifications/5
-        public async Task<IActionResult> Specifications(int id)
-        {
-            var product = await _context.Products
-                .Include(p => p.Specifications)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null)
-                return NotFound();
-
-            ViewBag.ProductName = product.Name;
-            ViewBag.ProductId = product.Id;
+            // Manager preview should not show review state
+            // for the currently logged-in admin.
+            ViewBag.UserAlreadyReviewed = false;
 
             ViewData["Title"] =
-                $"Specifications — {product.Name}";
+                $"Preview — {product.Name}";
+
+            // -----------------------------------------------------
+            // Re-use customer-side product page
+            // -----------------------------------------------------
 
             return View(
-                product.Specifications
-                    .OrderBy(s => s.SortOrder)
-                    .ToList());
-        }
-
-        // GET: /Admin/Products/CreateSpecification?productId=5
-        public async Task<IActionResult> CreateSpecification(
-            int productId)
-        {
-            var product =
-                await _context.Products.FindAsync(productId);
-
-            if (product == null)
-                return NotFound();
-
-            ViewBag.ProductName = product.Name;
-
-            return View(
-                new ProductSpecificationFormViewModel
-                {
-                    ProductId = productId
-                });
-        }
-
-        // POST: /Admin/Products/CreateSpecification
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateSpecification(
-            ProductSpecificationFormViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                var product =
-                    await _context.Products.FindAsync(model.ProductId);
-
-                ViewBag.ProductName = product?.Name;
-
-                return View(model);
-            }
-
-            var spec = new ProductSpecification
-            {
-                ProductId = model.ProductId,
-                Name = model.Name,
-                Value = model.Value,
-                SortOrder = model.SortOrder
-            };
-
-            _context.ProductSpecifications.Add(spec);
-
-            await _context.SaveChangesAsync();
-
-            await _auditLogger.LogAsync(
-                "Create",
-                "ProductSpecification",
-                spec.Id.ToString(),
-                $"Added spec '{spec.Name}: {spec.Value}' to product #{model.ProductId}");
-
-            TempData["Success"] = "Specification added.";
-
-            return RedirectToAction(
-                nameof(Specifications),
-                new { id = model.ProductId });
-        }
-
-        // GET: /Admin/Products/EditSpecification/5
-        public async Task<IActionResult> EditSpecification(int id)
-        {
-            var spec = await _context.ProductSpecifications
-                .Include(s => s.Product)
-                .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (spec == null)
-                return NotFound();
-
-            ViewBag.ProductName = spec.Product.Name;
-
-            var model = new ProductSpecificationFormViewModel
-            {
-                Id = spec.Id,
-                ProductId = spec.ProductId,
-                Name = spec.Name,
-                Value = spec.Value,
-                SortOrder = spec.SortOrder
-            };
-
-            return View(model);
-        }
-
-        // POST: /Admin/Products/EditSpecification/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditSpecification(
-            int id,
-            ProductSpecificationFormViewModel model)
-        {
-            if (id != model.Id)
-                return NotFound();
-
-            var spec =
-                await _context.ProductSpecifications.FindAsync(id);
-
-            if (spec == null)
-                return NotFound();
-
-            if (!ModelState.IsValid)
-            {
-                var product =
-                    await _context.Products.FindAsync(model.ProductId);
-
-                ViewBag.ProductName = product?.Name;
-
-                return View(model);
-            }
-
-            spec.Name = model.Name;
-            spec.Value = model.Value;
-            spec.SortOrder = model.SortOrder;
-
-            await _context.SaveChangesAsync();
-
-            await _auditLogger.LogAsync(
-                "Update",
-                "ProductSpecification",
-                spec.Id.ToString(),
-                $"Updated spec '{spec.Name}'");
-
-            TempData["Success"] = "Specification updated.";
-
-            return RedirectToAction(
-                nameof(Specifications),
-                new { id = model.ProductId });
-        }
-
-        // POST: /Admin/Products/DeleteSpecification/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteSpecification(
-            int id,
-            int productId)
-        {
-            var spec =
-                await _context.ProductSpecifications.FindAsync(id);
-
-            if (spec == null)
-                return NotFound();
-
-            await _auditLogger.LogAsync(
-                "Delete",
-                "ProductSpecification",
-                spec.Id.ToString(),
-                spec.Name);
-
-            _context.ProductSpecifications.Remove(spec);
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Specification deleted.";
-
-            return RedirectToAction(
-                nameof(Specifications),
-                new { id = productId });
-        }
-
-        // =========================================================
-        // ATTRIBUTES
-        // =========================================================
-
-        // GET: /Admin/Products/Attributes/5
-        public async Task<IActionResult> Attributes(int id)
-        {
-            var product = await _context.Products
-                .Include(p => p.Attributes)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null)
-                return NotFound();
-
-            ViewBag.ProductName = product.Name;
-            ViewBag.ProductId = product.Id;
-            ViewData["Title"] = $"Attributes — {product.Name}";
-
-            return View(
-                product.Attributes
-                    .OrderBy(a => a.SortOrder)
-                    .ToList());
-        }
-
-        // GET: /Admin/Products/CreateAttribute?productId=5
-        public async Task<IActionResult> CreateAttribute(int productId)
-        {
-            var product = await _context.Products.FindAsync(productId);
-
-            if (product == null)
-                return NotFound();
-
-            ViewBag.ProductName = product.Name;
-
-            return View(new ProductAttributeFormViewModel
-            {
-                ProductId = productId
-            });
-        }
-
-        // POST: /Admin/Products/CreateAttribute
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAttribute(
-            ProductAttributeFormViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                var product = await _context.Products.FindAsync(model.ProductId);
-                ViewBag.ProductName = product?.Name;
-
-                return View(model);
-            }
-
-            var attribute = new ProductAttribute
-            {
-                ProductId = model.ProductId,
-                Name = model.Name,
-                Value = model.Value,
-                SortOrder = model.SortOrder
-            };
-
-            _context.ProductAttributes.Add(attribute);
-            await _context.SaveChangesAsync();
-
-            await _auditLogger.LogAsync(
-                "Create",
-                "ProductAttribute",
-                attribute.Id.ToString(),
-                $"Added attribute '{attribute.Name}: {attribute.Value}' to product #{model.ProductId}");
-
-            TempData["Success"] = "Attribute added.";
-
-            return RedirectToAction(
-                nameof(Attributes),
-                new { id = model.ProductId });
-        }
-
-        // GET: /Admin/Products/EditAttribute/5
-        public async Task<IActionResult> EditAttribute(int id)
-        {
-            var attribute = await _context.ProductAttributes
-                .Include(a => a.Product)
-                .FirstOrDefaultAsync(a => a.Id == id);
-
-            if (attribute == null)
-                return NotFound();
-
-            ViewBag.ProductName = attribute.Product.Name;
-
-            var model = new ProductAttributeFormViewModel
-            {
-                Id = attribute.Id,
-                ProductId = attribute.ProductId,
-                Name = attribute.Name,
-                Value = attribute.Value,
-                SortOrder = attribute.SortOrder
-            };
-
-            return View(model);
-        }
-
-        // POST: /Admin/Products/EditAttribute/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditAttribute(
-            int id,
-            ProductAttributeFormViewModel model)
-        {
-            if (id != model.Id)
-                return NotFound();
-
-            var attribute = await _context.ProductAttributes
-                .FindAsync(id);
-
-            if (attribute == null)
-                return NotFound();
-
-            if (!ModelState.IsValid)
-            {
-                var product = await _context.Products
-                    .FindAsync(model.ProductId);
-
-                ViewBag.ProductName = product?.Name;
-
-                return View(model);
-            }
-
-            attribute.Name = model.Name;
-            attribute.Value = model.Value;
-            attribute.SortOrder = model.SortOrder;
-
-            await _context.SaveChangesAsync();
-
-            await _auditLogger.LogAsync(
-                "Update",
-                "ProductAttribute",
-                attribute.Id.ToString(),
-                $"Updated attribute '{attribute.Name}'");
-
-            TempData["Success"] = "Attribute updated.";
-
-            return RedirectToAction(
-                nameof(Attributes),
-                new { id = model.ProductId });
-        }
-
-        // POST: /Admin/Products/DeleteAttribute/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteAttribute(
-            int id,
-            int productId)
-        {
-            var attribute = await _context.ProductAttributes
-                .FindAsync(id);
-
-            if (attribute == null)
-                return NotFound();
-
-            await _auditLogger.LogAsync(
-                "Delete",
-                "ProductAttribute",
-                attribute.Id.ToString(),
-                attribute.Name);
-
-            _context.ProductAttributes.Remove(attribute);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Attribute deleted.";
-
-            return RedirectToAction(
-                nameof(Attributes),
-                new { id = productId });
-        }
-
-        // =========================================================
-        // TAGS
-        // =========================================================
-
-        // GET: /Admin/Products/Tags/5
-        public async Task<IActionResult> Tags(int id)
-        {
-            var product = await _context.Products
-                .Include(p => p.ProductTags)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null) return NotFound();
-
-            ViewBag.ProductName = product.Name;
-            ViewBag.ProductId = product.Id;
-            ViewData["Title"] = $"Tags — {product.Name}";
-
-            return View(product.ProductTags.OrderBy(t => t.Name).ToList());
-        }
-
-        // GET: /Admin/Products/CreateTag?productId=5
-        public async Task<IActionResult> CreateTag(int productId)
-        {
-            var product = await _context.Products.FindAsync(productId);
-
-            if (product == null) return NotFound();
-
-            ViewBag.ProductName = product.Name;
-
-            return View(new ProductTagFormViewModel
-            {
-                ProductId = productId
-            });
-        }
-
-        // POST: /Admin/Products/CreateTag
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateTag(ProductTagFormViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                var product = await _context.Products.FindAsync(model.ProductId);
-                ViewBag.ProductName = product?.Name;
-
-                return View(model);
-            }
-
-            var tag = new ProductTag
-            {
-                ProductId = model.ProductId,
-                Name = model.Name.Trim()
-            };
-
-            _context.ProductTags.Add(tag);
-            await _context.SaveChangesAsync();
-
-            await _auditLogger.LogAsync(
-                "Create",
-                "ProductTag",
-                tag.Id.ToString(),
-                $"Added tag '{tag.Name}' to product #{model.ProductId}");
-
-            TempData["Success"] = "Tag added.";
-
-            return RedirectToAction(
-                nameof(Tags),
-                new { id = model.ProductId });
-        }
-
-        // GET: /Admin/Products/EditTag/5
-        public async Task<IActionResult> EditTag(int id)
-        {
-            var tag = await _context.ProductTags
-                .Include(t => t.Product)
-                .FirstOrDefaultAsync(t => t.Id == id);
-
-            if (tag == null) return NotFound();
-
-            ViewBag.ProductName = tag.Product.Name;
-
-            return View(new ProductTagFormViewModel
-            {
-                Id = tag.Id,
-                ProductId = tag.ProductId,
-                Name = tag.Name
-            });
-        }
-
-        // POST: /Admin/Products/EditTag/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditTag(
-            int id,
-            ProductTagFormViewModel model)
-        {
-            if (id != model.Id) return NotFound();
-
-            var tag = await _context.ProductTags.FindAsync(id);
-
-            if (tag == null) return NotFound();
-
-            if (!ModelState.IsValid)
-            {
-                var product = await _context.Products.FindAsync(model.ProductId);
-                ViewBag.ProductName = product?.Name;
-
-                return View(model);
-            }
-
-            tag.Name = model.Name.Trim();
-
-            await _context.SaveChangesAsync();
-
-            await _auditLogger.LogAsync(
-                "Update",
-                "ProductTag",
-                tag.Id.ToString(),
-                $"Updated tag '{tag.Name}'");
-
-            TempData["Success"] = "Tag updated.";
-
-            return RedirectToAction(
-                nameof(Tags),
-                new { id = model.ProductId });
-        }
-
-        // POST: /Admin/Products/DeleteTag/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteTag(
-            int id,
-            int productId)
-        {
-            var tag = await _context.ProductTags.FindAsync(id);
-
-            if (tag == null) return NotFound();
-
-            await _auditLogger.LogAsync(
-                "Delete",
-                "ProductTag",
-                tag.Id.ToString(),
-                tag.Name);
-
-            _context.ProductTags.Remove(tag);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Tag deleted.";
-
-            return RedirectToAction(
-                nameof(Tags),
-                new { id = productId });
+                "~/Views/Products/Details.cshtml",
+                product);
         }
     }
 }

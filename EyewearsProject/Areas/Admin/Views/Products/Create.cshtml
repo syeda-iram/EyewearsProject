@@ -1,222 +1,3409 @@
 ﻿@model ProductFormViewModel
 
-<h4>@(Model.Id == 0 ? "Create" : "Edit") Product</h4>
+@{
+    ViewData["Title"] = "Create Product — {Model.Name}";
+}
 
-<form asp-action="@(Model.Id == 0 ? "Create" : "Edit")" method="post" style="max-width:520px;">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="product-edit-page">
 
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
-    </div>
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
 
-    <div class="mb-3">
-        <label asp-for="Sku" class="form-label">SKU</label>
-        <input asp-for="Sku" class="form-control" />
-        <span asp-validation-for="Sku" class="text-danger"></span>
-    </div>
+    <div class="product-edit-header">
 
-    <div class="mb-3">
-        <label asp-for="ShortDescription" class="form-label">Short Description</label>
-        <textarea asp-for="ShortDescription" class="form-control" rows="2"
-                  placeholder="Short summary shown on product listings"></textarea>
-        <span asp-validation-for="ShortDescription" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label">Description</label>
-        <textarea asp-for="Description" class="form-control" rows="5"
-                  placeholder="Detailed product description"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="ProductType" class="form-label">Product Type</label>
-        <select asp-for="ProductType" class="form-select">
-            <option value="">-- Select Product Type --</option>
-            <option value="Eyeglasses">Eyeglasses</option>
-            <option value="Sunglasses">Sunglasses</option>
-            <option value="Contact Lenses">Contact Lenses</option>
-            <option value="Accessories">Accessories</option>
-        </select>
-        <span asp-validation-for="ProductType" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Gender" class="form-label">Gender</label>
-        <select asp-for="Gender" class="form-select">
-            <option value="">-- Select Gender --</option>
-            <option value="Men">Men</option>
-            <option value="Women">Women</option>
-            <option value="Unisex">Unisex</option>
-            <option value="Kids">Kids</option>
-        </select>
-        <span asp-validation-for="Gender" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Material" class="form-label">Material</label>
-        <input asp-for="Material" class="form-control"
-               placeholder="e.g. Acetate, Titanium, Plastic" />
-        <span asp-validation-for="Material" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Shape" class="form-label">Shape</label>
-        <select asp-for="Shape" class="form-select">
-            <option value="">-- Select Shape --</option>
-            <option value="Round">Round</option>
-            <option value="Square">Square</option>
-            <option value="Rectangle">Rectangle</option>
-            <option value="Oval">Oval</option>
-            <option value="Cat Eye">Cat Eye</option>
-            <option value="Aviator">Aviator</option>
-            <option value="Wayfarer">Wayfarer</option>
-            <option value="Geometric">Geometric</option>
-            <option value="Other">Other</option>
-        </select>
-        <span asp-validation-for="Shape" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Color" class="form-label">Color</label>
-        <input asp-for="Color" class="form-control"
-               placeholder="e.g. Black, Gold, Tortoise" />
-        <span asp-validation-for="Color" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label">Category</label>
-        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
-            <option value="">-- Select --</option>
-        </select>
-        <span asp-validation-for="CategoryId" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="BrandId" class="form-label">Brand</label>
-        <select asp-for="BrandId" class="form-select" asp-items="ViewBag.Brands">
-            <option value="">-- No Brand (Unbranded) --</option>
-        </select>
-        <span asp-validation-for="BrandId" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Price" class="form-label">Price</label>
-        <input asp-for="Price" class="form-control" type="number" step="0.01" />
-        <span asp-validation-for="Price" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="DiscountPrice" class="form-label">Discount Price</label>
-        <input asp-for="DiscountPrice" class="form-control" type="number" step="0.01" />
-        <span asp-validation-for="DiscountPrice" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="CostPrice" class="form-label">Cost Price</label>
-        <input asp-for="CostPrice" class="form-control" type="number" step="0.01" />
-        <span asp-validation-for="CostPrice" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Weight" class="form-label">Weight</label>
-        <input asp-for="Weight" class="form-control" type="number" step="0.01"
-               placeholder="e.g. 22.5" />
-        <span asp-validation-for="Weight" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3 form-check">
-        <input asp-for="IsFeatured" class="form-check-input" />
-        <label asp-for="IsFeatured" class="form-check-label">
-            Featured Product
-        </label>
-    </div>
-
-    <div class="mb-3 form-check">
-        <input asp-for="IsActive" class="form-check-input" />
-        <label asp-for="IsActive" class="form-check-label"></label>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="TryOnOverlayImageUrl" class="form-label"></label>
-        <input type="file"
-               id="tryOnFileInput"
-               class="form-control mb-2"
-               accept="image/png" />
-
-        <input asp-for="TryOnOverlayImageUrl"
-               type="hidden"
-               id="TryOnOverlayImageUrl" />
-
-        <img id="tryOnPreview"
-             src="@Model.TryOnOverlayImageUrl"
-             style="max-height:120px; display:@(string.IsNullOrEmpty(Model.TryOnOverlayImageUrl) ? "none" : "block");"
-             class="mt-2 rounded border" />
-
-        <span asp-validation-for="TryOnOverlayImageUrl" class="text-danger"></span>
-
-        <div class="form-text">
-            Upload a transparent PNG of just the glasses (no face, no background)
-            for Virtual Try-On.
-        </div>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="TryOn3DModelUrl" class="form-label"></label>
-        <input asp-for="TryOn3DModelUrl"
-               class="form-control"
-               placeholder="rayban_aviator_or_vertFlash" />
-
-        <span asp-validation-for="TryOn3DModelUrl" class="text-danger"></span>
-
-        <div class="form-text">
-            Paste a real Jeeliz SKU that matches this product's style.
-            Leave blank to use the simpler 2D try-on.
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label asp-for="TryOnOverlayScale" class="form-label"></label>
-            <input asp-for="TryOnOverlayScale"
-                   type="number"
-                   step="0.1"
-                   class="form-control" />
-            <span asp-validation-for="TryOnOverlayScale" class="text-danger"></span>
+        <div>
+            <h3 class="product-edit-title">
+                Create Product — @Model.Name (@Model.Sku)
+            </h3>
         </div>
 
-        <div class="col-md-6 mb-3">
-            <label asp-for="TryOnOverlayVerticalOffset" class="form-label"></label>
-            <input asp-for="TryOnOverlayVerticalOffset"
-                   type="number"
-                   step="0.05"
-                   class="form-control" />
-            <span asp-validation-for="TryOnOverlayVerticalOffset" class="text-danger"></span>
+        <div class="product-edit-header-actions">
+
+            <a asp-action="Index"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Back to Products
+            </a>
+
+            <button type="button"
+                    class="btn btn-outline-secondary">
+                <i class="bi bi-eye"></i>
+                Preview
+            </button>
+
+            <button type="submit"
+                    form="editProductForm"
+                    class="btn btn-primary">
+                <i class="bi bi-save"></i>
+                Save Changes
+            </button>
+
         </div>
+
     </div>
 
-    <button type="submit" class="btn btn-dark">Save</button>
-</form>
+
+    <!-- =========================================================
+         MAIN FORM
+         ========================================================= -->
+
+    <form asp-action="Edit"
+          asp-route-id="@Model.Id"
+          method="post"
+          id="editProductForm">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="Id" />
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3">
+        </div>
+
+
+        <!-- =====================================================
+             TWO COLUMN LAYOUT
+             ===================================================== -->
+
+        <div class="product-edit-grid">
+
+
+            <!-- =================================================
+                 LEFT COLUMN
+                 ================================================= -->
+
+            <div class="product-edit-left">
+
+
+                <!-- =============================================
+                     BASIC INFORMATION
+                     ============================================= -->
+
+                <div class="product-card">
+
+                    <div class="product-card-header">
+                        <div class="section-icon">
+                            <i class="bi bi-box"></i>
+                        </div>
+
+                        <h5>Basic Information</h5>
+                    </div>
+
+
+                    <div class="product-card-body">
+
+                        <!-- Row 1 -->
+
+                        <div class="row g-3">
+
+                            <div class="col-md-4">
+
+                                <label asp-for="Name"
+                                       class="form-label">
+                                    Product Name
+                                    <span class="required">*</span>
+                                </label>
+
+                                <input asp-for="Name"
+                                       class="form-control" />
+
+                                <span asp-validation-for="Name"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <label asp-for="Sku"
+                                       class="form-label">
+                                    SKU
+                                    <span class="required">*</span>
+                                </label>
+
+                                <input asp-for="Sku"
+                                       class="form-control" />
+
+                                <span asp-validation-for="Sku"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <label asp-for="CategoryId"
+                                       class="form-label">
+                                    Category
+                                    <span class="required">*</span>
+                                </label>
+
+                                <select asp-for="CategoryId"
+                                        class="form-select"
+                                        asp-items="ViewBag.Categories">
+
+                                    <option value="">
+                                        -- Select Category --
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="CategoryId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Row 2 -->
+
+                        <div class="row g-3 mt-0">
+
+                            <div class="col-md-4">
+
+                                <label asp-for="SubCategoryId"
+                                       class="form-label">
+                                    Subcategory
+                                </label>
+
+                                <select asp-for="SubCategoryId"
+                                        class="form-select"
+                                        asp-items="ViewBag.SubCategories">
+
+                                    <option value="">
+                                        -- Select Subcategory --
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="SubCategoryId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <label asp-for="BrandId"
+                                       class="form-label">
+                                    Brand
+                                </label>
+
+                                <select asp-for="BrandId"
+                                        class="form-select"
+                                        asp-items="ViewBag.Brands">
+
+                                    <option value="">
+                                        -- No Brand --
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="BrandId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <label asp-for="Gender"
+                                       class="form-label">
+                                    Gender
+                                </label>
+
+                                <select asp-for="Gender"
+                                        class="form-select">
+
+                                    <option value="">
+                                        -- Select Gender --
+                                    </option>
+
+                                    <option value="Men">
+                                        Men
+                                    </option>
+
+                                    <option value="Women">
+                                        Women
+                                    </option>
+
+                                    <option value="Unisex">
+                                        Unisex
+                                    </option>
+
+                                    <option value="Kids">
+                                        Kids
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="Gender"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Row 3 -->
+
+                        <div class="row g-3 mt-0">
+
+                            <div class="col-md-4">
+
+                                <label asp-for="Material"
+                                       class="form-label">
+                                    Material
+                                </label>
+
+                                <input asp-for="Material"
+                                       class="form-control"
+                                       placeholder="e.g. Acetate, Titanium, Nylon" />
+
+                                <span asp-validation-for="Material"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <label asp-for="Shape"
+                                       class="form-label">
+                                    Shape
+                                </label>
+
+                                <select asp-for="Shape"
+                                        class="form-select">
+
+                                    <option value="">
+                                        -- Select Shape --
+                                    </option>
+
+                                    <option value="Round">
+                                        Round
+                                    </option>
+
+                                    <option value="Square">
+                                        Square
+                                    </option>
+
+                                    <option value="Rectangle">
+                                        Rectangle
+                                    </option>
+
+                                    <option value="Oval">
+                                        Oval
+                                    </option>
+
+                                    <option value="Cat Eye">
+                                        Cat Eye
+                                    </option>
+
+                                    <option value="Aviator">
+                                        Aviator
+                                    </option>
+
+                                    <option value="Wayfarer">
+                                        Wayfarer
+                                    </option>
+
+                                    <option value="Geometric">
+                                        Geometric
+                                    </option>
+
+                                    <option value="Other">
+                                        Other
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="Shape"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Description -->
+
+                        <div class="description-section">
+
+                            <label asp-for="Description"
+                                   class="form-label">
+                                Description
+                                <span class="required">*</span>
+                            </label>
+
+                            <textarea asp-for="Description"
+                                      class="form-control product-description"
+                                      rows="5"
+                                      placeholder="Detailed product description">
+                            </textarea>
+
+                            <span asp-validation-for="Description"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+<!-- =====================================================
+     PRICING
+     ===================================================== -->
+
+<div class="card mb-4">
+    <div class="card-body">
+
+        <h5 class="mb-3">
+            <i class="bi bi-currency-dollar me-2 text-primary"></i>
+            Pricing
+        </h5>
+
+        <div class="row g-3">
+
+            <!-- Price -->
+            <div class="col-md-4">
+                <label asp-for="Price" class="form-label">
+                    Price <span class="text-danger">*</span>
+                </label>
+
+                <input asp-for="Price"
+                       class="form-control"
+                       type="number"
+                       step="0.01"
+                       placeholder="4800.00" />
+
+                <span asp-validation-for="Price"
+                      class="text-danger"></span>
+            </div>
+
+            <!-- Discount Price -->
+            <div class="col-md-4">
+                <label asp-for="DiscountPrice"
+                       class="form-label">
+                    Discount Price
+                </label>
+
+                <input asp-for="DiscountPrice"
+                       class="form-control"
+                       type="number"
+                       step="0.01"
+                       placeholder="4100.00" />
+
+                <span asp-validation-for="DiscountPrice"
+                      class="text-danger"></span>
+            </div>
+
+            <!-- Cost Price -->
+            <div class="col-md-4">
+                <label asp-for="CostPrice"
+                       class="form-label">
+                    Cost Price
+                </label>
+
+                <input asp-for="CostPrice"
+                       class="form-control"
+                       type="number"
+                       step="0.01"
+                       placeholder="4200.00" />
+
+                <span asp-validation-for="CostPrice"
+                      class="text-danger"></span>
+            </div>
+
+            <!-- Weight -->
+            <div class="col-md-4">
+                <label asp-for="Weight"
+                       class="form-label">
+                    Weight (g)
+                </label>
+
+                <input asp-for="Weight"
+                       class="form-control"
+                       type="number"
+                       step="0.01"
+                       placeholder="e.g. 24.5" />
+
+                <span asp-validation-for="Weight"
+                      class="text-danger"></span>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =====================================================
+     VARIANTS
+     ===================================================== -->
+
+<div class="card mb-4">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-1">Variants</h5>
+                <p class="text-muted small mb-0">
+                    Manage product colors, sizes, SKUs and inventory.
+                </p>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle mb-2" id="variantsTable">
+
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Color</th>
+                        <th style="width: 23%;">Size</th>
+                        <th style="width: 25%;">SKU</th>
+                        <th style="width: 17%;">Stock (Inventory)</th>
+                        <th style="width: 10%;" class="text-center">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody id="variantsBody">
+
+                    @if (Model.Variants != null && Model.Variants.Any())
+                    {
+                        for (int i = 0; i < Model.Variants.Count; i++)
+                        {
+                            <tr class="variant-row">
+
+                                <!-- Variant ID -->
+                                <input type="hidden"
+                                       name="Variants[@i].Id"
+                                       value="@Model.Variants[i].Id" />
+
+                                <!-- COLOR -->
+                                <td>
+                                    <input type="text"
+                                           name="Variants[@i].Color"
+                                           value="@Model.Variants[i].Color"
+                                           class="form-control variant-edit-field"
+                                           disabled />
+                                </td>
+
+                                <!-- SIZE -->
+                                <td>
+                                    <select name="Variants[@i].Size"
+                                            class="form-select variant-edit-field"
+                                            disabled>
+
+                                        <option value="">-- Select --</option>
+
+                                        <option value="Small"
+                                            selected="@(Model.Variants[i].Size == "Small")">
+                                            Small
+                                        </option>
+
+                                        <option value="Medium"
+                                            selected="@(Model.Variants[i].Size == "Medium")">
+                                            Medium
+                                        </option>
+
+                                        <option value="Large"
+                                            selected="@(Model.Variants[i].Size == "Large")">
+                                            Large
+                                        </option>
+
+                                        <option value="XL"
+                                            selected="@(Model.Variants[i].Size == "XL")">
+                                            XL
+                                        </option>
+
+                                    </select>
+                                </td>
+
+                                <!-- SKU -->
+                                <td>
+                                    <input type="text"
+                                           name="Variants[@i].Sku"
+                                           value="@Model.Variants[i].Sku"
+                                           class="form-control variant-edit-field"
+                                           disabled />
+                                </td>
+
+                                <!-- STOCK -->
+                                <td>
+                                    <input type="number"
+                                           name="Variants[@i].StockQuantity"
+                                           value="@Model.Variants[i].StockQuantity"
+                                           class="form-control"
+                                           readonly />
+
+                                    <input type="hidden"
+                                           name="Variants[@i].ReservedQuantity"
+                                           value="@Model.Variants[i].ReservedQuantity" />
+                                </td>
+
+                                <!-- ACTIONS -->
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary variant-edit-btn"
+                                                title="Edit Variant">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger variant-delete-btn"
+                                                title="Delete Variant">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+
+                                    </div>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+        </div>
+
+        <!-- ADD VARIANT -->
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+
+            <button type="button"
+                    id="addVariantBtn"
+                    class="btn btn-outline-primary">
+                <i class="bi bi-plus-lg me-1"></i>
+                Add Variant
+            </button>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =====================================================
+     IMAGES
+     ===================================================== -->
+
+<div class="card mb-4">
+    <div class="card-body">
+
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="mb-0">Images</h5>
+
+            <span class="text-muted small ms-3">
+                Drag & drop to reorder. The first image will be the primary image (shown on store).
+            </span>
+        </div>
+
+
+        <div id="productImagesContainer"
+             class="product-images-list">
+
+            @if (Model.ExistingImages != null &&
+                 Model.ExistingImages.Any())
+            {
+                var imageIndex = 0;
+
+                foreach (var image in Model.ExistingImages
+                    .OrderBy(i => i.SortOrder))
+                {
+                    <div class="product-image-item"
+                         draggable="true"
+                         data-index="@imageIndex">
+
+                        <!-- Hidden fields -->
+
+                        <input type="hidden"
+                               name="ExistingImages[@imageIndex].Id"
+                               value="@image.Id" />
+
+                        <input type="hidden"
+                               name="ExistingImages[@imageIndex].ImageUrl"
+                               value="@image.ImageUrl"
+                               class="image-url-input" />
+
+                        <input type="hidden"
+                               name="ExistingImages[@imageIndex].ProductVariantId"
+                               value="@image.ProductVariantId" />
+
+                        <input type="hidden"
+                               name="ExistingImages[@imageIndex].SortOrder"
+                               value="@imageIndex"
+                               class="image-sort-input" />
+
+                        <input type="hidden"
+                               name="ExistingImages[@imageIndex].IsPrimary"
+                               value="@(imageIndex == 0 ? "true" : "false")"
+                               class="image-primary-input" />
+
+
+                        <!-- Image -->
+
+                        <div class="product-image-box">
+
+                            <img src="@image.ImageUrl"
+                                 alt="Product image"
+                                 class="product-image-preview" />
+
+
+                            <!-- Remove -->
+
+                            <button type="button"
+                                    class="image-remove-btn"
+                                    title="Remove image">
+                                ×
+                            </button>
+
+
+                            <!-- Primary -->
+
+                            @if (imageIndex == 0)
+                            {
+                                <span class="primary-badge">
+                                    Primary
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    imageIndex++;
+                }
+            }
+
+
+            <!-- =================================================
+                 UPLOAD MORE
+                 ================================================= -->
+
+            <label for="productImagesInput"
+                   class="upload-more-box">
+
+                <div class="upload-more-content">
+
+                    <div class="upload-icon">
+                        ☁
+                    </div>
+
+                    <span>
+                        Upload More
+                    </span>
+
+                </div>
+
+            </label>
+
+            <input type="file"
+                   id="productImagesInput"
+                   class="d-none"
+                   accept="image/png,image/jpeg,image/webp"
+                   multiple />
+
+        </div>
+
+    </div>
+</div>
+
+
+<style>
+
+    /* =========================================================
+       IMAGES SECTION
+       ========================================================= */
+
+    .product-images-list {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+
+    /* =========================================================
+       IMAGE ITEM
+       ========================================================= */
+
+    .product-image-item {
+        width: 120px;
+        cursor: grab;
+        user-select: none;
+    }
+
+    .product-image-item:active {
+        cursor: grabbing;
+    }
+
+    .product-image-item.dragging {
+        opacity: 0.45;
+    }
+
+
+    /* =========================================================
+       IMAGE BOX
+       ========================================================= */
+
+    .product-image-box {
+        position: relative;
+
+        width: 120px;
+        height: 110px;
+
+        border: 1px solid #dfe5ec;
+        border-radius: 6px;
+
+        background: #fff;
+
+        overflow: hidden;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    /* =========================================================
+       PRIMARY IMAGE
+       ========================================================= */
+
+    .product-image-item:first-child .product-image-box {
+        border: 2px solid #0d6efd;
+    }
+
+
+    /* =========================================================
+       IMAGE
+       ========================================================= */
+
+    .product-image-preview {
+        width: 100%;
+        height: 100%;
+
+        object-fit: contain;
+
+        padding: 6px;
+    }
+
+
+    /* =========================================================
+       REMOVE BUTTON
+       ========================================================= */
+
+    .image-remove-btn {
+        position: absolute;
+
+        top: 5px;
+        left: 5px;
+
+        width: 20px;
+        height: 20px;
+
+        padding: 0;
+
+        border: 0;
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.9);
+
+        color: #8b95a1;
+
+        font-size: 15px;
+        line-height: 18px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+
+        z-index: 2;
+    }
+
+    .image-remove-btn:hover {
+        background: #fff;
+        color: #dc3545;
+    }
+
+
+    /* =========================================================
+       PRIMARY BADGE
+       ========================================================= */
+
+    .primary-badge {
+        position: absolute;
+
+        right: 5px;
+        bottom: 5px;
+
+        background: #0d6efd;
+        color: #fff;
+
+        font-size: 9px;
+        font-weight: 600;
+
+        padding: 3px 6px;
+
+        border-radius: 3px;
+
+        z-index: 2;
+    }
+
+
+    /* =========================================================
+       UPLOAD MORE
+       ========================================================= */
+
+    .upload-more-box {
+        width: 120px;
+        height: 110px;
+
+        border: 1px dashed #cfd7e2;
+        border-radius: 6px;
+
+        background: #fff;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+
+        transition: all 0.2s ease;
+    }
+
+    .upload-more-box:hover {
+        border-color: #0d6efd;
+        background: #f8fbff;
+    }
+
+
+    .upload-more-content {
+        text-align: center;
+        color: #0d6efd;
+    }
+
+
+    .upload-icon {
+        font-size: 28px;
+        line-height: 30px;
+
+        color: #7b8794;
+
+        margin-bottom: 5px;
+    }
+
+
+    .upload-more-content span {
+        display: block;
+
+        font-size: 11px;
+        font-weight: 600;
+
+        color: #0d6efd;
+    }
+
+</style>
+
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const container =
+            document.getElementById("productImagesContainer");
+
+        const fileInput =
+            document.getElementById("productImagesInput");
+
+
+        // =====================================================
+        // DRAG & DROP
+        // =====================================================
+
+        let draggedItem = null;
+
+
+        container.addEventListener("dragstart", function (e) {
+
+            const item =
+                e.target.closest(".product-image-item");
+
+            if (!item)
+                return;
+
+            draggedItem = item;
+
+            item.classList.add("dragging");
+        });
+
+
+        container.addEventListener("dragend", function () {
+
+            if (draggedItem) {
+                draggedItem.classList.remove("dragging");
+            }
+
+            draggedItem = null;
+
+            updateImageOrder();
+        });
+
+
+        container.addEventListener("dragover", function (e) {
+
+            e.preventDefault();
+
+            if (!draggedItem)
+                return;
+
+            const target =
+                e.target.closest(".product-image-item");
+
+            if (!target ||
+                target === draggedItem)
+                return;
+
+
+            const rect =
+                target.getBoundingClientRect();
+
+            const before =
+                e.clientX <
+                rect.left + rect.width / 2;
+
+
+            if (before) {
+
+                container.insertBefore(
+                    draggedItem,
+                    target
+                );
+
+            } else {
+
+                container.insertBefore(
+                    draggedItem,
+                    target.nextSibling
+                );
+            }
+
+        });
+
+
+        // =====================================================
+        // REMOVE IMAGE
+        // =====================================================
+
+        container.addEventListener("click", function (e) {
+
+            const button =
+                e.target.closest(".image-remove-btn");
+
+            if (!button)
+                return;
+
+
+            const item =
+                button.closest(".product-image-item");
+
+            if (!item)
+                return;
+
+
+            item.remove();
+
+            updateImageOrder();
+
+        });
+
+
+        // =====================================================
+        // UPLOAD MORE
+        // =====================================================
+
+        fileInput.addEventListener(
+            "change",
+            async function () {
+
+                const files =
+                    Array.from(fileInput.files);
+
+                if (!files.length)
+                    return;
+
+
+                for (const file of files) {
+
+                    try {
+
+                        const imageUrl =
+                            await uploadProductImage(file);
+
+                        addImage(imageUrl);
+
+                    }
+                    catch (error) {
+
+                        console.error(error);
+
+                        alert(
+                            "Failed to upload image: " +
+                            file.name
+                        );
+                    }
+                }
+
+
+                fileInput.value = "";
+
+                updateImageOrder();
+            }
+        );
+
+
+        // =====================================================
+        // ADD NEW IMAGE
+        // =====================================================
+
+        function addImage(imageUrl) {
+
+            const items =
+                container.querySelectorAll(
+                    ".product-image-item"
+                );
+
+            const index =
+                items.length;
+
+
+            const item =
+                document.createElement("div");
+
+            item.className =
+                "product-image-item";
+
+            item.draggable = true;
+
+
+            item.innerHTML = `
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].Id"
+                       value="0" />
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].ImageUrl"
+                       value="${escapeHtml(imageUrl)}"
+                       class="image-url-input" />
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].ProductVariantId"
+                       value="" />
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].SortOrder"
+                       value="${index}"
+                       class="image-sort-input" />
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].IsPrimary"
+                       value="false"
+                       class="image-primary-input" />
+
+
+                <div class="product-image-box">
+
+                    <img src="${escapeHtml(imageUrl)}"
+                         alt="Product image"
+                         class="product-image-preview" />
+
+                    <button type="button"
+                            class="image-remove-btn"
+                            title="Remove image">
+                        ×
+                    </button>
+
+                </div>
+            `;
+
+
+            const uploadBox =
+                container.querySelector(
+                    ".upload-more-box"
+                );
+
+
+            container.insertBefore(
+                item,
+                uploadBox
+            );
+        }
+
+
+        // =====================================================
+        // UPDATE ORDER
+        // FIRST IMAGE = PRIMARY
+        // =====================================================
+
+        function updateImageOrder() {
+
+            const items =
+                container.querySelectorAll(
+                    ".product-image-item"
+                );
+
+
+            items.forEach(function (item, index) {
+
+                item.dataset.index = index;
+
+
+                // ---------------------------------------------
+                // Update hidden fields
+                // ---------------------------------------------
+
+                const sortInput =
+                    item.querySelector(
+                        ".image-sort-input"
+                    );
+
+                const primaryInput =
+                    item.querySelector(
+                        ".image-primary-input"
+                    );
+
+
+                if (sortInput)
+                    sortInput.value = index;
+
+
+                if (primaryInput)
+                    primaryInput.value =
+                        index === 0
+                            ? "true"
+                            : "false";
+
+
+                // ---------------------------------------------
+                // Primary badge
+                // ---------------------------------------------
+
+                const imageBox =
+                    item.querySelector(
+                        ".product-image-box"
+                    );
+
+                if (!imageBox)
+                    return;
+
+
+                const oldBadge =
+                    imageBox.querySelector(
+                        ".primary-badge"
+                    );
+
+                if (oldBadge)
+                    oldBadge.remove();
+
+
+                if (index === 0) {
+
+                    const badge =
+                        document.createElement("span");
+
+                    badge.className =
+                        "primary-badge";
+
+                    badge.textContent =
+                        "Primary";
+
+                    imageBox.appendChild(badge);
+                }
+
+
+                // ---------------------------------------------
+                // Re-index model fields
+                // ---------------------------------------------
+
+                item.querySelectorAll("input")
+                    .forEach(function (input) {
+
+                        const match =
+                            input.name.match(
+                                /^ExistingImages\[\d+\]\.(.+)$/
+                            );
+
+                        if (!match)
+                            return;
+
+                        input.name =
+                            `ExistingImages[${index}].${match[1]}`;
+                    });
+
+            });
+
+        }
+
+
+        // =====================================================
+        // UPLOAD IMAGE
+        // =====================================================
+
+        async function uploadProductImage(file) {
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "file",
+                file
+            );
+
+
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )?.value;
+
+
+            const response =
+                await fetch(
+                    '@Url.Action("Image", "Upload", new { area = "Admin" })',
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "RequestVerificationToken":
+                                token
+                        },
+
+                        body: formData
+                    }
+                );
+
+
+            if (!response.ok)
+                throw new Error(
+                    "Image upload failed."
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (!result.url)
+                throw new Error(
+                    "Upload response did not return an image URL."
+                );
+
+
+            return result.url;
+        }
+
+
+        // =====================================================
+        // ESCAPE HTML
+        // =====================================================
+
+        function escapeHtml(value) {
+
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+
+        // Initial state
+
+        updateImageOrder();
+
+    });
+
+</script>
+
+                <!-- =====================================================
+                     TAGS
+                     ===================================================== -->
+
+                <div class="card mb-4">
+                    <div class="card-body">
+
+                        <div class="d-flex align-items-center mb-3">
+
+                            <h5 class="mb-0">
+                                <i class="bi bi-tag me-2 text-primary"></i>
+                                Tags
+                            </h5>
+
+                            <span class="text-muted small ms-3">
+                                Type and press Enter to add tags
+                            </span>
+
+                        </div>
+
+                        <div id="tagsContainer"
+                             class="d-flex flex-wrap align-items-center gap-2">
+
+                            @if (Model.Tags != null && Model.Tags.Any())
+                            {
+                                for (int i = 0; i < Model.Tags.Count; i++)
+                                {
+                                    <div class="tag-item">
+
+                                        <input type="hidden"
+                                               name="Tags"
+                                               value="@Model.Tags[i]" />
+
+                                        <span class="badge rounded-pill bg-light text-dark border">
+                                            @Model.Tags[i]
+
+                                            <button type="button"
+                                                    class="btn-close ms-1 remove-tag"
+                                                    aria-label="Remove tag"
+                                                    style="font-size: 8px;">
+                                            </button>
+                                        </span>
+
+                                    </div>
+                                }
+                            }
+
+                            <input type="text"
+                                   id="tagInput"
+                                   class="form-control border-0 shadow-none flex-grow-1"
+                                   placeholder="Type a tag and press Enter..."
+                                   autocomplete="off"
+                                   style="min-width:220px;" />
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 RIGHT COLUMN
+                 ================================================= -->
+
+            <div class="product-edit-right">
+
+
+                <!-- =============================================
+                     PRODUCT SETTINGS
+                     ============================================= -->
+
+                <div class="product-card">
+
+                    <div class="product-card-header">
+
+                        <div class="section-icon">
+                            <i class="bi bi-gear"></i>
+                        </div>
+
+                        <h5>Product Settings</h5>
+
+                    </div>
+
+
+                    <div class="product-card-body">
+
+                        <div class="setting-row">
+
+                            <div>
+                                <div class="setting-title">
+                                    Status
+                                </div>
+
+                                <div class="setting-subtitle">
+                                    Product availability
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch">
+
+                                <input asp-for="IsActive"
+                                       class="form-check-input"
+                                       role="switch" />
+
+                                <label asp-for="IsActive"
+                                       class="form-check-label">
+                                    Active
+                                </label>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="setting-divider"></div>
+
+
+                        <div class="setting-row">
+
+                            <div>
+                                <div class="setting-title">
+                                    Featured Product
+                                </div>
+
+                                <div class="setting-subtitle">
+                                    Show in featured products
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch">
+
+                                <input asp-for="IsFeatured"
+                                       class="form-check-input"
+                                       role="switch" />
+
+                                <label asp-for="IsFeatured"
+                                       class="form-check-label">
+                                    Featured
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     VIRTUAL TRY-ON
+                     ============================================= -->
+
+                <div class="product-card">
+
+                    <div class="product-card-header">
+
+                        <div class="section-icon">
+                            <i class="bi bi-person-bounding-box"></i>
+                        </div>
+
+                        <h5>Try-On (Virtual)</h5>
+
+                    </div>
+
+
+                    <div class="product-card-body">
+
+                        <!-- 2D Overlay -->
+
+                        <div class="mb-3">
+
+                            <label asp-for="TryOnOverlayImageUrl"
+                                   class="form-label">
+                                2D Overlay Image URL
+                            </label>
+
+                            <div class="tryon-url-row">
+
+                                <input asp-for="TryOnOverlayImageUrl"
+                                       class="form-control"
+                                       id="TryOnOverlayImageUrl"
+                                       placeholder="/uploads/tryon/product-overlay.png" />
+
+                                <button type="button"
+                                        class="btn btn-outline-secondary tryon-upload-button"
+                                        onclick="document.getElementById('tryOnFileInput').click();">
+
+                                    <i class="bi bi-image"></i>
+
+                                </button>
+
+                            </div>
+
+                            <input type="file"
+                                   id="tryOnFileInput"
+                                   class="d-none"
+                                   accept="image/png" />
+
+                            <span asp-validation-for="TryOnOverlayImageUrl"
+                                  class="text-danger">
+                            </span>
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                Model.TryOnOverlayImageUrl))
+                            {
+                                <img id="tryOnPreview"
+                                     src="@Model.TryOnOverlayImageUrl"
+                                     class="tryon-preview"
+                                     alt="Try-on overlay preview" />
+                            }
+                            else
+                            {
+                                <img id="tryOnPreview"
+                                     src=""
+                                     class="tryon-preview d-none"
+                                     alt="Try-on overlay preview" />
+                            }
+
+                        </div>
+
+
+                        <!-- 3D Model -->
+
+                        <div class="mb-3">
+
+                            <label asp-for="TryOn3DModelUrl"
+                                   class="form-label">
+                                3D Model (GLB) URL
+                            </label>
+
+                            <input asp-for="TryOn3DModelUrl"
+                                   class="form-control"
+                                   placeholder="/uploads/3d/product.glb" />
+
+                            <span asp-validation-for="TryOn3DModelUrl"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+
+                        <!-- Scale + Offset -->
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label asp-for="TryOnOverlayScale"
+                                       class="form-label">
+                                    2D Overlay Scale
+                                </label>
+
+                                <input asp-for="TryOnOverlayScale"
+                                       type="number"
+                                       step="0.01"
+                                       class="form-control" />
+
+                                <span asp-validation-for="TryOnOverlayScale"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label asp-for="TryOnOverlayVerticalOffset"
+                                       class="form-label">
+                                    2D Overlay Vertical Offset
+                                </label>
+
+                                <input asp-for="TryOnOverlayVerticalOffset"
+                                       type="number"
+                                       step="0.05"
+                                       class="form-control" />
+
+                                <span asp-validation-for="TryOnOverlayVerticalOffset"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- =====================================================
+                     SPECIFICATIONS
+                     ===================================================== -->
+
+                <div class="card mb-4">
+                    <div class="card-body">
+
+                        <h5 class="mb-1">Specifications</h5>
+
+                        <p class="text-muted small mb-3">
+                            Select and add specifications for this product.
+                        </p>
+
+                        <div id="specificationsContainer">
+
+                            @if (Model.Specifications != null &&
+                                 Model.Specifications.Any())
+                            {
+                                for (int i = 0; i < Model.Specifications.Count; i++)
+                                {
+                                    <div class="specification-row mb-2">
+
+                                        <input type="hidden"
+                                               name="Specifications[@i].Id"
+                                               value="@Model.Specifications[i].Id" />
+
+                                        <input type="hidden"
+                                               name="Specifications[@i].SortOrder"
+                                               value="@Model.Specifications[i].SortOrder"
+                                               class="spec-sort-order" />
+
+                                        <div class="row g-2">
+
+                                            <div class="col-md-5">
+                                                <input type="text"
+                                                       name="Specifications[@i].Name"
+                                                       value="@Model.Specifications[i].Name"
+                                                       class="form-control"
+                                                       placeholder="Specification name" />
+                                            </div>
+
+                                            <div class="col-md-5">
+                                                <input type="text"
+                                                       name="Specifications[@i].Value"
+                                                       value="@Model.Specifications[i].Value"
+                                                       class="form-control"
+                                                       placeholder="Value" />
+                                            </div>
+
+                                            <button type="button"
+                                                    class="btn btn-outline-danger remove-specification"
+                                                    title="Remove Specification"
+                                                    style="width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                        <button type="button"
+                                id="addSpecificationBtn"
+                                class="btn btn-outline-primary mt-2">
+                            <span>+</span> Add Custom Specification
+                        </button>
+
+                    </div>
+                </div>
+
+           <!-- =====================================================
+                 ATTRIBUTES
+                ===================================================== -->
+
+                <div class="card mb-4">
+                    <div class="card-body">
+
+                        <h5 class="mb-1">
+                            <i class="bi bi-list-ul me-2 text-primary"></i>
+                            Attributes <span class="text-muted">(Optional)</span>
+                        </h5>
+
+                        <p class="text-muted small mb-3">
+                            Additional product measurements and details.
+                        </p>
+
+                        <div id="attributesContainer">
+
+                            @if (Model.Attributes != null &&
+                                 Model.Attributes.Any())
+                            {
+                                for (int i = 0; i < Model.Attributes.Count; i++)
+                                {
+                                    <div class="attribute-row mb-2">
+
+                                        <input type="hidden"
+                                               name="Attributes[@i].Id"
+                                               value="@Model.Attributes[i].Id" />
+
+                                        <input type="hidden"
+                                               name="Attributes[@i].ProductId"
+                                               value="@Model.Attributes[i].ProductId" />
+
+                                        <input type="hidden"
+                                               name="Attributes[@i].SortOrder"
+                                               value="@Model.Attributes[i].SortOrder"
+                                               class="attribute-sort-order" />
+
+                                        <div class="row g-2 align-items-center">
+
+                                            <div class="col-5">
+                                                <input type="text"
+                                                       name="Attributes[@i].Name"
+                                                       value="@Model.Attributes[i].Name"
+                                                       class="form-control form-control-sm"
+                                                       placeholder="Attribute" />
+                                            </div>
+
+                                            <div class="col-5">
+                                                <div class="input-group input-group-sm">
+
+                                                    <input type="text"
+                                                           name="Attributes[@i].Value"
+                                                           value="@Model.Attributes[i].Value"
+                                                           class="form-control"
+                                                           placeholder="Value" />
+
+                                                    <span class="input-group-text">
+                                                        mm
+                                                    </span>
+
+                                                </div>
+                                            </div>
+
+                                            <div class="col-2 text-end">
+
+                                                <button type="button"
+                                                        class="btn btn-outline-danger remove-attribute"
+                                                        title="Remove Attribute"
+                                                        style="width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                        <button type="button"
+                                id="addAttributeBtn"
+                                class="btn btn-outline-primary btn-sm mt-2">
+                            <i class="bi bi-plus"></i>
+                            Add Custom Attribute
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =============================================================
+     CSS
+     ============================================================= -->
+
+<style>
+
+    .product-edit-page {
+        padding: 8px 4px 40px;
+    }
+
+    /* =========================================================
+       HEADER
+       ========================================================= */
+
+    .product-edit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 18px;
+    }
+
+    .product-edit-title {
+        margin: 0;
+        font-size: 23px;
+        font-weight: 600;
+        color: #14213D;
+    }
+
+    .product-edit-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .product-edit-header-actions .btn {
+        white-space: nowrap;
+    }
+
+
+    /* =========================================================
+       TWO COLUMN LAYOUT
+       ========================================================= */
+
+    .product-edit-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2.25fr) minmax(300px, 0.95fr);
+        gap: 14px;
+        align-items: start;
+    }
+
+    .product-edit-left,
+    .product-edit-right {
+        min-width: 0;
+    }
+
+    .product-edit-right {
+        position: sticky;
+        top: 20px;
+    }
+
+
+    /* =========================================================
+       CARD
+       ========================================================= */
+
+    .product-card {
+        background: #ffffff;
+        border: 1px solid #e6e9ee;
+        border-radius: 7px;
+        margin-bottom: 14px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(20, 33, 61, 0.03);
+    }
+
+    .product-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 14px 12px;
+        border-bottom: 1px solid #edf0f3;
+    }
+
+    .product-card-header h5 {
+        margin: 0;
+        color: #14213D;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .product-card-body {
+        padding: 14px;
+    }
+
+    .section-icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #2878e8;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .section-description {
+        margin: 3px 0 0;
+        color: #7a8492;
+        font-size: 11px;
+    }
+
+
+    /* =========================================================
+       FORM
+       ========================================================= */
+
+    .form-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #303844;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 34px;
+        border: 1px solid #dfe4ea;
+        border-radius: 5px;
+        font-size: 12px;
+        color: #273142;
+        box-shadow: none;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #2878e8;
+        box-shadow: 0 0 0 2px rgba(40, 120, 232, 0.08);
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .text-danger {
+        font-size: 11px;
+    }
+
+
+    /* =========================================================
+       DESCRIPTION
+       ========================================================= */
+
+    .description-section {
+        margin-top: 14px;
+    }
+
+    .product-description {
+        min-height: 105px;
+        resize: vertical;
+    }
+
+
+    /* =========================================================
+       SETTINGS
+       ========================================================= */
+
+    .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+    }
+
+    .setting-title {
+        color: #303844;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .setting-subtitle {
+        margin-top: 3px;
+        color: #8a929d;
+        font-size: 10px;
+    }
+
+    .setting-row .form-check {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+    }
+
+    .setting-row .form-check-label {
+        color: #303844;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .setting-row .form-check-input {
+        width: 32px;
+        height: 18px;
+        margin: 0;
+    }
+
+    .setting-divider {
+        height: 1px;
+        background: #edf0f3;
+        margin: 14px 0;
+    }
+
+
+    /* =========================================================
+       TRY ON
+       ========================================================= */
+
+    .tryon-url-row {
+        display: flex;
+        gap: 7px;
+    }
+
+    .tryon-url-row .form-control {
+        min-width: 0;
+    }
+
+    .tryon-upload-button {
+        width: 38px;
+        min-width: 38px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tryon-preview {
+        display: block;
+        width: 100%;
+        max-height: 130px;
+        object-fit: contain;
+        margin-top: 10px;
+        padding: 6px;
+        border: 1px solid #e2e6eb;
+        border-radius: 6px;
+        background: #fafbfc;
+    }
+
+
+    /* =========================================================
+       VARIANTS
+       ========================================================= */
+
+    .variant-table {
+        margin: 0;
+        font-size: 12px;
+        vertical-align: middle;
+    }
+
+    .variant-table th {
+        background: #fafbfc;
+        color: #4a5563;
+        font-size: 11px;
+        font-weight: 600;
+        border-bottom: 1px solid #e2e6eb;
+    }
+
+    .variant-table td {
+        padding: 8px;
+    }
+
+    .variant-table .form-control {
+        min-width: 100px;
+    }
+
+
+    /* =========================================================
+       EMPTY
+       ========================================================= */
+
+    .empty-section {
+        padding: 15px;
+        text-align: center;
+        color: #8a929d;
+        font-size: 12px;
+        background: #fafbfc;
+        border: 1px dashed #dfe4ea;
+        border-radius: 6px;
+    }
+
+
+    /* =========================================================
+       TAGS
+       ========================================================= */
+
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .tag-input {
+        max-width: 220px;
+    }
+
+
+    /* =========================================================
+       SAVE CARD
+       ========================================================= */
+
+    .save-card {
+        background: #ffffff;
+        border: 1px solid #e6e9ee;
+        border-radius: 7px;
+        padding: 14px;
+        box-shadow: 0 1px 3px rgba(20, 33, 61, 0.03);
+    }
+
+    .save-card .btn {
+        font-size: 12px;
+        min-height: 36px;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @@media (max-width: 1100px) {
+
+        .product-edit-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .product-edit-right {
+            position: static;
+        }
+
+    }
+
+
+    @@media (max-width: 768px) {
+
+        .product-edit-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .product-edit-header-actions {
+            flex-wrap: wrap;
+        }
+
+        .product-edit-header-actions .btn {
+            flex: 1;
+        }
+
+    }
+
+</style>
+
 
 @section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
     <form id="tryOnAntiforgeryForm">
         @Html.AntiForgeryToken()
     </form>
 
     <script>
+
+        const tryOnFileInput =
+            document.getElementById('tryOnFileInput');
+
+        const tryOnUrlInput =
+            document.getElementById('TryOnOverlayImageUrl');
+
+        const tryOnPreview =
+            document.getElementById('tryOnPreview');
+
         const tryOnToken =
             document.querySelector(
                 '#tryOnAntiforgeryForm input[name="__RequestVerificationToken"]'
-            ).value;
+            )?.value;
 
-        wireImageUpload(
-            'tryOnFileInput',
-            'TryOnOverlayImageUrl',
-            'tryOnPreview',
-            '@Url.Action("Image", "Upload", new { area = "Admin" })',
-            tryOnToken
-        );
+
+        /*
+         * Keep the existing image upload functionality.
+         */
+
+        if (tryOnFileInput) {
+
+            tryOnFileInput.addEventListener(
+                'change',
+                function () {
+
+                    if (!this.files ||
+                        this.files.length === 0) {
+                        return;
+                    }
+
+                    /*
+                     * Existing project upload helper.
+                     * This keeps your current upload workflow.
+                     */
+
+                    if (typeof wireImageUpload === 'function') {
+
+                        wireImageUpload(
+                            'tryOnFileInput',
+                            'TryOnOverlayImageUrl',
+                            'tryOnPreview',
+                            '@Url.Action("Image", "Upload", new { area = "Admin" })',
+                            tryOnToken
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /*
+         * Preview when URL is manually changed.
+         */
+
+        if (tryOnUrlInput) {
+
+            tryOnUrlInput.addEventListener(
+                'change',
+                function () {
+
+                    const url = this.value.trim();
+
+                    if (!url) {
+
+                        tryOnPreview.classList.add('d-none');
+                        tryOnPreview.removeAttribute('src');
+
+                        return;
+                    }
+
+                    tryOnPreview.src = url;
+                    tryOnPreview.classList.remove('d-none');
+
+                }
+            );
+
+        }
+
     </script>
+
+    <script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const variantsBody =
+            document.getElementById("variantsBody");
+
+        const addVariantBtn =
+            document.getElementById("addVariantBtn");
+
+
+        // =====================================================
+        // EDIT VARIANT
+        // =====================================================
+
+        variantsBody.addEventListener("click", function (event) {
+
+            const editButton =
+                event.target.closest(".variant-edit-btn");
+
+            if (!editButton)
+                return;
+
+            const row =
+                editButton.closest(".variant-row");
+
+            const fields =
+                row.querySelectorAll(".variant-edit-field");
+
+            const isEditing =
+                row.classList.contains("editing");
+
+            if (!isEditing) {
+
+                fields.forEach(function (field) {
+                    field.disabled = false;
+                });
+
+                row.classList.add("editing");
+
+                editButton.innerHTML =
+                    '<i class="bi bi-check-lg"></i>';
+
+                editButton.title =
+                    "Done";
+
+            }
+            else {
+
+                fields.forEach(function (field) {
+                    field.disabled = true;
+                });
+
+                row.classList.remove("editing");
+
+                editButton.innerHTML =
+                    '<i class="bi bi-pencil"></i>';
+
+                editButton.title =
+                    "Edit Variant";
+            }
+
+        });
+
+
+        // =====================================================
+        // DELETE VARIANT
+        // =====================================================
+
+        variantsBody.addEventListener("click", function (event) {
+
+            const deleteButton =
+                event.target.closest(".variant-delete-btn");
+
+            if (!deleteButton)
+                return;
+
+            const row =
+                deleteButton.closest(".variant-row");
+
+            if (!row)
+                return;
+
+            const variantIdInput =
+                row.querySelector(
+                    'input[name$=".Id"]'
+                );
+
+            const variantId =
+                variantIdInput
+                    ? parseInt(variantIdInput.value || "0")
+                    : 0;
+
+
+            // Existing variant
+            if (variantId > 0) {
+
+                const confirmed =
+                    confirm(
+                        "Are you sure you want to remove this variant?"
+                    );
+
+                if (!confirmed)
+                    return;
+            }
+
+
+            row.remove();
+
+            reindexVariants();
+
+        });
+
+
+        // =====================================================
+        // ADD VARIANT
+        // =====================================================
+
+        addVariantBtn.addEventListener("click", function () {
+
+            const row =
+                document.createElement("tr");
+
+            row.className =
+                "variant-row editing";
+
+            row.innerHTML = `
+
+                <input type="hidden"
+                       name="Variants[0].Id"
+                       value="0" />
+
+                <td>
+                    <input type="text"
+                           class="form-control variant-edit-field"
+                           name="Variants[0].Color"
+                           placeholder="e.g. Black" />
+                </td>
+
+                <td>
+                    <select class="form-select variant-edit-field"
+                            name="Variants[0].Size">
+
+                        <option value="">
+                            -- Select --
+                        </option>
+
+                        <option value="Small">
+                            Small
+                        </option>
+
+                        <option value="Medium">
+                            Medium
+                        </option>
+
+                        <option value="Large">
+                            Large
+                        </option>
+
+                        <option value="XL">
+                            XL
+                        </option>
+
+                    </select>
+                </td>
+
+                <td>
+                    <input type="text"
+                           class="form-control variant-edit-field"
+                           name="Variants[0].Sku"
+                           placeholder="Variant SKU" />
+                </td>
+
+                <td>
+                    <input type="number"
+                           class="form-control"
+                           name="Variants[0].StockQuantity"
+                           value="0"
+                           min="0" />
+                </td>
+
+                <td>
+                    <div class="d-flex justify-content-center gap-2">
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary variant-edit-btn"
+                                title="Done">
+
+                            <i class="bi bi-check-lg"></i>
+
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger variant-delete-btn"
+                                title="Delete Variant">
+
+                            <i class="bi bi-trash"></i>
+
+                        </button>
+
+                    </div>
+                </td>
+            `;
+
+            variantsBody.appendChild(row);
+
+            reindexVariants();
+
+            const firstInput =
+                row.querySelector(
+                    'input[name$=".Color"]'
+                );
+
+            if (firstInput)
+                firstInput.focus();
+
+        });
+
+
+        // =====================================================
+        // REINDEX VARIANT INPUTS
+        // =====================================================
+
+        function reindexVariants() {
+
+            const rows =
+                variantsBody.querySelectorAll(".variant-row");
+
+            rows.forEach(function (row, index) {
+
+                row.querySelectorAll(
+                    "input, select"
+                ).forEach(function (input) {
+
+                    const name =
+                        input.getAttribute("name");
+
+                    if (!name)
+                        return;
+
+                    input.setAttribute(
+                        "name",
+                        name.replace(
+                            /Variants\[\d+\]/,
+                            `Variants[${index}]`
+                        )
+                    );
+
+                });
+
+            });
+
+        }
+
+    });
+
+</script>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const container =
+            document.getElementById(
+                "productImagesContainer"
+            );
+
+        const uploadBox =
+            document.getElementById(
+                "uploadMoreImages"
+            );
+
+        const fileInput =
+            document.getElementById(
+                "productImagesInput"
+            );
+
+
+        // =====================================================
+        // UPLOAD MORE
+        // =====================================================
+
+        uploadBox.addEventListener(
+            "click",
+            function () {
+
+                fileInput.click();
+
+            }
+        );
+
+
+        fileInput.addEventListener(
+            "change",
+            async function () {
+
+                const files =
+                    Array.from(fileInput.files);
+
+                if (!files.length)
+                    return;
+
+
+                for (const file of files) {
+
+                    await uploadImage(file);
+
+                }
+
+
+                fileInput.value = "";
+
+                updateImageIndexes();
+
+            }
+        );
+
+
+        // =====================================================
+        // UPLOAD IMAGE
+        // =====================================================
+
+        async function uploadImage(file) {
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "file",
+                file
+            );
+
+
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                ).value;
+
+
+            const response =
+                await fetch(
+                    '@Url.Action("Image", "Upload", new { area = "Admin" })',
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "RequestVerificationToken":
+                                token
+                        },
+
+                        body: formData
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                alert(
+                    "Image upload failed."
+                );
+
+                return;
+
+            }
+
+
+            const result =
+                await response.json();
+
+
+            if (!result.url) {
+
+                alert(
+                    "Image upload failed."
+                );
+
+                return;
+
+            }
+
+
+            addImageToList(
+                result.url
+            );
+
+        }
+
+
+        // =====================================================
+        // ADD IMAGE TO UI
+        // =====================================================
+
+        function addImageToList(imageUrl) {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "product-image-item";
+
+            item.draggable = true;
+
+
+            item.innerHTML = `
+
+                <input type="hidden"
+                       class="image-id"
+                       value="0" />
+
+                <input type="hidden"
+                       class="image-url"
+                       value="${escapeHtml(imageUrl)}" />
+
+                <input type="hidden"
+                       class="image-variant-id"
+                       value="" />
+
+                <input type="hidden"
+                       class="image-sort-order"
+                       value="0" />
+
+                <input type="hidden"
+                       class="image-primary"
+                       value="false" />
+
+
+                <div class="product-image-preview">
+
+                    <img src="${escapeHtml(imageUrl)}"
+                         alt="Product image" />
+
+                    <button type="button"
+                            class="image-remove-btn"
+                            title="Remove image">
+
+                        <i class="bi bi-x"></i>
+
+                    </button>
+
+                </div>
+            `;
+
+
+            container.insertBefore(
+                item,
+                uploadBox
+            );
+
+
+            updateImageIndexes();
+
+        }
+
+
+        // =====================================================
+        // REMOVE IMAGE
+        // =====================================================
+
+        container.addEventListener(
+            "click",
+            function (event) {
+
+                const removeButton =
+                    event.target.closest(
+                        ".image-remove-btn"
+                    );
+
+                if (!removeButton)
+                    return;
+
+
+                const item =
+                    removeButton.closest(
+                        ".product-image-item"
+                    );
+
+                if (!item)
+                    return;
+
+
+                item.remove();
+
+
+                updateImageIndexes();
+
+            }
+        );
+
+
+        // =====================================================
+        // DRAG & DROP
+        // =====================================================
+
+        let draggedItem = null;
+
+
+        container.addEventListener(
+            "dragstart",
+            function (event) {
+
+                const item =
+                    event.target.closest(
+                        ".product-image-item"
+                    );
+
+                if (!item)
+                    return;
+
+
+                draggedItem = item;
+
+                item.classList.add(
+                    "dragging"
+                );
+
+            }
+        );
+
+
+        container.addEventListener(
+            "dragend",
+            function (event) {
+
+                const item =
+                    event.target.closest(
+                        ".product-image-item"
+                    );
+
+                if (!item)
+                    return;
+
+
+                item.classList.remove(
+                    "dragging"
+                );
+
+                draggedItem = null;
+
+                updateImageIndexes();
+
+            }
+        );
+
+
+        container.addEventListener(
+            "dragover",
+            function (event) {
+
+                event.preventDefault();
+
+
+                const target =
+                    event.target.closest(
+                        ".product-image-item"
+                    );
+
+
+                if (!target ||
+                    !draggedItem ||
+                    target === draggedItem)
+                    return;
+
+
+                const rect =
+                    target.getBoundingClientRect();
+
+
+                const middle =
+                    rect.left +
+                    rect.width / 2;
+
+
+                if (event.clientX < middle) {
+
+                    container.insertBefore(
+                        draggedItem,
+                        target
+                    );
+
+                }
+                else {
+
+                    container.insertBefore(
+                        draggedItem,
+                        target.nextSibling
+                    );
+
+                }
+
+            }
+        );
+
+
+        // =====================================================
+        // UPDATE INDEXES
+        // FIRST IMAGE = PRIMARY
+        // =====================================================
+
+        function updateImageIndexes() {
+
+            const items =
+                container.querySelectorAll(
+                    ".product-image-item"
+                );
+
+
+            items.forEach(
+                function (item, index) {
+
+                    const idInput =
+                        item.querySelector(
+                            ".image-id"
+                        );
+
+                    const urlInput =
+                        item.querySelector(
+                            ".image-url"
+                        );
+
+                    const variantInput =
+                        item.querySelector(
+                            ".image-variant-id"
+                        );
+
+                    const sortInput =
+                        item.querySelector(
+                            ".image-sort-order"
+                        );
+
+                    const primaryInput =
+                        item.querySelector(
+                            ".image-primary"
+                        );
+
+
+                    if (idInput) {
+
+                        idInput.name =
+                            `ExistingImages[${index}].Id`;
+
+                    }
+
+
+                    if (urlInput) {
+
+                        urlInput.name =
+                            `ExistingImages[${index}].ImageUrl`;
+
+                    }
+
+
+                    if (variantInput) {
+
+                        variantInput.name =
+                            `ExistingImages[${index}].ProductVariantId`;
+
+                    }
+
+
+                    if (sortInput) {
+
+                        sortInput.name =
+                            `ExistingImages[${index}].SortOrder`;
+
+                        sortInput.value =
+                            index;
+
+                    }
+
+
+                    if (primaryInput) {
+
+                        primaryInput.name =
+                            `ExistingImages[${index}].IsPrimary`;
+
+                        primaryInput.value =
+                            index === 0
+                                ? "true"
+                                : "false";
+
+                    }
+
+
+                    // Remove old badge
+
+                    const oldBadge =
+                        item.querySelector(
+                            ".image-primary-badge"
+                        );
+
+                    if (oldBadge)
+                        oldBadge.remove();
+
+
+                    // First image = Primary
+
+                    if (index === 0) {
+
+                        const preview =
+                            item.querySelector(
+                                ".product-image-preview"
+                            );
+
+                        if (preview) {
+
+                            const badge =
+                                document.createElement(
+                                    "span"
+                                );
+
+                            badge.className =
+                                "image-primary-badge";
+
+                            badge.innerText =
+                                "Primary";
+
+                            preview.appendChild(
+                                badge
+                            );
+
+                        }
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        // =====================================================
+        // HTML ESCAPE
+        // =====================================================
+
+        function escapeHtml(value) {
+
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+
+        }
+
+
+        // Initial state
+
+        updateImageIndexes();
+
+    });
+
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const container =
+            document.getElementById("specificationsContainer");
+
+        const addButton =
+            document.getElementById("addSpecificationBtn");
+
+
+        function updateSpecificationIndexes() {
+
+            const rows =
+                container.querySelectorAll(".specification-row");
+
+            rows.forEach((row, index) => {
+
+                row.querySelectorAll("input").forEach(input => {
+
+                    if (input.name.includes(".Id")) {
+                        input.name =
+                            `Specifications[${index}].Id`;
+                    }
+
+                    else if (input.name.includes(".Name")) {
+                        input.name =
+                            `Specifications[${index}].Name`;
+                    }
+
+                    else if (input.name.includes(".Value")) {
+                        input.name =
+                            `Specifications[${index}].Value`;
+                    }
+
+                    else if (input.name.includes(".SortOrder")) {
+                        input.name =
+                            `Specifications[${index}].SortOrder`;
+
+                        input.value = index;
+                    }
+
+                });
+
+            });
+        }
+
+
+        addButton.addEventListener("click", function () {
+
+            const index =
+                container.querySelectorAll(".specification-row").length;
+
+            const row =
+                document.createElement("div");
+
+            row.className =
+                "specification-row mb-2";
+
+            row.innerHTML = `
+
+                <input type="hidden"
+                       name="Specifications[${index}].Id"
+                       value="0" />
+
+                <input type="hidden"
+                       name="Specifications[${index}].SortOrder"
+                       value="${index}"
+                       class="spec-sort-order" />
+
+                <div class="row g-2">
+
+                    <div class="col-md-5">
+                        <input type="text"
+                               name="Specifications[${index}].Name"
+                               class="form-control"
+                               placeholder="Specification name" />
+                    </div>
+
+                    <div class="col-md-5">
+                        <input type="text"
+                               name="Specifications[${index}].Value"
+                               class="form-control"
+                               placeholder="Value" />
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="button"
+                                class="btn btn-outline-danger remove-specification"
+                                title="Remove Specification"
+                                style="width: 42px; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+
+                </div>
+            `;
+
+            container.appendChild(row);
+
+            updateSpecificationIndexes();
+        });
+
+
+        container.addEventListener("click", function (e) {
+
+            if (!e.target.classList.contains(
+                "remove-specification")) {
+                return;
+            }
+
+            const row =
+                e.target.closest(".specification-row");
+
+            if (row) {
+                row.remove();
+                updateSpecificationIndexes();
+            }
+
+        });
+
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const container =
+            document.getElementById("attributesContainer");
+
+        const addButton =
+            document.getElementById("addAttributeBtn");
+
+
+        function updateAttributeIndexes() {
+
+            const rows =
+                container.querySelectorAll(".attribute-row");
+
+            rows.forEach((row, index) => {
+
+                const inputs =
+                    row.querySelectorAll("input");
+
+                inputs.forEach(input => {
+
+                    if (input.name.includes(".Id")) {
+                        input.name =
+                            `Attributes[${index}].Id`;
+                    }
+
+                    else if (input.name.includes(".ProductId")) {
+                        input.name =
+                            `Attributes[${index}].ProductId`;
+                    }
+
+                    else if (input.name.includes(".Name")) {
+                        input.name =
+                            `Attributes[${index}].Name`;
+                    }
+
+                    else if (input.name.includes(".Value")) {
+                        input.name =
+                            `Attributes[${index}].Value`;
+                    }
+
+                    else if (input.name.includes(".SortOrder")) {
+
+                        input.name =
+                            `Attributes[${index}].SortOrder`;
+
+                        input.value = index;
+                    }
+
+                });
+
+            });
+        }
+
+
+        addButton.addEventListener("click", function () {
+
+            const index =
+                container.querySelectorAll(".attribute-row").length;
+
+            const row =
+                document.createElement("div");
+
+            row.className =
+                "attribute-row mb-2";
+
+            row.innerHTML = `
+
+                <input type="hidden"
+                       name="Attributes[${index}].Id"
+                       value="0" />
+
+                <input type="hidden"
+                       name="Attributes[${index}].ProductId"
+                       value="@Model.Id" />
+
+                <input type="hidden"
+                       name="Attributes[${index}].SortOrder"
+                       value="${index}"
+                       class="attribute-sort-order" />
+
+                <div class="row g-2 align-items-center">
+
+                    <div class="col-5">
+
+                        <input type="text"
+                               name="Attributes[${index}].Name"
+                               class="form-control form-control-sm"
+                               placeholder="Attribute" />
+
+                    </div>
+
+                    <div class="col-5">
+
+                        <div class="input-group input-group-sm">
+
+                            <input type="text"
+                                   name="Attributes[${index}].Value"
+                                   class="form-control"
+                                   placeholder="Value" />
+
+                            <span class="input-group-text">
+                                mm
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-2 text-end">
+
+                        <button type="button"
+                                class="btn btn-outline-danger remove-attribute"
+                                title="Remove Attribute"
+                                style="width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+
+                            <i class="bi bi-trash"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+            container.appendChild(row);
+
+            updateAttributeIndexes();
+        });
+
+
+        container.addEventListener("click", function (e) {
+
+            const button =
+                e.target.closest(".remove-attribute");
+
+            if (!button)
+                return;
+
+            const row =
+                button.closest(".attribute-row");
+
+            if (row) {
+                row.remove();
+                updateAttributeIndexes();
+            }
+
+        });
+
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const tagsContainer =
+            document.getElementById("tagsContainer");
+
+        const tagInput =
+            document.getElementById("tagInput");
+
+
+        tagInput.addEventListener("keydown", function (e) {
+
+            if (e.key !== "Enter")
+                return;
+
+            e.preventDefault();
+
+            const tag =
+                tagInput.value.trim();
+
+            if (!tag)
+                return;
+
+
+            // Prevent duplicate tags
+            const existingTags =
+                Array.from(
+                    tagsContainer.querySelectorAll(
+                        'input[name="Tags"]'
+                    )
+                ).map(input =>
+                    input.value.toLowerCase()
+                );
+
+            if (existingTags.includes(tag.toLowerCase())) {
+
+                tagInput.value = "";
+
+                return;
+            }
+
+
+            const tagItem =
+                document.createElement("div");
+
+            tagItem.className =
+                "tag-item";
+
+
+            tagItem.innerHTML = `
+
+                <input type="hidden"
+                       name="Tags"
+                       value="${escapeHtml(tag)}" />
+
+                <span class="badge rounded-pill bg-light text-dark border">
+
+                    ${escapeHtml(tag)}
+
+                    <button type="button"
+                            class="btn-close ms-1 remove-tag"
+                            aria-label="Remove tag"
+                            style="font-size: 8px;">
+                    </button>
+
+                </span>
+            `;
+
+
+            tagsContainer.insertBefore(
+                tagItem,
+                tagInput
+            );
+
+
+            tagInput.value = "";
+
+            tagInput.focus();
+        });
+
+
+        tagsContainer.addEventListener("click", function (e) {
+
+            const removeButton =
+                e.target.closest(".remove-tag");
+
+            if (!removeButton)
+                return;
+
+            const tagItem =
+                removeButton.closest(".tag-item");
+
+            if (tagItem)
+                tagItem.remove();
+
+        });
+
+
+        function escapeHtml(value) {
+
+            const div =
+                document.createElement("div");
+
+            div.textContent = value;
+
+            return div.innerHTML;
+        }
+
+    });
+</script>
+
 }

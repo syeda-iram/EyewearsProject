@@ -7,393 +7,253 @@
 
     var primaryImage = Model.Images.FirstOrDefault(i => i.IsPrimary)
                        ?? Model.Images.FirstOrDefault();
+
+    var additionalImages = Model.Images
+        .Where(i => primaryImage == null || i.Id != primaryImage.Id)
+        .ToList();
+
+    var reviews = ViewBag.ApprovedReviews as List<Review>
+                  ?? new List<Review>();
+
+    double? averageRating = ViewBag.AverageRating as double?;
+
+    var availableVariants = Model.Variants
+        .Where(v => (v.Inventory?.QuantityOnHand ?? 0) > 0)
+        .ToList();
 }
+
 @if (TempData["Error"] != null)
 {
-    <div class="alert alert-danger">@TempData["Error"]</div>
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
 }
 
-<div class="row">
-
-    <!-- PRODUCT IMAGE -->
-    <div class="col-md-5">
-        <img src="@(primaryImage?.ImageUrl ?? "/images/placeholder.jpg")"
-             class="img-fluid rounded shadow-sm"
-             alt="@Model.Name">
+@if (TempData["ReviewSubmitted"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["ReviewSubmitted"]
     </div>
+}
 
-    <!-- PRODUCT INFORMATION -->
-    <div class="col-md-7">
+<div class="container py-4">
 
-        <h1>@Model.Name</h1>
+    <!-- PRODUCT -->
+    <div class="row g-5">
 
-        <p class="text-muted">
-            @Model.Brand?.Name &middot; @Model.Category?.Name
-        </p>
+        <!-- PRODUCT IMAGES -->
+        <div class="col-lg-6">
 
-        <!-- SKU -->
-        @if (!string.IsNullOrWhiteSpace(Model.Sku))
-        {
-            <p class="small text-muted mb-2">
-                SKU: @Model.Sku
-            </p>
-        }
+            <div class="position-relative">
 
-        <!-- SHORT DESCRIPTION -->
-        @if (!string.IsNullOrWhiteSpace(Model.ShortDescription))
-        {
-            <p class="lead">
-                @Model.ShortDescription
-            </p>
-        }
+                <img id="mainProductImage"
+                     src="@(primaryImage?.ImageUrl ?? "/images/placeholder.jpg")"
+                     class="img-fluid rounded shadow-sm w-100"
+                     alt="@Model.Name"
+                     style="max-height:520px; object-fit:contain; background:#f8f6f1;" />
 
-        <!-- PRICE -->
-        @if (Model.DiscountPrice.HasValue &&
-             Model.DiscountPrice.Value < Model.Price)
-        {
-            <h3>
-                <span class="text-decoration-line-through text-muted fs-5">
-                    @Model.Price.ToPkr()
-                </span>
-
-                <span class="text-danger ms-2">
-                    @Model.DiscountPrice.Value.ToPkr()
-                </span>
-            </h3>
-        }
-        else
-        {
-            <h3>@Model.Price.ToPkr()</h3>
-        }
-
-        <!-- PRODUCT DETAILS -->
-        <div class="mt-4">
-
-            <h5>Product Details</h5>
-
-            <table class="table table-sm">
-
-                @if (!string.IsNullOrWhiteSpace(Model.ProductType))
+                @if (Model.IsFeatured)
                 {
-                    <tr>
-                        <th>Product Type</th>
-                        <td>@Model.ProductType</td>
-                    </tr>
+                    <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-3">
+                        Featured
+                    </span>
                 }
 
-                @if (!string.IsNullOrWhiteSpace(Model.Gender))
+                @if (Model.DiscountPrice.HasValue &&
+                     Model.DiscountPrice.Value < Model.Price)
                 {
-                    <tr>
-                        <th>Gender</th>
-                        <td>@Model.Gender</td>
-                    </tr>
+                    <span class="badge bg-danger position-absolute top-0 end-0 m-3">
+                        Sale
+                    </span>
                 }
-
-                @if (!string.IsNullOrWhiteSpace(Model.Material))
-                {
-                    <tr>
-                        <th>Material</th>
-                        <td>@Model.Material</td>
-                    </tr>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(Model.Shape))
-                {
-                    <tr>
-                        <th>Shape</th>
-                        <td>@Model.Shape</td>
-                    </tr>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(Model.Color))
-                {
-                    <tr>
-                        <th>Color</th>
-                        <td>@Model.Color</td>
-                    </tr>
-                }
-
-                @if (Model.Weight.HasValue)
-                {
-                    <tr>
-                        <th>Weight</th>
-                        <td>@Model.Weight.Value g</td>
-                    </tr>
-                }
-
-            </table>
-
-        </div>
-
-        <!-- FULL DESCRIPTION -->
-        @if (!string.IsNullOrWhiteSpace(Model.Description))
-        {
-            <div class="mt-4">
-
-                <h5>Description</h5>
-
-                <p>
-                    @Model.Description
-                </p>
 
             </div>
-        }
 
-        <!-- PRODUCT TAGS -->
-        @if (Model.ProductTags != null && Model.ProductTags.Any())
-        {
-            <div class="mt-4">
+            <!-- THUMBNAILS -->
+            @if (additionalImages.Any())
+            {
+                <div class="d-flex flex-wrap gap-2 mt-3">
 
-                <h5>Tags</h5>
-
-                <div class="d-flex flex-wrap gap-2">
-
-                    @foreach (var tag in Model.ProductTags.OrderBy(t => t.Name))
+                    @if (primaryImage != null)
                     {
-                        <span class="badge bg-light text-dark border px-3 py-2">
-                            @tag.Name
-                        </span>
+                        <button type="button"
+                                class="border rounded p-1 bg-white product-thumbnail"
+                                data-image="@primaryImage.ImageUrl">
+
+                            <img src="@primaryImage.ImageUrl"
+                                 alt="@Model.Name"
+                                 style="width:80px;height:80px;object-fit:cover;" />
+
+                        </button>
+                    }
+
+                    @foreach (var image in additionalImages)
+                    {
+                        <button type="button"
+                                class="border rounded p-1 bg-white product-thumbnail"
+                                data-image="@image.ImageUrl">
+
+                            <img src="@image.ImageUrl"
+                                 alt="@Model.Name"
+                                 style="width:80px;height:80px;object-fit:cover;" />
+
+                        </button>
                     }
 
                 </div>
-
-            </div>
-        }
-
-        @if (!Model.Variants.Any())
-        {
-            <div class="alert alert-warning mt-2">
-                This product isn't available for purchase yet — no options have been set up.
-                <a asp-controller="Products" asp-action="Index">Browse other products</a> instead.
-            </div>
-        }
-        else
-        {
-            <form asp-controller="Cart" asp-action="Add" method="post">
-                <input type="hidden" name="productId" value="@Model.Id" />
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Color</label>
-                    <select name="variantId" class="form-select" style="max-width:250px;">
-                        @foreach (var variant in Model.Variants)
-                        {
-                            <option value="@variant.Id">
-                                @variant.Color @(variant.Size != null ? $"- {variant.Size}" : "")
-                                (@(variant.StockQuantity > 0 ? "In stock" : "Out of stock"))
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Quantity</label>
-                    <input type="number" name="quantity" value="1" min="1" class="form-control" style="max-width:100px;" />
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-lg mt-2">Add to Cart</button>
-            </form>
-
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <form asp-controller="Wishlist" asp-action="Add" method="post" class="mt-2">
-                    <input type="hidden" name="productId" value="@Model.Id" />
-                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                    <button type="submit" class="btn btn-outline-danger">&hearts; Add to Wishlist</button>
-                </form>
             }
 
-            <div class="mt-2">
-                <a class="btn btn-outline-primary btn-lg" id="selectLensesBtn" href="#">Select Lenses</a>
+        </div>
+
+
+        <!-- PRODUCT INFORMATION -->
+        <div class="col-lg-6">
+
+            <!-- TITLE -->
+            <h1 class="mb-2">
+                @Model.Name
+            </h1>
+
+            <!-- BRAND / CATEGORY -->
+            <p class="text-muted mb-2">
+
+                @(Model.Brand?.Name ?? "Unbranded")
+
+                @if (Model.Category != null)
+                {
+                    <span>
+                        &middot; @Model.Category.Name
+                    </span>
+                }
+
+                @if (Model.SubCategory != null)
+                {
+                    <span>
+                        &middot; @Model.SubCategory.Name
+                    </span>
+                }
+
+            </p>
+
+
+            <!-- SKU -->
+            @if (!string.IsNullOrWhiteSpace(Model.Sku))
+            {
+                <p class="small text-muted mb-3">
+                    SKU: @Model.Sku
+                </p>
+            }
+
+
+            <!-- PRICE -->
+            <div class="mb-4">
+
+                @if (Model.DiscountPrice.HasValue &&
+                     Model.DiscountPrice.Value < Model.Price)
+                {
+                    <div>
+
+                        <span class="text-decoration-line-through text-muted fs-5">
+                            @Model.Price.ToPkr()
+                        </span>
+
+                        <span class="fw-bold text-danger fs-3 ms-2">
+                            @Model.DiscountPrice.Value.ToPkr()
+                        </span>
+
+                    </div>
+                }
+                else
+                {
+                    <span class="fw-bold fs-3">
+                        @Model.Price.ToPkr()
+                    </span>
+                }
+
             </div>
-        }
-
-        <!-- VIRTUAL TRY ON -->
-        <div class="mt-2">
-
-            <a class="btn btn-outline-dark btn-lg"
-               asp-controller="TryOn"
-               asp-action="Index"
-               asp-route-productId="@Model.Id">
-
-                Virtual Try-On
-
-            </a>
-
-        </div>
-
-        <!-- WISHLIST -->
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            <form asp-controller="Wishlist"
-                  asp-action="Add"
-                  method="post"
-                  class="mt-2">
-
-                <input type="hidden"
-                       name="productId"
-                       value="@Model.Id" />
-
-                <input type="hidden"
-                       name="returnUrl"
-                       value="@Context.Request.Path" />
-
-                <button type="submit"
-                        class="btn btn-outline-danger">
-
-                    &hearts; Add to Wishlist
-
-                </button>
-
-            </form>
-        }
-
-        <!-- BACK -->
-        <div class="mt-4">
-
-            <a asp-controller="Products"
-               asp-action="Index">
-
-                &larr; Back to Shop
-
-            </a>
-
-        </div>
-
-    </div>
-</div>
 
 
-<!-- SPECIFICATIONS -->
-@if (Model.Specifications != null && Model.Specifications.Any())
-{
-    <hr class="my-5" />
+            <!-- PRODUCT DETAILS -->
+            <div class="mb-4">
 
-    <div class="row">
+                <h5 class="mb-3">
+                    Product Details
+                </h5>
 
-        <div class="col-md-8">
+                <table class="table table-sm">
 
-            <h3>Specifications</h3>
-
-            <table class="table table-bordered">
-
-                <tbody>
-
-                    @foreach (var spec in Model.Specifications
-                        .OrderBy(s => s.SortOrder))
+                    @if (!string.IsNullOrWhiteSpace(Model.Gender))
                     {
                         <tr>
-
                             <th style="width:35%;">
-                                @spec.Name
+                                Gender
                             </th>
-
                             <td>
-                                @spec.Value
+                                @Model.Gender
                             </td>
-
                         </tr>
                     }
 
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-}
-
-
-<!-- REVIEWS -->
-<hr class="my-5" />
-
-<div class="row">
-
-    <div class="col-md-8">
-
-        <h3>
-
-            Reviews
-
-            @if (ViewBag.AverageRating != null)
-            {
-                <span class="text-muted fs-6">
-                    (@(((double)ViewBag.AverageRating).ToString("0.0")) / 5 average)
-                </span>
-            }
-
-        </h3>
-
-        <!-- REVIEW SUBMISSION MESSAGE -->
-        @if (TempData["ReviewSubmitted"] != null)
-        {
-            <div class="alert alert-success">
-                @TempData["ReviewSubmitted"]
-            </div>
-        }
-
-        @{
-            var reviews = ViewBag.ApprovedReviews as List<Review>
-                          ?? new List<Review>();
-        }
-
-        <!-- APPROVED REVIEWS -->
-        @if (!reviews.Any())
-        {
-            <p class="text-muted">
-                No reviews yet. Be the first to review this product.
-            </p>
-        }
-        else
-        {
-            foreach (var review in reviews)
-            {
-                var filledStars = new string('*', review.Rating);
-                var emptyStars = new string('-', 5 - review.Rating);
-
-                <div class="border-bottom pb-3 mb-3">
-
-                    <strong>
-                        @review.User.FullName
-                    </strong>
-
-                    <span class="text-warning ms-2">
-                        @(filledStars)@(emptyStars)
-                    </span>
-
-                    @if (!string.IsNullOrWhiteSpace(review.Comment))
+                    @if (!string.IsNullOrWhiteSpace(Model.Material))
                     {
-                        <p class="mb-0 mt-1">
-                            @review.Comment
-                        </p>
+                        <tr>
+                            <th>
+                                Material
+                            </th>
+                            <td>
+                                @Model.Material
+                            </td>
+                        </tr>
                     }
 
-                    <small class="text-muted">
-                        @review.CreatedAt.ToString("dd MMM yyyy")
-                    </small>
+                    @if (!string.IsNullOrWhiteSpace(Model.Shape))
+                    {
+                        <tr>
+                            <th>
+                                Shape
+                            </th>
+                            <td>
+                                @Model.Shape
+                            </td>
+                        </tr>
+                    }
 
-                </div>
-            }
-        }
+                    @if (Model.Weight.HasValue)
+                    {
+                        <tr>
+                            <th>
+                                Weight
+                            </th>
+                            <td>
+                                @Model.Weight.Value g
+                            </td>
+                        </tr>
+                    }
 
-        <!-- WRITE REVIEW -->
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            @if (ViewBag.UserAlreadyReviewed == true)
+                </table>
+
+            </div>
+
+
+            <!-- VARIANTS / ADD TO CART -->
+            @if (!Model.Variants.Any())
             {
-                <p class="text-muted mt-4">
-                    You've already reviewed this product.
-                </p>
+                <div class="alert alert-warning">
+                    This product isn't available for purchase yet — no options have been set up.
+
+                    <a asp-controller="Products"
+                       asp-action="Index"
+                       class="alert-link">
+                        Browse other products
+                    </a>
+                </div>
             }
             else
             {
-                <h5 class="mt-4">
-                    Write a Review
-                </h5>
-
-                <form asp-controller="Products"
-                      asp-action="SubmitReview"
-                      method="post">
+                <form asp-controller="Cart"
+                      asp-action="Add"
+                      method="post"
+                      id="addToCartForm">
 
                     @Html.AntiForgeryToken()
 
@@ -401,79 +261,443 @@
                            name="productId"
                            value="@Model.Id" />
 
-                    <!-- RATING -->
+
+                    <!-- VARIANT -->
                     <div class="mb-3">
 
                         <label class="form-label fw-bold">
-                            Rating
+                            Choose Variant
                         </label>
 
-                        <select name="rating"
+                        <select name="variantId"
+                                id="variantSelect"
                                 class="form-select"
-                                style="max-width:150px;"
+                                style="max-width:320px;"
                                 required>
 
-                            <option value="5">
-                                5 - Excellent
-                            </option>
+                            @foreach (var variant in Model.Variants)
+                            {
+                                var variantLabel = string.IsNullOrWhiteSpace(variant.Size)
+                                    ? variant.Color
+                                    : $"{variant.Color} - {variant.Size}";
 
-                            <option value="4">
-                                4 - Good
-                            </option>
+                                <option value="@variant.Id"
+                                        data-stock="@(variant.Inventory?.QuantityOnHand ?? 0)"
+                                        disabled="@((variant.Inventory?.QuantityOnHand ?? 0) <= 0 ? "disabled" : null)">
 
-                            <option value="3">
-                                3 - Average
-                            </option>
+                                    @variantLabel
+                                    @((variant.Inventory?.QuantityOnHand ?? 0) > 0
+                                        ? $" — {(variant.Inventory?.QuantityOnHand ?? 0)} in stock"
+                                        : " — Out of stock")
 
-                            <option value="2">
-                                2 - Poor
-                            </option>
-
-                            <option value="1">
-                                1 - Terrible
-                            </option>
+                                </option>
+                            }
 
                         </select>
 
                     </div>
 
-                    <!-- COMMENT -->
+
+                    <!-- QUANTITY -->
                     <div class="mb-3">
 
                         <label class="form-label fw-bold">
-                            Comment
+                            Quantity
                         </label>
 
-                        <textarea name="comment"
-                                  class="form-control"
-                                  rows="3"
-                                  maxlength="1000"></textarea>
+                        <input type="number"
+                               name="quantity"
+                               id="quantityInput"
+                               value="1"
+                               min="1"
+                               class="form-control"
+                               style="max-width:110px;" />
 
                     </div>
 
-                    <button type="submit"
-                            class="btn btn-primary">
 
-                        Submit Review
+                    <!-- ADD TO CART -->
+                    <button type="submit"
+                            id="addToCartBtn"
+                            class="btn btn-primary btn-lg">
+
+                        Add to Cart
 
                     </button>
 
                 </form>
-            }
-        }
-        else
-        {
-            <p class="text-muted mt-4">
 
-                <a asp-controller="Account"
-                   asp-action="Login">
-                    Log in
+
+                <!-- SELECT LENSES -->
+                <div class="mt-3">
+
+                    <a href="#"
+                       class="btn btn-outline-primary btn-lg"
+                       id="selectLensesBtn">
+
+                        Select Lenses
+
+                    </a>
+
+                </div>
+
+
+                <!-- WISHLIST -->
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form asp-controller="Wishlist"
+                          asp-action="Add"
+                          method="post"
+                          class="mt-3">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="productId"
+                               value="@Model.Id" />
+
+                        <input type="hidden"
+                               name="returnUrl"
+                               value="@Context.Request.Path" />
+
+                        <button type="submit"
+                                class="btn btn-outline-danger">
+
+                            &hearts; Add to Wishlist
+
+                        </button>
+
+                    </form>
+                }
+
+            }
+
+
+            <!-- VIRTUAL TRY ON -->
+            <div class="mt-4 pt-3 border-top">
+
+                <h5>
+                    Try Before You Buy
+                </h5>
+
+                <p class="text-muted mb-3">
+                    See how these frames look on you with our Virtual Try-On.
+                </p>
+
+                <a class="btn btn-outline-dark btn-lg"
+                   asp-controller="TryOn"
+                   asp-action="Index"
+                   asp-route-productId="@Model.Id">
+
+                    Virtual Try-On
+
                 </a>
 
-                to leave a review.
+            </div>
 
-            </p>
-        }
+
+            <!-- TAGS -->
+            @if (Model.ProductTags != null &&
+                 Model.ProductTags.Any())
+            {
+                <div class="mt-4">
+
+                    <h6>
+                        Tags
+                    </h6>
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        @foreach (var tag in Model.ProductTags.OrderBy(t => t.Name))
+                        {
+                            <span class="badge bg-light text-dark border px-3 py-2">
+                                @tag.Name
+                            </span>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+
+    <!-- DESCRIPTION -->
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
+    {
+        <hr class="my-5" />
+
+        <div class="row">
+
+            <div class="col-lg-8">
+
+                <h3 class="mb-3">
+                    Description
+                </h3>
+
+                <p class="text-muted"
+                   style="white-space:pre-line;">
+                    @Model.Description
+                </p>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- SPECIFICATIONS -->
+    @if (Model.Specifications != null &&
+         Model.Specifications.Any())
+    {
+        <hr class="my-5" />
+
+        <div class="row">
+
+            <div class="col-lg-8">
+
+                <h3 class="mb-3">
+                    Specifications
+                </h3>
+
+                <table class="table table-bordered">
+
+                    <tbody>
+
+                        @foreach (var spec in Model.Specifications
+                            .OrderBy(s => s.SortOrder))
+                        {
+                            <tr>
+
+                                <th style="width:35%;">
+                                    @spec.Name
+                                </th>
+
+                                <td>
+                                    @spec.Value
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- REVIEWS -->
+    <hr class="my-5" />
+
+    <div class="row">
+
+        <div class="col-lg-8">
+
+            <div class="d-flex align-items-center gap-2 mb-4">
+
+                <h3 class="mb-0">
+                    Reviews
+                </h3>
+
+                @if (averageRating.HasValue)
+                {
+                    <span class="text-muted">
+                        @averageRating.Value.ToString("0.0") / 5
+                    </span>
+
+                    <span class="text-warning">
+                        @{
+                            var roundedRating =
+                                (int)Math.Round(averageRating.Value);
+                        }
+
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            @(i <= roundedRating ? "★" : "☆")
+                        }
+                    </span>
+                }
+
+            </div>
+
+
+            <!-- APPROVED REVIEWS -->
+            @if (!reviews.Any())
+            {
+                <p class="text-muted">
+                    No reviews yet. Be the first to review this product.
+                </p>
+            }
+            else
+            {
+                foreach (var review in reviews)
+                {
+                    <div class="border-bottom pb-3 mb-3">
+
+                        <div class="d-flex align-items-center gap-2">
+
+                            <strong>
+                                @review.User.FullName
+                            </strong>
+
+                            <span class="text-warning">
+
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    @(i <= review.Rating ? "★" : "☆")
+                                }
+
+                            </span>
+
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(review.Comment))
+                        {
+                            <p class="mb-1 mt-2">
+                                @review.Comment
+                            </p>
+                        }
+
+                        <small class="text-muted">
+                            @review.CreatedAt.ToString("dd MMM yyyy")
+                        </small>
+
+                    </div>
+                }
+            }
+
+
+            <!-- WRITE REVIEW -->
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @if (ViewBag.UserAlreadyReviewed == true)
+                {
+                    <p class="text-muted mt-4">
+                        You've already reviewed this product.
+                    </p>
+                }
+                else
+                {
+                    <div class="mt-5">
+
+                        <h5 class="mb-3">
+                            Write a Review
+                        </h5>
+
+                        <form asp-controller="Products"
+                              asp-action="SubmitReview"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="productId"
+                                   value="@Model.Id" />
+
+
+                            <!-- RATING -->
+                            <div class="mb-3">
+
+                                <label class="form-label fw-bold">
+                                    Rating
+                                </label>
+
+                                <select name="rating"
+                                        class="form-select"
+                                        style="max-width:180px;"
+                                        required>
+
+                                    <option value="5">
+                                        5 - Excellent
+                                    </option>
+
+                                    <option value="4">
+                                        4 - Good
+                                    </option>
+
+                                    <option value="3">
+                                        3 - Average
+                                    </option>
+
+                                    <option value="2">
+                                        2 - Poor
+                                    </option>
+
+                                    <option value="1">
+                                        1 - Terrible
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- COMMENT -->
+                            <div class="mb-3">
+
+                                <label class="form-label fw-bold">
+                                    Comment
+                                </label>
+
+                                <textarea name="comment"
+                                          class="form-control"
+                                          rows="4"
+                                          maxlength="1000"
+                                          placeholder="Share your experience with this product..."></textarea>
+
+                            </div>
+
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+
+                                Submit Review
+
+                            </button>
+
+                        </form>
+
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted mt-4">
+
+                    <a asp-controller="Account"
+                       asp-action="Login">
+
+                        Log in
+
+                    </a>
+
+                    to leave a review.
+
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+
+    <!-- BACK -->
+    <div class="mt-5">
+
+        <a asp-controller="Products"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+
+            &larr; Back to Shop
+
+        </a>
 
     </div>
 
@@ -484,29 +708,180 @@
 
     <script>
 
+        // ----------------------------------------
+        // PRODUCT IMAGE GALLERY
+        // ----------------------------------------
+
+        document
+            .querySelectorAll('.product-thumbnail')
+            .forEach(function (thumbnail) {
+
+                thumbnail.addEventListener('click', function () {
+
+                    const imageUrl =
+                        this.getAttribute('data-image');
+
+                    const mainImage =
+                        document.getElementById('mainProductImage');
+
+                    if (mainImage && imageUrl) {
+                        mainImage.src = imageUrl;
+                    }
+
+                });
+
+            });
+
+
+        // ----------------------------------------
+        // VARIANT / QUANTITY
+        // ----------------------------------------
+
+        const variantSelect =
+            document.getElementById('variantSelect');
+
+        const quantityInput =
+            document.getElementById('quantityInput');
+
+        const addToCartBtn =
+            document.getElementById('addToCartBtn');
+
+        if (variantSelect) {
+
+            function updateQuantityLimit() {
+
+                const selectedOption =
+                    variantSelect.options[
+                        variantSelect.selectedIndex
+                    ];
+
+                if (!selectedOption) {
+                    return;
+                }
+
+                const stock =
+                    parseInt(
+                        selectedOption.dataset.stock || '0'
+                    );
+
+                if (quantityInput) {
+
+                    quantityInput.max =
+                        stock > 0 ? stock : 1;
+
+                    if (parseInt(quantityInput.value) > stock) {
+                        quantityInput.value =
+                            stock > 0 ? stock : 1;
+                    }
+
+                    if (stock <= 0) {
+                        quantityInput.value = 1;
+                    }
+                }
+
+                if (addToCartBtn) {
+
+                    addToCartBtn.disabled =
+                        stock <= 0;
+
+                }
+
+            }
+
+            variantSelect.addEventListener(
+                'change',
+                updateQuantityLimit
+            );
+
+            updateQuantityLimit();
+        }
+
+
+        // ----------------------------------------
+        // SELECT LENSES
+        // ----------------------------------------
+
         const selectLensesBtn =
             document.getElementById('selectLensesBtn');
 
         if (selectLensesBtn) {
 
-            selectLensesBtn.addEventListener('click', function (e) {
+            selectLensesBtn.addEventListener(
+                'click',
+                function (e) {
 
-                e.preventDefault();
+                    e.preventDefault();
 
-                const variantSelect =
-                    document.querySelector('select[name="variantId"]');
+                    if (!variantSelect) {
+                        return;
+                    }
 
-                const variantId =
-                    variantSelect
-                        ? variantSelect.value
-                        : '@(Model.Variants.FirstOrDefault()?.Id ?? 0)';
+                    const selectedOption =
+                        variantSelect.options[
+                            variantSelect.selectedIndex
+                        ];
 
-                window.location.href =
-                    '@Url.Action("Customize", "Lens")' +
-                    '?productId=@Model.Id&variantId=' +
-                    variantId;
+                    if (!selectedOption) {
+                        return;
+                    }
 
-            });
+                    const stock =
+                        parseInt(
+                            selectedOption.dataset.stock || '0'
+                        );
+
+                    if (stock <= 0) {
+                        alert(
+                            'Please select an in-stock variant.'
+                        );
+
+                        return;
+                    }
+
+                    const variantId =
+                        variantSelect.value;
+
+                    window.location.href =
+                        '@Url.Action("Customize", "Lens")' +
+                        '?productId=@Model.Id&variantId=' +
+                        variantId;
+
+                }
+            );
+
+        }
+
+
+        // ----------------------------------------
+        // QUANTITY VALIDATION
+        // ----------------------------------------
+
+        if (quantityInput) {
+
+            quantityInput.addEventListener(
+                'input',
+                function () {
+
+                    const max =
+                        parseInt(
+                            this.max || '1'
+                        );
+
+                    let value =
+                        parseInt(this.value || '1');
+
+                    if (value < 1) {
+                        value = 1;
+                    }
+
+                    if (max > 0 && value > max) {
+                        value = max;
+                    }
+
+                    this.value = value;
+
+                }
+            );
 
         }
 

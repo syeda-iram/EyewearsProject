@@ -714,3 +714,186 @@ a {
     display: flex;
     justify-content: center;
 }
+
+/* =====================================================
+   PRODUCT VARIANTS
+   ===================================================== */
+
+#variantsTable {
+    border: 1px solid var(--brand-border, #e4dfd5);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+    #variantsTable thead th {
+        background: #fafafa;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    #variantsTable tbody td {
+        vertical-align: middle;
+    }
+
+    #variantsTable tbody tr {
+        border-bottom: 1px solid #eee;
+    }
+
+        #variantsTable tbody tr:last-child {
+            border-bottom: 0;
+        }
+
+.variant-row.editing {
+    background: #fcfdff;
+}
+
+.variant-edit-btn,
+.variant-delete-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#addVariantBtn {
+    white-space: nowrap;
+}
+
+/* =====================================================
+   PRODUCT IMAGES
+   ===================================================== */
+
+.product-images-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+
+/* =====================================================
+   IMAGE ITEM
+   ===================================================== */
+
+.product-image-item {
+    width: 138px;
+    cursor: grab;
+}
+
+    .product-image-item.dragging {
+        opacity: 0.45;
+    }
+
+
+/* =====================================================
+   IMAGE PREVIEW
+   ===================================================== */
+
+.product-image-preview {
+    position: relative;
+    width: 138px;
+    height: 112px;
+    border: 1px solid #dfe4ea;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+
+
+    .product-image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+
+/* =====================================================
+   REMOVE BUTTON
+   ===================================================== */
+
+.image-remove-btn {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #9aa3ad;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+}
+
+
+    .image-remove-btn:hover {
+        color: #dc3545;
+        background: #fff;
+    }
+
+
+/* =====================================================
+   PRIMARY BADGE
+   ===================================================== */
+
+.image-primary-badge {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    background: #1677ff;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 7px;
+    border-radius: 4px;
+}
+
+
+/* =====================================================
+   UPLOAD MORE
+   ===================================================== */
+
+.product-image-upload {
+    width: 138px;
+    height: 112px;
+    border: 1px dashed #cfd6df;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #1677ff;
+    background: #fff;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+
+    .product-image-upload:hover {
+        border-color: #1677ff;
+        background: #f8fbff;
+    }
+
+
+    .product-image-upload i {
+        font-size: 28px;
+        margin-bottom: 5px;
+    }
+
+
+    .product-image-upload span {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .product-image-upload small {
+        margin-top: 3px;
+        color: #8a94a3;
+        font-size: 10px;
+    }

@@ -47,7 +47,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 TotalCustomers = await _userManager.Users.CountAsync(),
                 NewCustomersThisMonth = await _userManager.Users.CountAsync(u => u.CreatedAt >= monthStart),
 
-                LowStockCount = await _context.ProductVariants.CountAsync(v => v.StockQuantity <= LowStockThreshold)
+                LowStockCount = await _context.ProductVariants.CountAsync(v => v.Inventory.QuantityOnHand <= LowStockThreshold)
             };
 
             // Top products by units sold (paid orders only)

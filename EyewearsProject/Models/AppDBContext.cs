@@ -6,7 +6,6 @@ namespace EyewearsProject.Models
     public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<Brand> Brands { get; set; } = null!;
         public DbSet<Product> Products { get; set; } = null!;
@@ -30,7 +29,6 @@ namespace EyewearsProject.Models
         public DbSet<Wishlist> Wishlists { get; set; } = null!;
         public DbSet<WishlistItem> WishlistItems { get; set; } = null!;
         public DbSet<Address> Addresses { get; set; } = null!;
-
         public DbSet<Inventory> Inventories { get; set; } = null!;
         public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
         public DbSet<Prescription> Prescriptions { get; set; } = null!;
@@ -39,29 +37,16 @@ namespace EyewearsProject.Models
         {
             base.OnModelCreating(modelBuilder);
 
-            // Explicit self-referencing relationship for Category → SubCategories.
-            // Restrict (not Cascade) means deleting a parent category is blocked
-            // while it still has subcategories, rather than silently wiping them out.
-            modelBuilder.Entity<Category>()
-                .HasOne(c => c.ParentCategory)
-                .WithMany(c => c.SubCategories)
-                .HasForeignKey(c => c.ParentCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Inventory>()
+                .HasIndex(i => i.ProductVariantId)
+                .IsUnique();
 
-            // Apply a consistent precision/scale to every decimal property in the model,
-            // rather than annotating each one individually. 18,2 covers currency amounts
-            // (up to 16 digits before the decimal point, 2 after).
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            {
-                foreach (var property in entityType.GetProperties())
-                {
-                    if (property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
-                    {
-                        property.SetPrecision(18);
-                        property.SetScale(2);
-                    }
-                }
-            }
+            modelBuilder.Entity<Inventory>()
+                .HasOne(i => i.ProductVariant)
+                .WithOne(v => v.Inventory)
+                .HasForeignKey<Inventory>(
+                    i => i.ProductVariantId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

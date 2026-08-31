@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace EyewearsProject.Areas.Admin.Models
 {
-    public class ProductFormViewModel
+    public class ProductEditViewModel
     {
         public int Id { get; set; }
 

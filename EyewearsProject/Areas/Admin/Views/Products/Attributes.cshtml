@@ -1,6 +1,6 @@
 ﻿@model List<ProductAttribute>
 
-<div class="d-flex justify-content-between mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <h4>Attributes — @ViewBag.ProductName</h4>
 
     <a asp-action="CreateAttribute"
@@ -10,47 +10,54 @@
     </a>
 </div>
 
-<table class="table table-bordered bg-white">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Value</th>
-            <th>Order</th>
-            <th></th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @foreach (var item in Model)
-        {
+<div class="table-responsive">
+    <table class="table table-bordered bg-white align-middle">
+        <thead>
             <tr>
-                <td>@item.Name</td>
-                <td>@item.Value</td>
-                <td>@item.SortOrder</td>
-
-                <td class="d-flex gap-1">
-                    <a asp-action="EditAttribute"
-                       asp-route-id="@item.Id"
-                       class="btn btn-sm btn-outline-primary">
-                        Edit
-                    </a>
-
-                    <form asp-action="DeleteAttribute"
-                          asp-route-id="@item.Id"
-                          asp-route-productId="@ViewBag.ProductId"
-                          method="post"
-                          onsubmit="return confirm('Delete this attribute?');">
-
-                        <button type="submit"
-                                class="btn btn-sm btn-outline-danger">
-                            Delete
-                        </button>
-                    </form>
-                </td>
+                <th>Name</th>
+                <th>Value</th>
+                <th>Order</th>
+                <th style="width: 160px;">Actions</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Value</td>
+                    <td>@item.SortOrder</td>
+
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a asp-action="EditAttribute"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-outline-primary">
+                                Edit
+                            </a>
+
+                            <form asp-action="DeleteAttribute"
+                                  asp-route-id="@item.Id"
+                                  asp-route-productId="@ViewBag.ProductId"
+                                  method="post"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Delete this attribute?');">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
 
 @if (!Model.Any())
 {

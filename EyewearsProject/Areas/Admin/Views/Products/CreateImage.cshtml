@@ -1,40 +1,172 @@
 ﻿@model ProductImageFormViewModel
-<h4>Add Image — @ViewBag.ProductName</h4>
-<form asp-action="CreateImage" method="post" style="max-width:420px;">
-    <input type="hidden" asp-for="ProductId" />
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <div class="mb-3">
-        <label class="form-label fw-bold">Upload Image</label>
-        <input type="file" id="fileInput" class="form-control" accept="image/*" />
-        <img id="preview" src="#" style="display:none;max-height:150px;margin-top:10px;" class="rounded" />
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">Add Image</h4>
+        <p class="text-muted mb-0">
+            @ViewBag.ProductName
+        </p>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="ImageUrl" class="form-label">Image URL</label>
-        <input asp-for="ImageUrl" id="urlInput" class="form-control" placeholder="Uploads fill this in automatically, or paste a URL" />
-        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+    <a asp-action="Images"
+       asp-route-id="@Model.ProductId"
+       class="btn btn-outline-secondary">
+        Back to Images
+    </a>
+</div>
+
+
+<form asp-action="CreateImage"
+      method="post"
+      style="max-width:520px;">
+
+    @Html.AntiForgeryToken()
+
+    <input type="hidden"
+           asp-for="ProductId" />
+
+    <div asp-validation-summary="ModelOnly"
+         class="text-danger mb-3">
     </div>
 
-    <div class="mb-3 form-check">
-        <input asp-for="IsPrimary" class="form-check-input" />
-        <label asp-for="IsPrimary" class="form-check-label">Set as primary image</label>
-    </div>
+
+    <!-- =====================================================
+         IMAGE UPLOAD
+         ===================================================== -->
 
     <div class="mb-3">
-        <label asp-for="ProductVariantId" class="form-label">Which color is this image for?</label>
-        <select asp-for="ProductVariantId" class="form-select" asp-items="ViewBag.Variants">
-            <option value="">-- General / not color-specific --</option>
+
+        <label class="form-label fw-bold">
+            Upload Image
+        </label>
+
+        <input type="file"
+               id="fileInput"
+               class="form-control"
+               accept="image/*" />
+
+        <img id="preview"
+             src="#"
+             alt="Image preview"
+             style="display:none;
+        max-height:180px;
+        max-width:100%;
+        margin-top:10px;"
+             class="rounded border" />
+
+    </div>
+
+
+    <!-- =====================================================
+         IMAGE URL
+         ===================================================== -->
+
+    <div class="mb-3">
+
+        <label asp-for="ImageUrl"
+               class="form-label">
+        </label>
+
+        <input asp-for="ImageUrl"
+               id="urlInput"
+               class="form-control"
+               placeholder="Upload an image or paste an image URL" />
+
+        <span asp-validation-for="ImageUrl"
+              class="text-danger">
+        </span>
+
+    </div>
+
+
+    <!-- =====================================================
+         VARIANT
+         ===================================================== -->
+
+    <div class="mb-3">
+
+        <label asp-for="ProductVariantId"
+               class="form-label">
+            Variant
+        </label>
+
+        <select asp-for="ProductVariantId"
+                class="form-select"
+                asp-items="ViewBag.Variants">
+
+            <option value="">
+                -- General Product Image --
+            </option>
+
         </select>
+
+        <span asp-validation-for="ProductVariantId"
+              class="text-danger">
+        </span>
+
+        <div class="form-text">
+            Select a color/size variant if this image belongs
+            specifically to that variant.
+        </div>
+
     </div>
 
-    <button class="btn btn-dark">Save</button>
+
+    <!-- =====================================================
+         PRIMARY IMAGE
+         ===================================================== -->
+
+    <div class="mb-4 form-check">
+
+        <input asp-for="IsPrimary"
+               class="form-check-input" />
+
+        <label asp-for="IsPrimary"
+               class="form-check-label">
+            Set as primary image
+        </label>
+
+    </div>
+
+
+    <!-- =====================================================
+         ACTIONS
+         ===================================================== -->
+
+    <div class="d-flex gap-2">
+
+        <button type="submit"
+                class="btn btn-dark">
+            Save Image
+        </button>
+
+        <a asp-action="Images"
+           asp-route-id="@Model.ProductId"
+           class="btn btn-outline-secondary">
+            Cancel
+        </a>
+
+    </div>
+
 </form>
 
+
 @section Scripts {
-    <form id="antiforgeryForm">@Html.AntiForgeryToken()</form>
+
+    <partial name="_ValidationScriptsPartial" />
+
     <script>
-        const token = document.querySelector('#antiforgeryForm input[name="__RequestVerificationToken"]').value;
-        wireImageUpload('fileInput', 'urlInput', 'preview', '@Url.Action("Image", "Upload", new { area = "Admin" })', token);
+        const token =
+            document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            ).value;
+
+        wireImageUpload(
+            'fileInput',
+            'urlInput',
+            'preview',
+            '@Url.Action("Image", "Upload", new { area = "Admin" })',
+            token
+        );
     </script>
 }

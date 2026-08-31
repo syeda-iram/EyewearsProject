@@ -2,11 +2,9 @@
 
 namespace EyewearsProject.Areas.Admin.Models
 {
-    public class ProductSpecificationFormViewModel
+    public class ProductEditSpecificationViewModel
     {
         public int Id { get; set; }
-
-        public int ProductId { get; set; }
 
         [Required]
         [Display(Name = "Specification Name")]

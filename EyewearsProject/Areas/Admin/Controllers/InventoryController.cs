@@ -207,23 +207,19 @@ namespace EyewearsProject.Areas.Admin.Controllers
             if (variant == null)
                 return NotFound();
 
-            var transaction = await _inventoryService.AdjustToQuantityAsync(
+            await _inventoryService.AdjustToQuantityAsync(
                 variantId,
                 Math.Max(0, newQuantityOnHand),
                 string.IsNullOrWhiteSpace(reason)
-                    ? "Manual stock adjustment by admin"
-                    : reason);
+                ? "Manual stock adjustment by admin"
+                : reason);
 
-            if (transaction != null)
-            {
-                await _auditLogger.LogAsync(
-                    "Update",
-                    "Inventory",
-                    variantId.ToString(),
-                    $"Stock for {variant.Sku} adjusted by " +
-                    $"{transaction.Quantity:+#;-#;0} " +
-                    $"(reason: {transaction.Reason})");
-            }
+            await _auditLogger.LogAsync(
+                "Update",
+                "Inventory",
+                variantId.ToString(),
+                $"Stock for {variant.Sku} set to {newQuantityOnHand} " +
+                $"(reason: {(string.IsNullOrWhiteSpace(reason) ? "Manual stock adjustment by admin" : reason)})");
 
             TempData["Success"] =
                 $"Stock updated for {variant.Sku}.";

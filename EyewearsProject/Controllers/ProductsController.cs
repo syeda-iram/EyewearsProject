@@ -11,20 +11,23 @@ namespace EyewearsProject.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
-    public ProductsController(
-        AppDbContext context,
-        UserManager<ApplicationUser> userManager)
+        public ProductsController(
+            AppDbContext context,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
 
+        // =====================================================
         // GET: /Products
+        // =====================================================
+
         public async Task<IActionResult> Index(
             string? category,
+            int? subCategoryId,
             int? brandId,
             string? color,
-            string? productType,
             string? gender,
             string? material,
             string? shape,
@@ -36,72 +39,103 @@ namespace EyewearsProject.Controllers
             var query = _context.Products
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
+                .Include(p => p.SubCategory)
                 .Include(p => p.Images)
                 .Include(p => p.Variants)
                 .Include(p => p.Specifications)
+                .Include(p => p.Attributes)
                 .Include(p => p.ProductTags)
                 .Where(p => p.IsActive)
                 .AsQueryable();
 
-            // Category
+            // =================================================
+            // CATEGORY
+            // =================================================
+
             if (!string.IsNullOrWhiteSpace(category))
             {
                 query = query.Where(p =>
                     p.Category.Name == category);
             }
 
-            // Brand
+            // =================================================
+            // SUBCATEGORY
+            // =================================================
+
+            if (subCategoryId.HasValue)
+            {
+                query = query.Where(p =>
+                    p.SubCategoryId == subCategoryId.Value);
+            }
+
+            // =================================================
+            // BRAND
+            // =================================================
+
             if (brandId.HasValue)
             {
                 query = query.Where(p =>
                     p.BrandId == brandId.Value);
             }
 
-            // Color
-            // Check Product.Color first and then Variant.Color.
+            // =================================================
+            // COLOR
+            //
+            // Color exists only at VARIANT level.
+            // =================================================
+
             if (!string.IsNullOrWhiteSpace(color))
             {
                 query = query.Where(p =>
-                    p.Color == color ||
-                    p.Variants.Any(v => v.Color == color));
+                    p.Variants.Any(v =>
+                        v.Color == color));
             }
 
-            // Product Type
-            if (!string.IsNullOrWhiteSpace(productType))
-            {
-                query = query.Where(p =>
-                    p.ProductType == productType);
-            }
+            // =================================================
+            // GENDER
+            // =================================================
 
-            // Gender
             if (!string.IsNullOrWhiteSpace(gender))
             {
                 query = query.Where(p =>
                     p.Gender == gender);
             }
 
-            // Material
+            // =================================================
+            // MATERIAL
+            // =================================================
+
             if (!string.IsNullOrWhiteSpace(material))
             {
                 query = query.Where(p =>
                     p.Material == material);
             }
 
-            // Shape
+            // =================================================
+            // SHAPE
+            // =================================================
+
             if (!string.IsNullOrWhiteSpace(shape))
             {
                 query = query.Where(p =>
                     p.Shape == shape);
             }
 
-            // Product Tag
+            // =================================================
+            // PRODUCT TAG
+            // =================================================
+
             if (!string.IsNullOrWhiteSpace(tag))
             {
                 query = query.Where(p =>
-                    p.ProductTags.Any(t => t.Name == tag));
+                    p.ProductTags.Any(t =>
+                        t.Name == tag));
             }
 
-            // Price
+            // =================================================
+            // PRICE
+            // =================================================
+
             if (minPrice.HasValue)
             {
                 query = query.Where(p =>
@@ -114,17 +148,22 @@ namespace EyewearsProject.Controllers
                     (p.DiscountPrice ?? p.Price) <= maxPrice.Value);
             }
 
-            // Dynamic Specification
+            // =================================================
+            // DYNAMIC SPECIFICATION
+            //
             // Example:
             // Material:Acetate
+            // Lens Type:UV Protection
+            // =================================================
+
             if (!string.IsNullOrWhiteSpace(spec))
             {
                 var parts = spec.Split(':', 2);
 
                 if (parts.Length == 2)
                 {
-                    var specName = parts[0];
-                    var specValue = parts[1];
+                    var specName = parts[0].Trim();
+                    var specValue = parts[1].Trim();
 
                     query = query.Where(p =>
                         p.Specifications.Any(s =>
@@ -133,58 +172,64 @@ namespace EyewearsProject.Controllers
                 }
             }
 
-            // Featured products first,
-            // then newest products.
+            // =================================================
+            // ORDERING
+            // =================================================
+
             var products = await query
                 .OrderByDescending(p => p.IsFeatured)
                 .ThenByDescending(p => p.Id)
                 .ToListAsync();
 
-            // ---------------------------------------
+            // =================================================
             // FILTER / FACET DATA
-            // ---------------------------------------
+            // =================================================
 
+            // -------------------------------------------------
+            // Categories
+            // -------------------------------------------------
+
+            ViewBag.AllCategories = await _context.Categories
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            // -------------------------------------------------
+            // Subcategories
+            // -------------------------------------------------
+
+            ViewBag.AllSubCategories = await _context.Categories
+                .Where(c => c.ParentCategoryId != null)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            // -------------------------------------------------
             // Brands
+            // -------------------------------------------------
+
             ViewBag.AllBrands = await _context.Brands
                 .OrderBy(b => b.Name)
                 .ToListAsync();
 
-            // Colors from Product.Color
-            var productColors = await _context.Products
-                .Where(p =>
-                    p.IsActive &&
-                    p.Color != null &&
-                    p.Color != "")
-                .Select(p => p.Color!)
-                .Distinct()
-                .ToListAsync();
+            // -------------------------------------------------
+            // Colors
+            //
+            // Colors come ONLY from ProductVariant.
+            // -------------------------------------------------
 
-            // Colors from ProductVariant.Color
-            var variantColors = await _context.ProductVariants
+            ViewBag.AllColors = await _context.ProductVariants
                 .Where(v =>
+                    v.Product.IsActive &&
                     v.Color != null &&
                     v.Color != "")
                 .Select(v => v.Color)
                 .Distinct()
-                .ToListAsync();
-
-            ViewBag.AllColors = productColors
-                .Union(variantColors)
                 .OrderBy(c => c)
-                .ToList();
-
-            // Product Types
-            ViewBag.AllProductTypes = await _context.Products
-                .Where(p =>
-                    p.IsActive &&
-                    p.ProductType != null &&
-                    p.ProductType != "")
-                .Select(p => p.ProductType!)
-                .Distinct()
-                .OrderBy(x => x)
                 .ToListAsync();
 
+            // -------------------------------------------------
             // Genders
+            // -------------------------------------------------
+
             ViewBag.AllGenders = await _context.Products
                 .Where(p =>
                     p.IsActive &&
@@ -195,7 +240,10 @@ namespace EyewearsProject.Controllers
                 .OrderBy(x => x)
                 .ToListAsync();
 
+            // -------------------------------------------------
             // Materials
+            // -------------------------------------------------
+
             ViewBag.AllMaterials = await _context.Products
                 .Where(p =>
                     p.IsActive &&
@@ -206,7 +254,10 @@ namespace EyewearsProject.Controllers
                 .OrderBy(x => x)
                 .ToListAsync();
 
+            // -------------------------------------------------
             // Shapes
+            // -------------------------------------------------
+
             ViewBag.AllShapes = await _context.Products
                 .Where(p =>
                     p.IsActive &&
@@ -217,7 +268,10 @@ namespace EyewearsProject.Controllers
                 .OrderBy(x => x)
                 .ToListAsync();
 
+            // -------------------------------------------------
             // Product Tags
+            // -------------------------------------------------
+
             ViewBag.AllTags = await _context.ProductTags
                 .Where(t =>
                     t.Product.IsActive &&
@@ -228,9 +282,17 @@ namespace EyewearsProject.Controllers
                 .OrderBy(x => x)
                 .ToListAsync();
 
+            // -------------------------------------------------
             // Dynamic Specifications
+            // -------------------------------------------------
+
             ViewBag.AllSpecs = await _context.ProductSpecifications
-                .Where(s => s.Product.IsActive)
+                .Where(s =>
+                    s.Product.IsActive &&
+                    s.Name != null &&
+                    s.Name != "" &&
+                    s.Value != null &&
+                    s.Value != "")
                 .Select(s => new
                 {
                     s.Name,
@@ -238,16 +300,17 @@ namespace EyewearsProject.Controllers
                 })
                 .Distinct()
                 .OrderBy(s => s.Name)
+                .ThenBy(s => s.Value)
                 .ToListAsync();
 
-            // ---------------------------------------
+            // =================================================
             // SELECTED FILTERS
-            // ---------------------------------------
+            // =================================================
 
             ViewBag.SelectedCategory = category;
+            ViewBag.SelectedSubCategoryId = subCategoryId;
             ViewBag.SelectedBrandId = brandId;
             ViewBag.SelectedColor = color;
-            ViewBag.SelectedProductType = productType;
             ViewBag.SelectedGender = gender;
             ViewBag.SelectedMaterial = material;
             ViewBag.SelectedShape = shape;
@@ -259,16 +322,21 @@ namespace EyewearsProject.Controllers
             return View(products);
         }
 
+        // =====================================================
         // GET: /Products/Details/5
+        // =====================================================
+
         public async Task<IActionResult> Details(int id)
         {
             var product = await _context.Products
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
+                .Include(p => p.SubCategory)
                 .Include(p => p.Images)
                     .ThenInclude(i => i.ProductVariant)
                 .Include(p => p.Variants)
                 .Include(p => p.Specifications)
+                .Include(p => p.Attributes)
                 .Include(p => p.ProductTags)
                 .FirstOrDefaultAsync(p =>
                     p.Id == id &&
@@ -277,7 +345,10 @@ namespace EyewearsProject.Controllers
             if (product == null)
                 return NotFound();
 
-            // Approved reviews
+            // =================================================
+            // APPROVED REVIEWS
+            // =================================================
+
             var approvedReviews = await _context.Reviews
                 .Include(r => r.User)
                 .Where(r =>
@@ -288,13 +359,19 @@ namespace EyewearsProject.Controllers
 
             ViewBag.ApprovedReviews = approvedReviews;
 
-            // Average rating
+            // =================================================
+            // AVERAGE RATING
+            // =================================================
+
             ViewBag.AverageRating =
                 approvedReviews.Any()
                     ? approvedReviews.Average(r => r.Rating)
                     : (double?)null;
 
-            // Check whether current user already reviewed
+            // =================================================
+            // CURRENT USER REVIEW STATUS
+            // =================================================
+
             if (User.Identity?.IsAuthenticated == true)
             {
                 var userId = _userManager.GetUserId(User);
@@ -308,7 +385,10 @@ namespace EyewearsProject.Controllers
             return View(product);
         }
 
+        // =====================================================
         // POST: /Products/SubmitReview
+        // =====================================================
+
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]

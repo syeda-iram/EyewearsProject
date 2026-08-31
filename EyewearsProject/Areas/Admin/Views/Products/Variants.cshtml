@@ -13,7 +13,7 @@
                 <td>@v.Color</td>
                 <td>@(v.Size ?? "-")</td>
                 <td>@v.Sku</td>
-                <td>@v.StockQuantity</td>
+                <td>@(v.Inventory?.QuantityOnHand ?? 0)</td>
                 <td class="d-flex gap-1">
                     <a asp-action="EditVariant" asp-route-id="@v.Id" class="btn btn-sm btn-outline-primary">Edit</a>
                     <form asp-action="DeleteVariant" asp-route-id="@v.Id" asp-route-productId="@ViewBag.ProductId" method="post" onsubmit="return confirm('Delete this variant?');">
