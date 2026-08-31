@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Text;
+
 namespace EyewearsProject.Controllers
 {
     [Authorize]
@@ -143,6 +144,7 @@ namespace EyewearsProject.Controllers
 
             return RedirectToAction("Index");
         }
+
         private static readonly string[] AllowedPrescriptionExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
         private const long MaxPrescriptionFileBytes = 8 * 1024 * 1024; // 8 MB
 
@@ -174,6 +176,7 @@ namespace EyewearsProject.Controllers
             var publicUrl = $"/uploads/prescriptions/{fileName}";
             return Json(new { success = true, url = publicUrl });
         }
+
         // POST: /Prescriptions/ScanPrescription
         // Uses OCR.space's OCREngine 2, which returns per-word bounding boxes —
         // letting us reconstruct table rows/columns by real position instead of
@@ -318,7 +321,16 @@ namespace EyewearsProject.Controllers
                             num = -Math.Abs(num);
                             pendingNegative = false;
                         }
-                        numbers.Add(FixMissingDecimal(num));
+
+                        // The decimal-drop OCR bug only ever affects SPH and CYL, which stay
+                        // within roughly ±20 by nature. Axis (0-180) and PD (usually 25-75)
+                        // are legitimately large numbers already — applying the same fix to
+                        // them would wrongly shrink real values like 90 into 0.90.
+                        var columnIndex = numbers.Count; // 0 = SPH, 1 = CYL, 2 = Axis, 3 = Add, 4 = PD
+                        if (columnIndex <= 1)
+                            num = FixMissingDecimal(num);
+
+                        numbers.Add(num);
                     }
                 }
                 return numbers;
@@ -350,12 +362,16 @@ namespace EyewearsProject.Controllers
                 result["rSph"] = odNums[0];
                 result["rCyl"] = odNums[1];
                 if (odNums.Count > 2) result["rAxis"] = odNums[2];
+                if (odNums.Count > 3) result["rAdd"] = odNums[3];
+                if (odNums.Count > 4) result["rPd"] = odNums[4];
             }
             if (osNums != null)
             {
                 result["lSph"] = osNums[0];
                 result["lCyl"] = osNums[1];
                 if (osNums.Count > 2) result["lAxis"] = osNums[2];
+                if (osNums.Count > 3) result["lAdd"] = osNums[3];
+                if (osNums.Count > 4) result["lPd"] = osNums[4];
             }
 
             if (result.Count == 0)
@@ -364,5 +380,4 @@ namespace EyewearsProject.Controllers
             return Json(new { success = true, values = result });
         }
     }
-
 }
