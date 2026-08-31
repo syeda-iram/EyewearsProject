@@ -899,8 +899,17 @@ namespace EyewearsProject.Areas.Admin.Controllers
             // TRANSACTION
             // =========================================================
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+            // =====================================================
+            // TRANSACTION — wrapped in EF's retry-aware execution
+            // strategy, required once EnableRetryOnFailure is on
+            // =====================================================
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction =
+                    await _context.Database.BeginTransactionAsync();
 
             try
             {
@@ -908,138 +917,134 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 // PRODUCT INFORMATION
                 // =====================================================
 
-                product.Name =
-                    model.Name ?? "";
+                    product.Name =
+                        model.Name.Trim();
 
-                product.Sku =
-                    model.Sku;
+                    product.Sku =
+                        newProductSku;
 
-                product.Description =
-                    model.Description;
+                    product.Description =
+                        model.Description;
 
-                product.CategoryId =
-                    model.CategoryId;
+                    product.CategoryId =
+                        model.CategoryId;
 
-                product.SubCategoryId =
-                    model.SubCategoryId;
+                    product.SubCategoryId =
+                        model.SubCategoryId;
 
-                product.BrandId =
-                    model.BrandId;
+                    product.BrandId =
+                        model.BrandId;
 
-                product.Gender =
-                    model.Gender;
+                    product.Gender =
+                        model.Gender;
 
-                product.Material =
-                    model.Material;
+                    product.Material =
+                        model.Material;
 
-                product.Shape =
-                    model.Shape;
+                    product.Shape =
+                        model.Shape;
 
                 // =====================================================
                 // PRICING
                 // =====================================================
 
-                product.Price =
-                    model.Price;
+                    product.Price =
+                        model.Price;
 
-                product.DiscountPrice =
-                    model.DiscountPrice;
+                    product.DiscountPrice =
+                        model.DiscountPrice;
 
-                product.CostPrice =
-                    model.CostPrice;
+                    product.CostPrice =
+                        model.CostPrice;
 
-                product.Weight =
-                    model.Weight;
+                    product.Weight =
+                        model.Weight;
 
                 // =====================================================
                 // SETTINGS
                 // =====================================================
 
-                product.IsActive =
-                    model.IsActive;
+                    product.IsActive =
+                        model.IsActive;
 
-                product.IsFeatured =
-                    model.IsFeatured;
+                    product.IsFeatured =
+                        model.IsFeatured;
 
                 // =====================================================
                 // VIRTUAL TRY-ON
                 // =====================================================
 
-                product.TryOnOverlayImageUrl =
-                    model.TryOnOverlayImageUrl;
+                    product.TryOnOverlayImageUrl =
+                        model.TryOnOverlayImageUrl;
 
-                product.TryOn3DModelUrl =
-                    model.TryOn3DModelUrl;
+                    product.TryOn3DModelUrl =
+                        model.TryOn3DModelUrl;
 
-                product.TryOnOverlayScale =
-                    model.TryOnOverlayScale;
+                    product.TryOnOverlayScale =
+                        model.TryOnOverlayScale;
 
-                product.TryOnOverlayVerticalOffset =
-                    model.TryOnOverlayVerticalOffset;
+                    product.TryOnOverlayVerticalOffset =
+                        model.TryOnOverlayVerticalOffset;
 
-                product.UpdatedAt =
-                    DateTime.UtcNow;
+                    product.UpdatedAt =
+                        DateTime.UtcNow;
 
-                // =====================================================
-                // VARIANTS
-                // =====================================================
+                    // =================================================
+                    // VARIANTS
+                    // =================================================
 
-                var variantsOk = await SaveVariantsAsync(product, model);
-
-                if (!variantsOk)
-                {
-                    await transaction.RollbackAsync();
-                    await PopulateDropdownsAsync(model.CategoryId, model.SubCategoryId, model.BrandId);
-                    return View(model);
-                }
+                    await SaveVariantsAsync(
+                        product,
+                        model);
 
                 // =====================================================
                 // IMAGES
                 // =====================================================
 
-                await SaveImagesAsync(
-                    product,
-                    model);
+                    await SaveImagesAsync(
+                        product,
+                        model);
 
                 // =====================================================
                 // SPECIFICATIONS
                 // =====================================================
 
-                await SaveSpecificationsAsync(
-                    product,
-                    model);
+                    await SaveSpecificationsAsync(
+                        product,
+                        model);
 
                 // =====================================================
                 // ATTRIBUTES
                 // =====================================================
 
-                await SaveAttributesAsync(
-                    product,
-                    model);
+                    await SaveAttributesAsync(
+                        product,
+                        model);
 
                 // =====================================================
                 // TAGS
                 // =====================================================
 
-                await SaveTagsAsync(
-                    product,
-                    model);
+                    await SaveTagsAsync(
+                        product,
+                        model);
 
                 // =====================================================
                 // FINAL SAVE
                 // =====================================================
 
-                await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync();
 
-                await transaction.CommitAsync();
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
 
-            // =========================================================
+                    throw;
+                }
+            });
+            // =====================================================
             // AUDIT
             // =========================================================
 

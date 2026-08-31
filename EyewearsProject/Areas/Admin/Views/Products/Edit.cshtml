@@ -584,14 +584,10 @@
 
                                                 </td>
 
-
-                                                <!-- SIZE -->
-
-                                                <td>
-
-                                                    <select name="Variants[@i].Size"
-                                                            class="form-select variant-edit-field"
-                                                            disabled>
+                                <!-- SIZE -->
+                                <td>
+                                    <select name="Variants[@i].Size"
+                                            class="form-select variant-edit-field variant-locked">
 
                                                         <option value="">
                                                             -- Select --
@@ -835,6 +831,434 @@
                         </div>
 
                     </div>
+
+
+<style>
+
+    /* =========================================================
+       VARIANT LOCK STYLING
+       ========================================================= */
+
+    .variant-locked {
+        pointer-events: none;
+        background-color: #e9ecef;
+        opacity: 0.85;
+    }
+
+    /* =========================================================
+       IMAGES SECTION
+       ========================================================= */
+
+    .product-images-list {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+
+    /* =========================================================
+       IMAGE ITEM
+       ========================================================= */
+
+    .product-image-item {
+        width: 120px;
+        cursor: grab;
+        user-select: none;
+    }
+
+    .product-image-item:active {
+        cursor: grabbing;
+    }
+
+    .product-image-item.dragging {
+        opacity: 0.45;
+    }
+
+
+    /* =========================================================
+       IMAGE BOX
+       ========================================================= */
+
+    .product-image-box {
+        position: relative;
+
+        width: 120px;
+        height: 110px;
+
+        border: 1px solid #dfe5ec;
+        border-radius: 6px;
+
+        background: #fff;
+
+        overflow: hidden;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    /* =========================================================
+       PRIMARY IMAGE
+       ========================================================= */
+
+    .product-image-item:first-child .product-image-box {
+        border: 2px solid #0d6efd;
+    }
+
+
+    /* =========================================================
+       IMAGE
+       ========================================================= */
+
+    .product-image-preview {
+        width: 100%;
+        height: 100%;
+
+        object-fit: contain;
+
+        padding: 6px;
+    }
+
+
+    /* =========================================================
+       REMOVE BUTTON
+       ========================================================= */
+
+    .image-remove-btn {
+        position: absolute;
+
+        top: 5px;
+        left: 5px;
+
+        width: 20px;
+        height: 20px;
+
+        padding: 0;
+
+        border: 0;
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.9);
+
+        color: #8b95a1;
+
+        font-size: 15px;
+        line-height: 18px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+
+        z-index: 2;
+    }
+
+    .image-remove-btn:hover {
+        background: #fff;
+        color: #dc3545;
+    }
+
+
+    /* =========================================================
+       PRIMARY BADGE
+       ========================================================= */
+
+    .primary-badge {
+        position: absolute;
+
+        right: 5px;
+        bottom: 5px;
+
+        background: #0d6efd;
+        color: #fff;
+
+        font-size: 9px;
+        font-weight: 600;
+
+        padding: 3px 6px;
+
+        border-radius: 3px;
+
+        z-index: 2;
+    }
+
+
+    /* =========================================================
+       UPLOAD MORE
+       ========================================================= */
+
+    .upload-more-box {
+        width: 120px;
+        height: 110px;
+
+        border: 1px dashed #cfd7e2;
+        border-radius: 6px;
+
+        background: #fff;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+
+        transition: all 0.2s ease;
+    }
+
+    .upload-more-box:hover {
+        border-color: #0d6efd;
+        background: #f8fbff;
+    }
+
+
+    .upload-more-content {
+        text-align: center;
+        color: #0d6efd;
+    }
+
+
+    .upload-icon {
+        font-size: 28px;
+        line-height: 30px;
+
+        color: #7b8794;
+
+        margin-bottom: 5px;
+    }
+
+
+    .upload-more-content span {
+        display: block;
+
+        font-size: 11px;
+        font-weight: 600;
+
+        color: #0d6efd;
+    }
+
+</style>
+
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const container =
+            document.getElementById("productImagesContainer");
+
+        const fileInput =
+            document.getElementById("productImagesInput");
+
+
+        // =====================================================
+        // DRAG & DROP
+        // =====================================================
+
+        let draggedItem = null;
+
+
+        container.addEventListener("dragstart", function (e) {
+
+            const item =
+                e.target.closest(".product-image-item");
+
+            if (!item)
+                return;
+
+            draggedItem = item;
+
+            item.classList.add("dragging");
+        });
+
+
+        container.addEventListener("dragend", function () {
+
+            if (draggedItem) {
+                draggedItem.classList.remove("dragging");
+            }
+
+            draggedItem = null;
+
+            updateImageOrder();
+        });
+
+
+        container.addEventListener("dragover", function (e) {
+
+            e.preventDefault();
+
+            if (!draggedItem)
+                return;
+
+            const target =
+                e.target.closest(".product-image-item");
+
+            if (!target ||
+                target === draggedItem)
+                return;
+
+
+            const rect =
+                target.getBoundingClientRect();
+
+            const before =
+                e.clientX 
+                rect.left + rect.width / 2;
+
+
+            if (before) {
+
+                container.insertBefore(
+                    draggedItem,
+                    target
+                );
+
+            } else {
+
+                container.insertBefore(
+                    draggedItem,
+                    target.nextSibling
+                );
+            }
+
+        });
+
+
+        // =====================================================
+        // REMOVE IMAGE
+        // =====================================================
+
+        container.addEventListener("click", function (e) {
+
+            const button =
+                e.target.closest(".image-remove-btn");
+
+            if (!button)
+                return;
+
+
+            const item =
+                button.closest(".product-image-item");
+
+            if (!item)
+                return;
+
+
+            item.remove();
+
+            updateImageOrder();
+
+        });
+
+
+        // =====================================================
+        // UPLOAD MORE
+        // =====================================================
+
+        fileInput.addEventListener(
+            "change",
+            async function () {
+
+                const files =
+                    Array.from(fileInput.files);
+
+                if (!files.length)
+                    return;
+
+
+                for (const file of files) {
+
+                    try {
+
+                        const imageUrl =
+                            await uploadProductImage(file);
+
+                        addImage(imageUrl);
+
+                    }
+                    catch (error) {
+
+                        console.error(error);
+
+                        alert(
+                            "Failed to upload image: " +
+                            file.name
+                        );
+                    }
+                }
+
+
+                fileInput.value = "";
+
+                updateImageOrder();
+            }
+        );
+
+
+        // =====================================================
+        // ADD NEW IMAGE
+        // =====================================================
+
+        function addImage(imageUrl) {
+
+            const items =
+                container.querySelectorAll(
+                    ".product-image-item"
+                );
+
+            const index =
+                items.length;
+
+
+            const item =
+                document.createElement("div");
+
+            item.className =
+                "product-image-item";
+
+            item.draggable = true;
+
+
+            item.innerHTML = `
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].Id"
+                       value="0" />
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].ImageUrl"
+                       value="${escapeHtml(imageUrl)}"
+                       class="image-url-input" />
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].ProductVariantId"
+                       value="" />
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].SortOrder"
+                       value="${index}"
+                       class="image-sort-input" />
+
+                <input type="hidden"
+                       name="ExistingImages[${index}].IsPrimary"
+                       value="false"
+                       class="image-primary-input" />
+
+
+                <div class="product-image-box">
+
+                    <img src="${escapeHtml(imageUrl)}"
+                         alt="Product image"
+                         class="product-image-preview" />
+
+                    <button type="button"
+                            class="image-remove-btn"
+                            title="Remove image">
+                        ×
+                    </button>
 
                 </div>
 
@@ -2246,8 +2670,9 @@
                         }
                         else {
 
-                            fields.forEach(
-                                function(field) {
+                fields.forEach(function (field) {
+                    field.classList.add("variant-locked");
+                });
 
                                     if (field.tagName === "SELECT") {
 

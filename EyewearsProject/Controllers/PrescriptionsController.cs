@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Globalization;
+using System.Text;
 namespace EyewearsProject.Controllers
 {
     [Authorize]
@@ -12,12 +15,21 @@ namespace EyewearsProject.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public PrescriptionsController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment env)
+        public PrescriptionsController(
+            AppDbContext context,
+            UserManager<ApplicationUser> userManager,
+            IWebHostEnvironment env,
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
             _env = env;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         // GET: /Prescriptions
@@ -162,5 +174,195 @@ namespace EyewearsProject.Controllers
             var publicUrl = $"/uploads/prescriptions/{fileName}";
             return Json(new { success = true, url = publicUrl });
         }
+        // POST: /Prescriptions/ScanPrescription
+        // Uses OCR.space's OCREngine 2, which returns per-word bounding boxes —
+        // letting us reconstruct table rows/columns by real position instead of
+        // guessing at raw text reading order.
+        [HttpPost]
+        public async Task<IActionResult> ScanPrescription(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return Json(new { success = false, message = "No file selected." });
+
+            var apiKey = _configuration["OcrSpace:ApiKey"];
+            if (string.IsNullOrEmpty(apiKey))
+                return Json(new { success = false, message = "OCR service is not configured." });
+
+            var httpClient = _httpClientFactory.CreateClient();
+
+            using var formData = new MultipartFormDataContent();
+            using var fileStream = file.OpenReadStream();
+            using var fileContent = new StreamContent(fileStream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+
+            formData.Add(fileContent, "file", file.FileName);
+            formData.Add(new StringContent(apiKey), "apikey");
+            formData.Add(new StringContent("2"), "OCREngine");   // Engine 2 — better accuracy, gives word-level positions
+            formData.Add(new StringContent("true"), "isOverlayRequired"); // returns word bounding boxes
+            formData.Add(new StringContent("eng"), "language");
+
+            HttpResponseMessage response;
+            try
+            {
+                response = await httpClient.PostAsync("https://api.ocr.space/parse/image", formData);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Couldn't reach the OCR service: " + ex.Message });
+            }
+
+            if (!response.IsSuccessStatusCode)
+                return Json(new { success = false, message = "OCR request failed." });
+
+            var json = await response.Content.ReadAsStringAsync();
+            var words = new List<(string Text, double CenterX, double CenterY)>();
+
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("IsErroredOnProcessing", out var errEl) && errEl.GetBoolean())
+                {
+                    var errMsg = root.TryGetProperty("ErrorMessage", out var msgEl)
+                        ? msgEl.ToString()
+                        : "Unknown OCR error.";
+                    return Json(new { success = false, message = "OCR error: " + errMsg });
+                }
+
+                var parsedResults = root.GetProperty("ParsedResults");
+                if (parsedResults.GetArrayLength() == 0)
+                    return Json(new { success = false, message = "We couldn't read any text from this image." });
+
+                var firstResult = parsedResults[0];
+                var overlay = firstResult.GetProperty("TextOverlay");
+                var lines = overlay.GetProperty("Lines");
+
+                foreach (var line in lines.EnumerateArray())
+                {
+                    foreach (var word in line.GetProperty("Words").EnumerateArray())
+                    {
+                        var text = word.GetProperty("WordText").GetString() ?? "";
+                        var left = word.GetProperty("Left").GetDouble();
+                        var top = word.GetProperty("Top").GetDouble();
+                        var width = word.GetProperty("Width").GetDouble();
+                        var height = word.GetProperty("Height").GetDouble();
+
+                        var centerX = left + width / 2;
+                        var centerY = top + height / 2;
+
+                        if (!string.IsNullOrWhiteSpace(text))
+                            words.Add((text, centerX, centerY));
+                    }
+                }
+            }
+            catch
+            {
+                return Json(new { success = false, message = "We couldn't read any text from this image." });
+            }
+
+            if (words.Count == 0)
+                return Json(new { success = false, message = "We couldn't read any text from this image." });
+
+            // ---- Reconstruct table rows using real Y-position ----
+            var sortedByY = words.OrderBy(w => w.CenterY).ToList();
+            var rows = new List<List<(string Text, double CenterX, double CenterY)>>();
+            const double rowThreshold = 12;
+
+            foreach (var w in sortedByY)
+            {
+                var row = rows.FirstOrDefault(r => Math.Abs(r.Average(x => x.CenterY) - w.CenterY) < rowThreshold);
+                if (row != null) row.Add(w);
+                else rows.Add(new List<(string, double, double)> { w });
+            }
+
+            foreach (var row in rows)
+                row.Sort((a, b) => a.CenterX.CompareTo(b.CenterX));
+
+            double FixMissingDecimal(double num)
+            {
+                if (Math.Abs(num) > 20 && Math.Abs(num) < 3000)
+                {
+                    var shifted = num / 100;
+                    if (Math.Abs(shifted) <= 20) return shifted;
+                }
+                return num;
+            }
+
+            List<double> ExtractNumbersFromRow(List<(string Text, double CenterX, double CenterY)> row, Regex labelPattern)
+            {
+                var labelIndex = row.FindIndex(w => labelPattern.IsMatch(w.Text));
+                if (labelIndex == -1) return new List<double>();
+
+                var numbers = new List<double>();
+                bool pendingNegative = false;
+
+                for (int i = labelIndex + 1; i < row.Count && numbers.Count < 5; i++)
+                {
+                    var text = row[i].Text.Trim();
+
+                    // OCR sometimes splits the minus sign off into its own token, separate
+                    // from the number that follows it — remember it and apply it to the
+                    // next number we successfully parse.
+                    if (text == "-" || text == "—" || text == "–")
+                    {
+                        pendingNegative = true;
+                        continue;
+                    }
+
+                    var cleaned = text.Replace(",", ".");
+                    if (double.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var num))
+                    {
+                        if (pendingNegative)
+                        {
+                            num = -Math.Abs(num);
+                            pendingNegative = false;
+                        }
+                        numbers.Add(FixMissingDecimal(num));
+                    }
+                }
+                return numbers;
+            }
+
+            var odPattern = new Regex(@"^O\.?D\.?$", RegexOptions.IgnoreCase);
+            var osPattern = new Regex(@"^O\.?S\.?$", RegexOptions.IgnoreCase);
+
+            List<double>? odNums = null;
+            List<double>? osNums = null;
+
+            foreach (var row in rows)
+            {
+                if (odNums == null)
+                {
+                    var nums = ExtractNumbersFromRow(row, odPattern);
+                    if (nums.Count >= 2) odNums = nums;
+                }
+                if (osNums == null)
+                {
+                    var nums = ExtractNumbersFromRow(row, osPattern);
+                    if (nums.Count >= 2) osNums = nums;
+                }
+            }
+
+            var result = new Dictionary<string, double>();
+            if (odNums != null)
+            {
+                result["rSph"] = odNums[0];
+                result["rCyl"] = odNums[1];
+                if (odNums.Count > 2) result["rAxis"] = odNums[2];
+            }
+            if (osNums != null)
+            {
+                result["lSph"] = osNums[0];
+                result["lCyl"] = osNums[1];
+                if (osNums.Count > 2) result["lAxis"] = osNums[2];
+            }
+
+            if (result.Count == 0)
+                return Json(new { success = false, message = "We couldn't clearly read prescription values from this photo. Please enter them manually." });
+
+            return Json(new { success = true, values = result });
+        }
     }
+
 }

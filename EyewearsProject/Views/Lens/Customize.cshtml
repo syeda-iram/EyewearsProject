@@ -63,8 +63,7 @@
                 }
             </div>
 
-            <<h5>3. Prescription</h5>
-
+            <h5>3. Prescription</h5>
                 @if (User.Identity?.IsAuthenticated != true)
                 {
                     <p class="text-muted"><a asp-controller="Account" asp-action="Login">Log in</a> to attach a prescription, or continue without one.</p>
@@ -72,37 +71,37 @@
                 else
                 {
                     <div class="d-flex gap-2 mb-3">
-                        <button type="button" class="btn btn-outline-primary" id="addPrescriptionBtn">+ Add Prescription</button>
-                        <span class="text-muted align-self-center" id="continueWithoutLabel">or continue without one</span>
+                    <button type="button" class="btn btn-outline-primary" id="addPrescriptionBtn">@(savedPrescriptions.Any() ? "Edit Prescription" : "+ Add Prescription")</button>                        <span class="text-muted align-self-center" id="continueWithoutLabel">or continue without one</span>
                     </div>
 
-                    <div id="prescriptionPanel" class="border rounded p-3 mb-4" style="display:none;">
-                        @if (savedPrescriptions.Any())
-                        {
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Use a saved prescription</label>
-                                <select name="prescriptionId" id="savedRxSelect" class="form-select" style="max-width:400px;">
-                                    <option value="">-- Select --</option>
-                                    @foreach (var rx in savedPrescriptions)
-                                    {
-                                        <option value="@rx.Id">@rx.PatientName — @rx.CreatedAt.ToString("dd MMM yyyy")</option>
-                                    }
-                                </select>
-                            </div>
-                            <hr />
-                            <p class="text-muted small">Or add a new one below:</p>
-                        }
-
+                    <div id="prescriptionPanel" class="border rounded p-3 mb-4" style="display:@(savedPrescriptions.Any() ? "block" : "none");">
+    @if (savedPrescriptions.Any())
+    {
+        var mostRecent = savedPrescriptions.First();
+        <div class="mb-3">
+            <label class="form-label fw-bold">Using your saved prescription</label>
+            <select name="prescriptionId" id="savedRxSelect" class="form-select" style="max-width:400px;">
+                @foreach (var rx in savedPrescriptions)
+                {
+                    <option value="@rx.Id" selected="@(rx.Id == mostRecent.Id ? "selected" : null)">@rx.PatientName — @rx.CreatedAt.ToString("dd MMM yyyy")</option>
+                }
+                <option value="">-- Don't use a saved one, enter new details below --</option>
+            </select>
+        </div>
+        <hr />
+        <p class="text-muted small">Or add a new one below:</p>
+    }
                         <div class="btn-group mb-3" role="group">
                             <button type="button" class="btn btn-outline-secondary btn-sm rx-tab-btn active" data-tab="upload">Upload Photo/PDF</button>
                             <button type="button" class="btn btn-outline-secondary btn-sm rx-tab-btn" data-tab="manual">Enter Manually</button>
                         </div>
 
-                        <div id="rx-tab-upload" class="rx-tab-content">
-                            <input type="file" id="rxFileInput" accept=".jpg,.jpeg,.png,.pdf" class="form-control mb-2" style="max-width:400px;" />
-                            <div id="rxUploadStatus" class="small text-muted"></div>
-                            <input type="hidden" name="uploadedFileUrl" id="uploadedFileUrlField" />
-                        </div>
+                    <div id="rx-tab-upload" class="rx-tab-content">
+                        <input type="file" id="rxFileInput" accept=".jpg,.jpeg,.png,.pdf" class="form-control mb-2" style="max-width:400px;" />
+                        <div id="rxUploadStatus" class="small text-muted"></div>
+                        <div id="rxOcrNotice" class="small mt-2" style="display:none;"></div>
+                        <input type="hidden" name="uploadedFileUrl" id="uploadedFileUrlField" />
+                    </div>
 
                         <div id="rx-tab-manual" class="rx-tab-content" style="display:none;">
                             <div class="mb-2">
@@ -125,6 +124,8 @@
                                 <div class="col"><input type="number" step="0.5" name="lPd" class="form-control form-control-sm" placeholder="PD" /></div>
                             </div>
                         </div>
+                    <button type="button" id="confirmRxBtn" class="btn btn-sm btn-success mt-3">Use This Prescription</button>
+                    <div id="rxConfirmedNotice" class="small text-success mt-2" style="display:none;">✓ Prescription details saved — they'll be attached when you click Add to Cart below.</div>
                     </div>
                 }
         </div>
@@ -156,6 +157,7 @@
 </form>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         const basePrice = @((product.DiscountPrice ?? product.Price));
 
@@ -196,30 +198,162 @@
                 });
             });
 
-            const rxFileInput = document.getElementById('rxFileInput');
-            if (rxFileInput) {
-                rxFileInput.addEventListener('change', async function() {
-                    const file = this.files[0];
-                    if (!file) return;
+// Prescription SPH/CYL are almost always between -20.00 and +20.00 in real optical practice.
+// OCR sometimes drops the decimal point ("-2.00" -> "200"). If a raw number is
+// implausibly large for SPH/CYL but divides cleanly by 100 into a plausible range,
+// treat that as the intended decimal value.
+function fixMissingDecimal(num) {
+    if (Math.abs(num) > 20 && Math.abs(num) < 3000) {
+        const shifted = num / 100;
+        if (Math.abs(shifted) <= 20) return shifted;
+    }
+    return num;
+}
 
-                    const statusEl = document.getElementById('rxUploadStatus');
-                    statusEl.textContent = 'Uploading...';
+// Scans the ENTIRE OCR'd text as a flat token stream (not line-by-line) and
+// grabs the first few numeric tokens appearing after a given label — this is
+// far more resilient to table layouts where OCR reading order gets scrambled
+// across columns than a same-line-only search.
+function extractPrescriptionNumbers(text, labelPatterns) {
+    const tokens = text.split(/\s+/).filter(Boolean);
+    const numberRegex = /^[-+]?\d+(\.\d+)?$/;
 
-                    const formData = new FormData();
-                    formData.append('file', file);
-
-                    const response = await fetch('/Prescriptions/UploadFile', { method: 'POST', body: formData });
-                    const data = await response.json();
-
-                    if (data.success) {
-                        document.getElementById('uploadedFileUrlField').value = data.url;
-                        statusEl.textContent = 'Uploaded: ' + file.name;
-                        statusEl.classList.add('text-success');
-                    } else {
-                        statusEl.textContent = data.message;
-                        statusEl.classList.add('text-danger');
-                    }
-                });
+    for (let i = 0; i < tokens.length; i++) {
+        if (labelPatterns.some(p => p.test(tokens[i]))) {
+            const found = [];
+            // Look at the next ~12 tokens after the label for anything numeric,
+            // skipping stray single-letter tokens like the "X" before axis.
+            for (let j = i + 1; j < tokens.length && found.length < 5 && j < i + 12; j++) {
+                if (numberRegex.test(tokens[j])) {
+                    found.push(fixMissingDecimal(parseFloat(tokens[j])));
+                }
             }
+            if (found.length >= 2) return found;
+        }
+    }
+    return null;
+}
+
+function parsePrescriptionText(text) {
+    const odNums = extractPrescriptionNumbers(text, [/^OD$/i, /right/i]);
+    const osNums = extractPrescriptionNumbers(text, [/^OS$/i, /left/i]);
+
+    const result = {};
+    if (odNums && odNums.length >= 2) {
+        result.rSph = odNums[0];
+        result.rCyl = odNums[1];
+        if (odNums[2] !== undefined) result.rAxis = odNums[2];
+        if (odNums[3] !== undefined) result.rAdd = odNums[3];
+        if (odNums[4] !== undefined) result.rPd = odNums[4];
+    }
+    if (osNums && osNums.length >= 2) {
+        result.lSph = osNums[0];
+        result.lCyl = osNums[1];
+        if (osNums[2] !== undefined) result.lAxis = osNums[2];
+        if (osNums[3] !== undefined) result.lAdd = osNums[3];
+        if (osNums[4] !== undefined) result.lPd = osNums[4];
+    }
+    return result;
+}
+function isPrescriptionDataUsable(data) {
+    const hasRight = data.rSph !== undefined && data.rCyl !== undefined;
+    const hasLeft = data.lSph !== undefined && data.lCyl !== undefined;
+    return hasRight || hasLeft;
+}
+
+function fillManualFieldsFromOcr(data) {
+    for (const [fieldName, value] of Object.entries(data)) {
+        const input = document.querySelector(`#rx-tab-manual input[name="${fieldName}"]`);
+        if (input) input.value = value;
+    }
+}
+
+function switchToManualTab() {
+    document.querySelectorAll('.rx-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.rx-tab-btn[data-tab="manual"]').classList.add('active');
+    document.querySelectorAll('.rx-tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById('rx-tab-manual').style.display = 'block';
+}
+
+const rxFileInput = document.getElementById('rxFileInput');
+if (rxFileInput) {
+    rxFileInput.addEventListener('change', async function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const statusEl = document.getElementById('rxUploadStatus');
+        const ocrNoticeEl = document.getElementById('rxOcrNotice');
+        ocrNoticeEl.style.display = 'none';
+        statusEl.classList.remove('text-success', 'text-danger');
+        statusEl.textContent = 'Uploading...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/Prescriptions/UploadFile', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (!data.success) {
+            statusEl.textContent = data.message;
+            statusEl.classList.add('text-danger');
+            return;
+        }
+
+        document.getElementById('uploadedFileUrlField').value = data.url;
+        statusEl.textContent = 'Uploaded: ' + file.name;
+        statusEl.classList.add('text-success');
+
+        const isImage = /\.(jpg|jpeg|png)$/i.test(file.name);
+        if (!isImage) {
+            ocrNoticeEl.style.display = 'block';
+            ocrNoticeEl.className = 'small mt-2 text-muted';
+            ocrNoticeEl.textContent = 'Automatic reading isn\'t available for PDF files yet — please enter your prescription values manually below.';
+            switchToManualTab();
+            return;
+        }
+
+        ocrNoticeEl.style.display = 'block';
+        ocrNoticeEl.className = 'small mt-2 text-muted';
+        ocrNoticeEl.textContent = 'Reading your prescription...';
+
+                ocrNoticeEl.className = 'small mt-2 text-muted';
+                ocrNoticeEl.textContent = 'Reading your prescription...';
+
+                try {
+                    const ocrFormData = new FormData();
+                    ocrFormData.append('file', file);
+
+                    const ocrResponse = await fetch('/Prescriptions/ScanPrescription', { method: 'POST', body: ocrFormData });
+                    const ocrResult = await ocrResponse.json();
+
+                    switchToManualTab();
+
+                    if (ocrResult.success) {
+                        for (const [fieldName, value] of Object.entries(ocrResult.values)) {
+                            const input = document.querySelector(`#rx-tab-manual input[name="${fieldName}"]`);
+                            if (input) input.value = value;
+                        }
+                        ocrNoticeEl.className = 'small mt-2 text-success';
+                        ocrNoticeEl.textContent = 'We filled in what we could read — please review and correct the values below before adding to cart.';
+                    } else {
+                        ocrNoticeEl.className = 'small mt-2 text-danger';
+                        ocrNoticeEl.textContent = ocrResult.message;
+                    }
+                } catch (err) {
+                    console.error('OCR failed:', err);
+                    switchToManualTab();
+                    ocrNoticeEl.className = 'small mt-2 text-danger';
+                    ocrNoticeEl.textContent = "We couldn't read this photo automatically. Please enter your prescription values manually below.";
+                }
+    });
+}
+        const confirmRxBtn = document.getElementById('confirmRxBtn');
+        if (confirmRxBtn) {
+            confirmRxBtn.addEventListener('click', function() {
+                document.getElementById('rxConfirmedNotice').style.display = 'block';
+                panel.style.display = 'none';
+                addBtn.textContent = 'Edit Prescription';
+            });
+        }
     </script>
 }
