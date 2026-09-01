@@ -8,10 +8,25 @@
 <h1>Order @Model.OrderNumber</h1>
 <p class="text-muted">Placed on @Model.OrderDate.ToString("dd MMM yyyy, h:mm tt")</p>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning">@TempData["Error"]</div>
+}
+
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-4">
-            <div class="card-header">Items</div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Items</span>
+                <form asp-controller="Orders" asp-action="ReorderAll" method="post">
+                    <input type="hidden" name="orderId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-sm btn-dark">Order Again (All Items)</button>
+                </form>
+            </div>
             <table class="table mb-0">
                 <thead>
                     <tr>
@@ -20,6 +35,7 @@
                         <th>Qty</th>
                         <th>Unit Price</th>
                         <th>Total</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,6 +57,13 @@
                             <td>@item.Quantity</td>
                             <td>@item.UnitPrice.ToPkr()</td>
                             <td>@item.TotalPrice.ToPkr()</td>
+                            <td>
+                                <form asp-controller="Orders" asp-action="ReorderItem" method="post">
+                                    <input type="hidden" name="orderId" value="@Model.Id" />
+                                    <input type="hidden" name="itemId" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-dark">Order Again</button>
+                                </form>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -97,4 +120,5 @@
     </div>
 </div>
 
+<a asp-action="Track" asp-route-id="@Model.Id" class="btn btn-outline-dark">Track Order</a>
 <a asp-action="Index" class="btn btn-secondary">Back to My Orders</a>

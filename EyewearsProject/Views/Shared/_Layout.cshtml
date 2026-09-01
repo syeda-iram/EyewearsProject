@@ -2,11 +2,13 @@
 @using Microsoft.EntityFrameworkCore
 @using EyewearsProject.Models
 @using EyewearsProject.Extensions
+@using EyewearsProject.Services
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject AppDbContext DbContext
 @inject IHttpContextAccessor HttpContextAccessor
+@inject ICartService CartService
 
 @{
     var categories = await DbContext.Categories
@@ -22,9 +24,7 @@
         currentUser = await UserManager.GetUserAsync(User);
     }
 
-    var cartItems = HttpContextAccessor.HttpContext?.Session
-        .GetObject<List<CartItem>>("Cart")
-        ?? new List<CartItem>();
+    var cartItems = await CartService.GetCartAsync();
 
     var cartCount = cartItems.Sum(i => i.Quantity);
 

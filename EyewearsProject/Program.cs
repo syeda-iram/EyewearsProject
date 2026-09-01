@@ -57,18 +57,11 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<
-    EyewearsProject.Services.IAuditLogger, 
-    EyewearsProject.Services.AuditLogger>();
-builder.Services.AddScoped<
-    EyewearsProject.Services.IInventoryService, 
-    EyewearsProject.Services.InventoryService>();
-builder.Services.AddScoped<
-    EyewearsProject.Services.Email.IEmailService,
-    EyewearsProject.Services.Email.EmailService>();
-builder.Services.AddScoped<
-    EyewearsProject.Services.Sms.ISmsService,
-    EyewearsProject.Services.Sms.SmsService>();
+builder.Services.AddScoped<EyewearsProject.Services.IAuditLogger, EyewearsProject.Services.AuditLogger>();
+builder.Services.AddScoped<EyewearsProject.Services.IInventoryService, EyewearsProject.Services.InventoryService>();
+builder.Services.AddScoped<EyewearsProject.Services.ICartService, EyewearsProject.Services.CartService>();
+builder.Services.AddScoped<EyewearsProject.Services.Email.IEmailService, EyewearsProject.Services.Email.EmailService>();
+builder.Services.AddScoped<EyewearsProject.Services.Sms.ISmsService, EyewearsProject.Services.Sms.SmsService>();
 
 var app = builder.Build();
 
