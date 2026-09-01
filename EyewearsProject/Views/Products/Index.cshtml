@@ -149,7 +149,7 @@
 
 
     /* =========================================================
-       FEATURED / SALE BADGES
+       FEATURED BADGES
     ========================================================= */
 
     .featured-badge {
@@ -159,19 +159,6 @@
         background: #ffffff;
         color: #172c5f;
         border: 1px solid #d8dfeb;
-        border-radius: 20px;
-        padding: 4px 8px;
-        font-size: 10px;
-        font-weight: 600;
-    }
-
-    .sale-badge {
-        position: absolute;
-        top: 9px;
-        right: 9px;
-        background: #ffffff;
-        color: #d93025;
-        border: 1px solid #f0d1cf;
         border-radius: 20px;
         padding: 4px 8px;
         font-size: 10px;
@@ -871,14 +858,6 @@
                             {
                                 <span class="featured-badge">
                                     Featured
-                                </span>
-                            }
-
-                            @if (product.DiscountPrice.HasValue &&
-                                 product.DiscountPrice.Value < product.Price)
-                            {
-                                <span class="sale-badge">
-                                    Sale
                                 </span>
                             }
 
