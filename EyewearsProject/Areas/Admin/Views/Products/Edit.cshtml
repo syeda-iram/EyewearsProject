@@ -48,12 +48,19 @@
     <!-- =========================================================
          MAIN FORM
          ========================================================= -->
+    @if (ViewBag.DebugErrors != null)
+    {
+        <div class="alert alert-danger" style="white-space: pre-wrap;">
+            <strong>DEBUG — validation errors:</strong><br />
+            @ViewBag.DebugErrors
+        </div>
+    }
 
     <form asp-action="Edit"
           asp-route-id="@Model.Id"
           method="post"
+          novalidate
           id="editProductForm">
-
         @Html.AntiForgeryToken()
 
         <input type="hidden"
@@ -960,12 +967,17 @@
 
                             <div class="form-check form-switch">
 
-                                <input asp-for="IsActive"
+                                <input type="checkbox"
                                        class="form-check-input"
-                                       role="switch" />
+                                       role="switch"
+                                       id="IsActive"
+                                       name="IsActive"
+                                       value="true"
+                                       checked="@(Model.IsActive ? "checked" : null)" />
 
-                                <label asp-for="IsActive"
-                                       class="form-check-label">
+                                <input type="hidden" name="IsActive" value="false" />
+
+                                <label class="form-check-label" for="IsActive">
                                     Active
                                 </label>
 
@@ -994,12 +1006,17 @@
 
                             <div class="form-check form-switch">
 
-                                <input asp-for="IsFeatured"
+                                <input type="checkbox"
                                        class="form-check-input"
-                                       role="switch" />
+                                       role="switch"
+                                       id="IsFeatured"
+                                       name="IsFeatured"
+                                       value="true"
+                                       checked="@(Model.IsFeatured ? "checked" : null)" />
 
-                                <label asp-for="IsFeatured"
-                                       class="form-check-label">
+                                <input type="hidden" name="IsFeatured" value="false" />
+
+                                <label class="form-check-label" for="IsFeatured">
                                     Featured
                                 </label>
 
@@ -1911,7 +1928,19 @@
 
     <partial name="_ValidationScriptsPartial" />
 
-
+    <script>
+        // Client-side validation was silently blocking this form
+        // (e.g. the checkbox-required bug) with no visible feedback.
+        // Disable it here and let the server do real validation instead —
+        // that way Save always at least reaches the controller.
+        document.addEventListener("DOMContentLoaded", function() {
+            var $form = window.jQuery && jQuery("#editProductForm");
+            if ($form && $form.length) {
+                $form.removeData("validator");
+                $form.removeData("unobtrusiveValidation");
+            }
+        });
+    </script>
     <!-- =========================================================
          TRY-ON SCRIPT
          ========================================================= -->

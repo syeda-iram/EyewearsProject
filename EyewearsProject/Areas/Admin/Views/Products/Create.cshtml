@@ -1,7 +1,7 @@
 ﻿@model ProductFormViewModel
 
 @{
-    ViewData["Title"] = "Create Product — {Model.Name}";
+    ViewData["Title"] = "Create New Product";
 }
 
 <div class="product-edit-page">
@@ -48,9 +48,7 @@
     <!-- =========================================================
          MAIN FORM
          ========================================================= -->
-
-    <form asp-action="Edit"
-          asp-route-id="@Model.Id"
+    <form asp-action="Create"
           method="post"
           id="editProductForm">
 

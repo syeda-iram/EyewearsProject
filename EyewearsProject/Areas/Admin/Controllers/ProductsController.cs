@@ -125,9 +125,12 @@ namespace EyewearsProject.Areas.Admin.Controllers
             // ---------------------------------------------------------
             // Basic ModelState validation
             // ---------------------------------------------------------
-
             if (!ModelState.IsValid)
             {
+                ViewBag.DebugErrors = string.Join(" | ", ModelState
+                    .Where(kvp => kvp.Value.Errors.Count > 0)
+                    .Select(kvp => $"[{kvp.Key}] " + string.Join(", ", kvp.Value.Errors.Select(e => e.ErrorMessage))));
+
                 await PopulateDropdownsAsync(
                     model.CategoryId,
                     model.SubCategoryId,
@@ -139,7 +142,6 @@ namespace EyewearsProject.Areas.Admin.Controllers
             // ---------------------------------------------------------
             // SKU required
             // ---------------------------------------------------------
-
             if (string.IsNullOrWhiteSpace(model.Sku))
             {
                 ModelState.AddModelError(
@@ -195,140 +197,148 @@ namespace EyewearsProject.Areas.Admin.Controllers
             }
 
             // =========================================================
-            // TRANSACTION
+            // TRANSACTION — wrapped in EF's retry-aware execution
+            // strategy, required once EnableRetryOnFailure is on
             // =========================================================
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+            var strategy = _context.Database.CreateExecutionStrategy();
 
-            try
+            Product product = null!;
+
+            await strategy.ExecuteAsync(async () =>
             {
-                // =====================================================
-                // CREATE PRODUCT
-                // =====================================================
+                await using var transaction =
+                    await _context.Database.BeginTransactionAsync();
 
-                var product = new Product
+                try
                 {
-                    Name = model.Name ?? "",
+                    // =====================================================
+                    // CREATE PRODUCT
+                    // =====================================================
 
-                    Sku = model.Sku,
+                    product = new Product
+                    {
+                        Name = model.Name ?? "",
 
-                    Description = model.Description,
+                        Sku = model.Sku,
 
-                    CategoryId = model.CategoryId,
+                        Description = model.Description,
 
-                    SubCategoryId = model.SubCategoryId,
+                        CategoryId = model.CategoryId,
 
-                    BrandId = model.BrandId,
+                        SubCategoryId = model.SubCategoryId,
 
-                    Gender = model.Gender,
+                        BrandId = model.BrandId,
 
-                    Material = model.Material,
+                        Gender = model.Gender,
 
-                    Shape = model.Shape,
+                        Material = model.Material,
 
-                    Price = model.Price,
+                        Shape = model.Shape,
 
-                    DiscountPrice = model.DiscountPrice,
+                        Price = model.Price,
 
-                    CostPrice = model.CostPrice,
+                        DiscountPrice = model.DiscountPrice,
 
-                    Weight = model.Weight,
+                        CostPrice = model.CostPrice,
 
-                    IsFeatured = model.IsFeatured,
+                        Weight = model.Weight,
 
-                    IsActive = model.IsActive,
+                        IsFeatured = model.IsFeatured,
 
-                    TryOnOverlayImageUrl =
-                        model.TryOnOverlayImageUrl,
+                        IsActive = model.IsActive,
 
-                    TryOn3DModelUrl =
-                        model.TryOn3DModelUrl,
+                        TryOnOverlayImageUrl =
+                            model.TryOnOverlayImageUrl,
 
-                    TryOnOverlayScale =
-                        model.TryOnOverlayScale,
+                        TryOn3DModelUrl =
+                            model.TryOn3DModelUrl,
 
-                    TryOnOverlayVerticalOffset =
-                        model.TryOnOverlayVerticalOffset,
+                        TryOnOverlayScale =
+                            model.TryOnOverlayScale,
 
-                    CreatedAt = DateTime.UtcNow,
+                        TryOnOverlayVerticalOffset =
+                            model.TryOnOverlayVerticalOffset,
 
-                    UpdatedAt = DateTime.UtcNow
-                };
+                        CreatedAt = DateTime.UtcNow,
 
-                _context.Products.Add(product);
+                        UpdatedAt = DateTime.UtcNow
+                    };
 
-                // Product ID required for child records.
-                await _context.SaveChangesAsync();
+                    _context.Products.Add(product);
 
-                // =====================================================
-                // VARIANTS + INVENTORY
-                // =====================================================
+                    // Product ID required for child records.
+                    await _context.SaveChangesAsync();
 
-                await CreateVariantsAsync(
-                    product,
-                    model);
+                    // =====================================================
+                    // VARIANTS + INVENTORY
+                    // =====================================================
 
-                // =====================================================
-                // IMAGES
-                // =====================================================
+                    await CreateVariantsAsync(
+                        product,
+                        model);
 
-                await CreateImagesAsync(
-                    product,
-                    model);
+                    // =====================================================
+                    // IMAGES
+                    // =====================================================
 
-                // =====================================================
-                // SPECIFICATIONS
-                // =====================================================
+                    await CreateImagesAsync(
+                        product,
+                        model);
 
-                await CreateSpecificationsAsync(
-                    product,
-                    model);
+                    // =====================================================
+                    // SPECIFICATIONS
+                    // =====================================================
 
-                // =====================================================
-                // ATTRIBUTES
-                // =====================================================
+                    await CreateSpecificationsAsync(
+                        product,
+                        model);
 
-                await CreateAttributesAsync(
-                    product,
-                    model);
+                    // =====================================================
+                    // ATTRIBUTES
+                    // =====================================================
 
-                // =====================================================
-                // TAGS
-                // =====================================================
+                    await CreateAttributesAsync(
+                        product,
+                        model);
 
-                await CreateTagsAsync(
-                    product,
-                    model);
+                    // =====================================================
+                    // TAGS
+                    // =====================================================
 
-                // =====================================================
-                // FINAL SAVE
-                // =====================================================
+                    await CreateTagsAsync(
+                        product,
+                        model);
 
-                await _context.SaveChangesAsync();
+                    // =====================================================
+                    // FINAL SAVE
+                    // =====================================================
 
-                await transaction.CommitAsync();
+                    await _context.SaveChangesAsync();
 
-                // =====================================================
-                // AUDIT
-                // =====================================================
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
 
-                await _auditLogger.LogAsync(
-                    "Create",
-                    "Product",
-                    product.Id.ToString(),
-                    $"Created product {product.Name} (SKU: {product.Sku}) including variants, inventory, images, specifications, attributes and tags.");
+            // =========================================================
+            // AUDIT
+            // =========================================================
 
-                TempData["Success"] =
-                    "Product created successfully.";
+            await _auditLogger.LogAsync(
+                "Create",
+                "Product",
+                product.Id.ToString(),
+                $"Created product {product.Name} (SKU: {product.Sku}) including variants, inventory, images, specifications, attributes and tags.");
 
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            TempData["Success"] =
+                "Product created successfully.";
+
+            return RedirectToAction(nameof(Index));
         }
 
         // =========================================================
@@ -911,11 +921,11 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 await using var transaction =
                     await _context.Database.BeginTransactionAsync();
 
-            try
-            {
-                // =====================================================
-                // PRODUCT INFORMATION
-                // =====================================================
+                try
+                {
+                    // =====================================================
+                    // PRODUCT INFORMATION
+                    // =====================================================
 
                     product.Name =
                         model.Name.Trim();
@@ -944,9 +954,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     product.Shape =
                         model.Shape;
 
-                // =====================================================
-                // PRICING
-                // =====================================================
+                    // =====================================================
+                    // PRICING
+                    // =====================================================
 
                     product.Price =
                         model.Price;
@@ -960,9 +970,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     product.Weight =
                         model.Weight;
 
-                // =====================================================
-                // SETTINGS
-                // =====================================================
+                    // =====================================================
+                    // SETTINGS
+                    // =====================================================
 
                     product.IsActive =
                         model.IsActive;
@@ -970,9 +980,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     product.IsFeatured =
                         model.IsFeatured;
 
-                // =====================================================
-                // VIRTUAL TRY-ON
-                // =====================================================
+                    // =====================================================
+                    // VIRTUAL TRY-ON
+                    // =====================================================
 
                     product.TryOnOverlayImageUrl =
                         model.TryOnOverlayImageUrl;
@@ -993,45 +1003,54 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     // VARIANTS
                     // =================================================
 
-                    await SaveVariantsAsync(
+                    var variantsOk = await SaveVariantsAsync(
                         product,
                         model);
 
-                // =====================================================
-                // IMAGES
-                // =====================================================
+                    if (!variantsOk)
+                    {
+                        // ModelState already has the specific error.
+                        // Abort the save instead of silently committing
+                        // partial/invalid variant data.
+                        throw new InvalidOperationException(
+                            "Variant validation failed.");
+                    }
+
+                    // =====================================================
+                    // IMAGES
+                    // =====================================================
 
                     await SaveImagesAsync(
                         product,
                         model);
 
-                // =====================================================
-                // SPECIFICATIONS
-                // =====================================================
+                    // =====================================================
+                    // SPECIFICATIONS
+                    // =====================================================
 
                     await SaveSpecificationsAsync(
                         product,
                         model);
 
-                // =====================================================
-                // ATTRIBUTES
-                // =====================================================
+                    // =====================================================
+                    // ATTRIBUTES
+                    // =====================================================
 
                     await SaveAttributesAsync(
                         product,
                         model);
 
-                // =====================================================
-                // TAGS
-                // =====================================================
+                    // =====================================================
+                    // TAGS
+                    // =====================================================
 
                     await SaveTagsAsync(
                         product,
                         model);
 
-                // =====================================================
-                // FINAL SAVE
-                // =====================================================
+                    // =====================================================
+                    // FINAL SAVE
+                    // =====================================================
 
                     await _context.SaveChangesAsync();
 
