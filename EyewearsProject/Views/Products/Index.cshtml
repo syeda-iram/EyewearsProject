@@ -183,31 +183,30 @@
        WISHLIST BUTTON
     ========================================================= */
 
-    .wishlist-btn {
+    .wishlist-form {
         position: absolute;
         top: 8px;
         right: 8px;
+        z-index: 3;
+    }
 
+    .wishlist-btn {
+        position: relative;
+        top: auto;
+        right: auto;
         width: 32px;
         height: 32px;
-
         border: none;
         border-radius: 50%;
-
         background: rgba(255, 255, 255, 0.95);
-
         color: #172c5f;
         font-size: 20px;
         line-height: 1;
-
         display: flex;
         align-items: center;
         justify-content: center;
-
         cursor: pointer;
-
-        transition: transform 0.15s ease,
-                    background 0.15s ease;
+        transition: transform 0.15s ease, background 0.15s ease;
     }
 
     .wishlist-btn:hover {
@@ -852,13 +851,9 @@
                         product.Images.FirstOrDefault(i => i.IsPrimary)
                         ?? product.Images.FirstOrDefault();
 
-
                     <div class="product-card">
 
-
-                        <!-- =========================================
-                             IMAGE
-                        ========================================== -->
+                        <!-- IMAGE -->
 
                         <div class="product-image-wrapper">
 
@@ -872,18 +867,12 @@
 
                             </a>
 
-
-                            <!-- FEATURED -->
-
                             @if (product.IsFeatured)
                             {
                                 <span class="featured-badge">
                                     Featured
                                 </span>
                             }
-
-
-                            <!-- SALE -->
 
                             @if (product.DiscountPrice.HasValue &&
                                  product.DiscountPrice.Value < product.Price)
@@ -893,37 +882,37 @@
                                 </span>
                             }
 
+                            <form asp-controller="Wishlist"
+                                  asp-action="Add"
+                                  method="post"
+                                  class="wishlist-form">
 
-                            <!-- WISHLIST -->
+                                @Html.AntiForgeryToken()
 
-                            <button type="button"
-                                    class="wishlist-btn"
-                                    title="Add to wishlist">
+                                <input type="hidden"
+                                       name="productId"
+                                       value="@product.Id" />
 
-                                ♡
+                                <button type="submit"
+                                        class="wishlist-btn"
+                                        title="Add to wishlist">
 
-                            </button>
+                                    ♡
+
+                                </button>
+
+                            </form>
 
                         </div>
 
 
-                        <!-- =========================================
-                             PRODUCT INFO
-                        ========================================== -->
+                        <!-- PRODUCT INFO -->
 
                         <div class="product-info">
 
-
-                            <!-- BRAND -->
-
                             <div class="product-brand">
-
                                 @(product.Brand?.Name ?? "Unbranded")
-
                             </div>
-
-
-                            <!-- PRODUCT NAME -->
 
                             <a asp-controller="Products"
                                asp-action="Details"
@@ -933,9 +922,6 @@
                                 @product.Name
 
                             </a>
-
-
-                            <!-- CATEGORY -->
 
                             <div class="product-category">
 
@@ -950,24 +936,12 @@
 
                             </div>
 
-
-                            <!-- GENDER -->
-
                             @if (!string.IsNullOrWhiteSpace(product.Gender))
                             {
                                 <span class="product-gender">
-
                                     @product.Gender
-
                                 </span>
                             }
-
-
-                        
-
-                            <!-- =====================================
-                                 PRICE
-                            ====================================== -->
 
                             <div class="product-price-row">
 
@@ -1000,11 +974,6 @@
 
                             </div>
 
-
-                            <!-- =====================================
-                                 DETAILS BUTTON
-                            ====================================== -->
-
                             <a asp-controller="Products"
                                asp-action="Details"
                                asp-route-id="@product.Id"
@@ -1017,19 +986,16 @@
                         </div>
 
                     </div>
-
                 }
 
             </div>
         }
-
-
-        <!-- =====================================================
-             EMPTY STATE
-        ===================================================== -->
-
         else
         {
+            <!-- =====================================================
+                 EMPTY STATE
+            ===================================================== -->
+
             <div class="empty-products">
 
                 <p class="mb-2">

@@ -1,12 +1,932 @@
 ﻿@using EyewearsProject.Extensions
 @model Order
+
 @{
     ViewData["Title"] = "Order Confirmed";
+
+    var subtotal = Model.TotalAmount;
+    var hasDiscount = Model.DiscountAmount > 0;
 }
 
-<div class="text-center">
-    <h1 class="text-success mb-3">Thank you!</h1>
-    <p>Your order <strong>@Model.OrderNumber</strong> has been placed.</p>
-    <p>Total: @Model.GrandTotal.ToPkr() &middot; Payment: @Model.PaymentMethod</p>
-    <a asp-controller="Products" asp-action="Index" class="btn btn-primary mt-3">Continue Shopping</a>
+<style>
+    .confirmation-page {
+        background: #fff;
+        min-height: 100vh;
+        padding: 38px 20px 55px;
+    }
+
+    .confirmation-container {
+        max-width: 1020px;
+        margin: 0 auto;
+    }
+
+    /* =========================
+           SUCCESS HEADER
+           ========================= */
+
+    .success-header {
+        text-align: center;
+        margin-bottom: 28px;
+        position: relative;
+    }
+
+    .success-icon {
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 12px;
+        border-radius: 50%;
+        background: #24915d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        font-weight: 700;
+        box-shadow: 0 4px 14px rgba(36, 145, 93, 0.18);
+    }
+
+    .success-header h1 {
+        margin: 0 0 7px;
+        color: #238653;
+        font-size: 34px;
+        font-weight: 750;
+        letter-spacing: -0.5px;
+    }
+
+    .success-header .success-message {
+        margin: 0 0 10px;
+        color: #263654;
+        font-size: 15px;
+        font-weight: 500;
+    }
+
+    .order-id-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f4f6f8;
+        border-radius: 10px;
+        padding: 8px 15px;
+        color: #14213d;
+        font-size: 14px;
+        margin-bottom: 9px;
+    }
+
+        .order-id-box strong {
+            color: #16a36b;
+        }
+
+    .email-message {
+        margin: 0;
+        color: #667085;
+        font-size: 13px;
+    }
+
+    /* =========================
+           TOP INFO CARDS
+           ========================= */
+
+    .order-info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 1px solid #e4e8ee;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 10px rgba(20, 33, 61, 0.035);
+    }
+
+    .order-info-card {
+        min-height: 78px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 16px;
+        border-right: 1px solid #e4e8ee;
+    }
+
+        .order-info-card:last-child {
+            border-right: none;
+        }
+
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 18px;
+    }
+
+    .icon-blue {
+        background: #eaf3ff;
+        color: #1769d1;
+    }
+
+    .icon-green {
+        background: #eaf8f0;
+        color: #27915f;
+    }
+
+    .icon-purple {
+        background: #f1edff;
+        color: #7352d8;
+    }
+
+    .icon-amber {
+        background: #fff5dd;
+        color: #d59a16;
+    }
+
+    .info-label {
+        color: #68758a;
+        font-size: 11px;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        color: #14213d;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .info-subvalue {
+        color: #697586;
+        font-size: 11px;
+        margin-top: 3px;
+    }
+
+    /* =========================
+           MAIN CONTENT
+           ========================= */
+
+    .confirmation-grid {
+        display: grid;
+        grid-template-columns: 1.65fr 1fr;
+        gap: 14px;
+        align-items: start;
+    }
+
+    .confirmation-card {
+        background: #fff;
+        border: 1px solid #e3e7ed;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(20, 33, 61, 0.035);
+        overflow: hidden;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 15px 18px 13px;
+        border-bottom: 1px solid #e7e9ed;
+        color: #14213d;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .card-header-icon {
+        font-size: 17px;
+    }
+
+    /* =========================
+           ORDER ITEMS
+           ========================= */
+
+    .order-items {
+        padding: 0 18px;
+    }
+
+    .order-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 0;
+        border-bottom: 1px solid #e8ebef;
+    }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+    .product-image-wrap {
+        width: 64px;
+        height: 64px;
+        flex-shrink: 0;
+        background: #f5f3ef;
+        border-radius: 9px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .order-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .product-name {
+        color: #14213d;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 3px;
+    }
+
+    .product-brand {
+        color: #6c7890;
+        font-size: 11px;
+        margin-bottom: 5px;
+    }
+
+    .product-details {
+        color: #667085;
+        font-size: 10.5px;
+        line-height: 1.5;
+    }
+
+        .product-details .dot {
+            margin: 0 7px;
+            color: #a7afbb;
+        }
+
+    .order-item-right {
+        min-width: 88px;
+        text-align: right;
+        align-self: flex-start;
+        padding-top: 2px;
+    }
+
+    .item-price {
+        color: #14213d;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .item-qty {
+        color: #667085;
+        font-size: 11px;
+        margin-top: 5px;
+    }
+
+    /* =========================
+           INVOICE
+           ========================= */
+
+    .invoice-link-area {
+        border-top: 1px solid #e8ebef;
+        padding: 11px 18px;
+        text-align: center;
+    }
+
+    .invoice-link {
+        color: #4d7ee8;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+        .invoice-link:hover {
+            color: #315fc6;
+            text-decoration: underline;
+        }
+
+    /* =========================
+           ORDER SUMMARY
+           ========================= */
+
+    .summary-content {
+        padding: 16px 18px 18px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        padding: 8px 0;
+        color: #697586;
+        font-size: 12px;
+    }
+
+        .summary-row span:last-child {
+            color: #344054;
+            font-weight: 500;
+            text-align: right;
+        }
+
+    .discount-value {
+        color: #238653 !important;
+    }
+
+    .summary-divider {
+        height: 1px;
+        background: #e7e9ed;
+        margin: 5px 0;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 13px 0 10px;
+        color: #14213d;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .total-value {
+        font-size: 20px;
+        font-weight: 750;
+    }
+
+    /* =========================
+           NEXT STEPS
+           ========================= */
+
+    .next-step-box {
+        margin-top: 8px;
+        padding: 13px 14px;
+        border-radius: 9px;
+        background: #eef9f2;
+        border: 1px solid #d9f0e2;
+        display: flex;
+        gap: 10px;
+    }
+
+    .next-step-icon {
+        color: #238653;
+        font-size: 17px;
+        flex-shrink: 0;
+    }
+
+    .next-step-title {
+        color: #28754f;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .next-step-text {
+        color: #5b7465;
+        font-size: 10.5px;
+        line-height: 1.55;
+        margin: 0;
+    }
+
+    /* =========================
+           BUTTON
+           ========================= */
+
+    .continue-shopping {
+        text-align: center;
+        margin-top: 18px;
+    }
+
+    .continue-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 195px;
+        padding: 11px 25px;
+        border-radius: 9px;
+        background: #14213d;
+        color: #fff !important;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        transition: background 0.2s ease;
+    }
+
+        .continue-btn:hover {
+            background: #1d2e52;
+            color: #fff !important;
+        }
+
+    /* =========================
+           MOBILE
+           ========================= */
+
+    @@media (max-width: 850px) {
+
+        .order-info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .order-info-card:nth-child(2) {
+            border-right: none;
+        }
+
+        .order-info-card:nth-child(-n+2) {
+            border-bottom: 1px solid #e4e8ee;
+        }
+
+        .confirmation-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 560px) {
+
+        .confirmation-page {
+            padding: 28px 12px 45px;
+        }
+
+        .success-header h1 {
+            font-size: 29px;
+        }
+
+        .order-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .order-info-card {
+            border-right: none;
+            border-bottom: 1px solid #e4e8ee;
+        }
+
+            .order-info-card:last-child {
+                border-bottom: none;
+            }
+
+        .order-item {
+            align-items: flex-start;
+        }
+
+        .product-image-wrap {
+            width: 55px;
+            height: 55px;
+        }
+
+        .order-item-right {
+            min-width: 70px;
+        }
+    }
+</style>
+
+
+<div class="confirmation-page">
+
+    <div class="confirmation-container">
+
+        <!-- ==========================================
+             SUCCESS HEADER
+             ========================================== -->
+
+        <div class="success-header">
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <h1>Thank you!</h1>
+
+            <p class="success-message">
+                Your order has been placed successfully.
+            </p>
+
+            <div class="order-id-box">
+                Order ID:
+                <strong>@Model.OrderNumber</strong>
+            </div>
+
+            <p class="email-message">
+                We've sent an order confirmation email to your registered email address.
+            </p>
+
+        </div>
+
+
+        <!-- ==========================================
+             ORDER INFO
+             ========================================== -->
+
+        <div class="order-info-grid">
+
+            <!-- DATE -->
+
+            <div class="order-info-card">
+
+                <div class="info-icon icon-blue">
+                    📅
+                </div>
+
+                <div>
+                    <div class="info-label">
+                        Order Date
+                    </div>
+
+                    <div class="info-value">
+                        @Model.OrderDate.ToLocalTime().ToString("dd MMM yyyy")
+                    </div>
+
+                    <div class="info-subvalue">
+                        @Model.OrderDate.ToLocalTime().ToString("hh:mm tt")
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- PAYMENT -->
+
+            <div class="order-info-card">
+
+                <div class="info-icon icon-green">
+                    💳
+                </div>
+
+                <div>
+                    <div class="info-label">
+                        Payment Method
+                    </div>
+
+                    <div class="info-value">
+                        @Model.PaymentMethod
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- SHIPPING -->
+
+            <div class="order-info-card">
+
+                <div class="info-icon icon-purple">
+                    🚚
+                </div>
+
+                <div>
+                    <div class="info-label">
+                        Shipping Method
+                    </div>
+
+                    <div class="info-value">
+                        Standard · 3–5 days
+                    </div>
+
+                    <div class="info-subvalue">
+                        @(Model.ShippingAmount > 0
+                            ? Model.ShippingAmount.ToPkr()
+                            : "Free")
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- TOTAL -->
+
+            <div class="order-info-card">
+
+                <div class="info-icon icon-amber">
+                    🧾
+                </div>
+
+                <div>
+                    <div class="info-label">
+                        Total Amount
+                    </div>
+
+                    <div class="info-value">
+                        @Model.GrandTotal.ToPkr()
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==========================================
+             ITEMS + SUMMARY
+             ========================================== -->
+
+        <div class="confirmation-grid">
+
+            <!-- ======================================
+                 ORDER ITEMS
+                 ====================================== -->
+
+            <div class="confirmation-card">
+
+                <div class="card-header">
+
+                    <span class="card-header-icon">
+                        🛍
+                    </span>
+
+                    <span>
+                        Order Items
+                    </span>
+
+                </div>
+
+
+                <div class="order-items">
+
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            var imageUrl =
+                                item.Product?.Images?
+                                    .FirstOrDefault(i => i.ProductVariantId == item.ProductVariantId)
+                                    ?.ImageUrl
+                                ?? item.Product?.Images?
+                                    .FirstOrDefault(i => i.IsPrimary)
+                                    ?.ImageUrl
+                                ?? item.Product?.Images?
+                                    .FirstOrDefault()
+                                    ?.ImageUrl
+                                ?? "/images/placeholder.jpg";
+
+                            <div class="order-item">
+
+                                <!-- PRODUCT IMAGE -->
+
+                                <div class="product-image-wrap">
+
+                                    <img src="@imageUrl"
+                                         alt="@item.ProductName"
+                                         class="product-image"
+                                         onerror="this.onerror=null;this.src='/images/placeholder.jpg';" />
+
+                                </div>
+
+
+                                <!-- PRODUCT INFO -->
+
+                                <div class="order-item-info">
+
+                                    <div class="product-name">
+                                        @item.ProductName
+                                    </div>
+
+                                    @if (item.Product?.Brand != null)
+                                    {
+                                        <div class="product-brand">
+                                            @item.Product.Brand.Name
+                                        </div>
+                                    }
+
+                                    <div class="product-details">
+
+                                        @if (item.ProductVariant != null)
+                                        {
+                                            <span>
+                                                Color:
+                                                @item.ProductVariant.Color
+                                            </span>
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(item.LensType))
+                                        {
+                                            <span class="dot">•</span>
+
+                                            <span>
+                                                Lens:
+                                                @item.LensType
+                                            </span>
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(item.Coating)
+                                            && item.Coating != "None")
+                                        {
+                                            <span class="dot">•</span>
+
+                                            <span>
+                                                Coating:
+                                                @item.Coating
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- PRICE -->
+
+                                <div class="order-item-right">
+
+                                    <div class="item-price">
+                                        @item.TotalPrice.ToPkr()
+                                    </div>
+
+                                    <div class="item-qty">
+                                        Qty: @item.Quantity
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="padding:25px 0;color:#777;font-size:13px;">
+                            No order items found.
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- INVOICE -->
+
+                <div class="invoice-link-area">
+
+                    <a href="#"
+                       class="invoice-link"
+                       onclick="window.print(); return false;">
+
+                        ⤓ &nbsp; Download Invoice
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- ======================================
+                 ORDER SUMMARY
+                 ====================================== -->
+
+            <div class="confirmation-card">
+
+                <div class="card-header">
+
+                    <span class="card-header-icon">
+                        🧾
+                    </span>
+
+                    <span>
+                        Order Summary
+                    </span>
+
+                </div>
+
+
+                <div class="summary-content">
+
+                    <!-- SUBTOTAL -->
+
+                    <div class="summary-row">
+
+                        <span>
+                            Subtotal
+                        </span>
+
+                        <span>
+                            @subtotal.ToPkr()
+                        </span>
+
+                    </div>
+
+
+                    <!-- DISCOUNT -->
+                    @if (hasDiscount)
+                    {
+                        <div class="summary-row">
+
+                            <span>
+                                Discount
+                            </span>
+
+                            <span class="discount-value">
+                                - @Model.DiscountAmount.ToPkr()
+                            </span>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="summary-row">
+
+                            <span>
+                                Discount
+                            </span>
+
+                            <span class="discount-value">
+                                - Rs 0
+                            </span>
+
+                        </div>
+                    }
+
+
+                    <!-- SHIPPING -->
+
+                    <div class="summary-row">
+
+                        <span>
+                            Shipping
+                        </span>
+
+                        <span class="discount-value">
+                            @(Model.ShippingAmount > 0
+                                ? Model.ShippingAmount.ToPkr()
+                                : "Free")
+                        </span>
+
+                    </div>
+
+
+                    <!-- TAX -->
+
+                    <div class="summary-row">
+
+                        <span>
+                            Tax (5%)
+                        </span>
+
+                        <span>
+                            @Model.TaxAmount.ToPkr()
+                        </span>
+
+                    </div>
+
+
+                    <div class="summary-divider"></div>
+
+
+                    <!-- TOTAL -->
+
+                    <div class="total-row">
+
+                        <span>
+                            Total Amount
+                        </span>
+
+                        <span class="total-value">
+                            @Model.GrandTotal.ToPkr()
+                        </span>
+
+                    </div>
+
+
+                    <!-- NEXT STEPS -->
+
+                    <div class="next-step-box">
+
+                        <div class="next-step-icon">
+                            ♡
+                        </div>
+
+                        <div>
+
+                            <div class="next-step-title">
+                                What happens next?
+                            </div>
+
+                            <p class="next-step-text">
+                                We are processing your order.
+                                You will receive tracking details
+                                once your order is shipped.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==========================================
+             CONTINUE SHOPPING
+             ========================================== -->
+
+        <div class="continue-shopping">
+
+            <a asp-controller="Products"
+               asp-action="Index"
+               class="continue-btn">
+
+                Continue Shopping
+
+            </a>
+
+        </div>
+
+    </div>
+
 </div>

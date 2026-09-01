@@ -376,9 +376,14 @@ namespace EyewearsProject.Controllers
         {
             var order = await _context.Orders
                 .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
+                        .ThenInclude(p => p.Images)
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.ProductVariant)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
-            if (order == null) return NotFound();
+            if (order == null)
+                return NotFound();
 
             return View(order);
         }

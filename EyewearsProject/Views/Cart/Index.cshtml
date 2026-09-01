@@ -3,84 +3,822 @@
 
 @{
     ViewData["Title"] = "Your Cart";
-    var grandTotal = Model.Sum(i => i.TotalPrice);
+
+    var subtotal = Model.Sum(i => i.TotalPrice);
+
+    // 5% tax
+    var tax = subtotal * 0.05m;
+
+    var shipping = 0m;
+
+    var grandTotal = subtotal + tax + shipping;
 }
 
-<h1 class="mb-4">Your Cart</h1>
+<style>
+    /* =========================================================
+           CART PAGE
+        ========================================================= */
 
-@if (!Model.Any())
-{
-    <p class="text-muted">Your cart is empty.</p>
-    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Continue Shopping</a>
-}
-else
-{
-    <table class="table align-middle">
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Color</th>
-                <th>Lens</th>
-                <th>Unit Price</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td class="d-flex align-items-center gap-2">
-                        <img src="@(item.ImageUrl ?? "/images/placeholder.jpg")" style="width:50px;height:50px;object-fit:cover;" />
-                        @item.ProductName
-                    </td>
-                    <td>@item.Color</td>
-                    <td>
-                        @if (!string.IsNullOrEmpty(item.LensType))
-                        {
-                            <div class="small">@item.LensType</div>
-                            @if (!string.IsNullOrEmpty(item.Coating) && item.Coating != "None")
+    .cart-page {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 38px 24px 70px;
+    }
+
+    .cart-title {
+        color: #071b49;
+        font-size: 32px;
+        font-weight: 700;
+        margin: 0 0 26px;
+    }
+
+
+    /* =========================================================
+           MAIN LAYOUT
+        ========================================================= */
+
+    .cart-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 28px;
+        align-items: start;
+    }
+
+
+    /* =========================================================
+           CART ITEMS
+        ========================================================= */
+
+    .cart-items {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .cart-item {
+        background: #ffffff;
+        border: 1px solid #dfe5ee;
+        border-radius: 18px;
+        padding: 14px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 4px 15px rgba(20, 40, 80, 0.05);
+    }
+
+
+    /* =========================================================
+           PRODUCT IMAGE
+        ========================================================= */
+
+    .cart-image {
+        width: 98px;
+        height: 84px;
+        flex: 0 0 98px;
+        border-radius: 13px;
+        background: #f8f6ef;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .cart-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+
+    /* =========================================================
+           PRODUCT INFORMATION
+        ========================================================= */
+
+    .cart-item-info {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .cart-item-name {
+        color: #071b49;
+        font-size: 16px;
+        font-weight: 650;
+        margin: 0 0 5px;
+        line-height: 1.3;
+    }
+
+    .cart-item-meta {
+        color: #6d7b91;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .cart-item-lens {
+        color: #53647f;
+        font-size: 11px;
+        line-height: 1.55;
+    }
+
+    .prescription-attached {
+        color: #3e7a5e;
+    }
+
+    .prescription-missing {
+        color: #c48722;
+    }
+
+
+    /* =========================================================
+           PRICE
+        ========================================================= */
+
+    .cart-item-price {
+        min-width: 95px;
+        text-align: right;
+        color: #071b49;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+
+    /* =========================================================
+           QUANTITY
+        ========================================================= */
+
+    .quantity-section {
+        min-width: 115px;
+    }
+
+    .quantity-form {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .quantity-input {
+        width: 58px;
+        height: 34px;
+        border: 1px solid #d7dfeb;
+        border-radius: 8px;
+        text-align: center;
+        color: #263b61;
+        font-size: 12px;
+        outline: none;
+    }
+
+        .quantity-input:focus {
+            border-color: #172c5f;
+            box-shadow: 0 0 0 3px rgba(23, 44, 95, 0.08);
+        }
+
+    .update-btn {
+        height: 34px;
+        border: 1px solid #d7dfeb;
+        background: #ffffff;
+        color: #435575;
+        border-radius: 8px;
+        padding: 0 8px;
+        font-size: 10px;
+        cursor: pointer;
+    }
+
+        .update-btn:hover {
+            background: #f5f7fa;
+        }
+
+
+    /* =========================================================
+           REMOVE
+        ========================================================= */
+
+    .remove-form {
+        margin-left: 2px;
+    }
+
+    .remove-btn {
+        width: 34px;
+        height: 34px;
+        border: none;
+        background: transparent;
+        color: #7d8797;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+    }
+
+        .remove-btn:hover {
+            background: #fff3f2;
+            color: #c03932;
+        }
+
+
+    /* =========================================================
+           ORDER SUMMARY
+        ========================================================= */
+
+    .order-summary {
+        background: #ffffff;
+        border: 1px solid #dfe5ee;
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 4px 15px rgba(20, 40, 80, 0.06);
+        position: sticky;
+        top: 20px;
+    }
+
+    .summary-title {
+        color: #071b49;
+        font-size: 17px;
+        font-weight: 700;
+        margin: 0 0 17px;
+    }
+
+
+    /* =========================================================
+           COUPON
+        ========================================================= */
+
+    .coupon-row {
+        display: flex;
+        gap: 7px;
+        margin-bottom: 15px;
+    }
+
+    .coupon-input {
+        min-width: 0;
+        flex: 1;
+        height: 36px;
+        border: 1px solid #d7dfeb;
+        border-radius: 9px;
+        padding: 0 11px;
+        font-size: 11px;
+        color: #263b61;
+        outline: none;
+    }
+
+        .coupon-input:focus {
+            border-color: #172c5f;
+        }
+
+    .coupon-btn {
+        height: 36px;
+        border: none;
+        border-radius: 9px;
+        background: #eef2f8;
+        color: #172c5f;
+        padding: 0 13px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .coupon-btn:hover {
+            background: #e3e9f2;
+        }
+
+    .coupon-hint {
+        color: #71809a;
+        font-size: 10px;
+        margin: -7px 0 17px;
+    }
+
+
+    /* =========================================================
+           SUMMARY ROWS
+        ========================================================= */
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #65748d;
+        font-size: 12px;
+        margin-bottom: 11px;
+    }
+
+        .summary-row strong {
+            color: #263b61;
+            font-weight: 600;
+        }
+
+    .shipping-free {
+        color: #3e7a5e !important;
+    }
+
+    .summary-divider {
+        height: 1px;
+        background: #e4e8ef;
+        margin: 14px 0;
+    }
+
+
+    /* =========================================================
+           GRAND TOTAL
+        ========================================================= */
+
+    .grand-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #071b49;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+
+    .grand-total-price {
+        font-size: 17px;
+    }
+
+
+    /* =========================================================
+           CHECKOUT
+        ========================================================= */
+
+    .checkout-btn {
+        width: 100%;
+        height: 44px;
+        border: none;
+        border-radius: 11px;
+        background: #172c5f;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 650;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+        .checkout-btn:hover {
+            background: #071b49;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+
+    /* =========================================================
+           CONTINUE SHOPPING
+        ========================================================= */
+
+    .continue-shopping {
+        display: inline-block;
+        margin-top: 18px;
+        color: #53647f;
+        font-size: 12px;
+        text-decoration: none;
+    }
+
+        .continue-shopping:hover {
+            color: #071b49;
+        }
+
+
+    /* =========================================================
+           EMPTY CART
+        ========================================================= */
+
+    .empty-cart {
+        border: 1px solid #dfe5ee;
+        border-radius: 18px;
+        padding: 60px 25px;
+        text-align: center;
+        background: #ffffff;
+    }
+
+    .empty-cart-icon {
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 15px;
+        border-radius: 50%;
+        background: #f4f6fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #172c5f;
+        font-size: 24px;
+    }
+
+    .empty-cart h3 {
+        color: #071b49;
+        font-size: 20px;
+        margin-bottom: 7px;
+    }
+
+    .empty-cart p {
+        color: #71809a;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    .continue-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #172c5f;
+        color: #ffffff;
+        border-radius: 9px;
+        padding: 9px 18px;
+        font-size: 12px;
+        text-decoration: none;
+    }
+
+        .continue-btn:hover {
+            background: #071b49;
+            color: #ffffff;
+        }
+
+
+    /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+    @@media (max-width: 1000px) {
+
+        .cart-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .order-summary {
+            position: static;
+        }
+    }
+
+
+    @@media (max-width: 700px) {
+
+        .cart-page {
+            padding: 25px 15px 50px;
+        }
+
+        .cart-title {
+            font-size: 27px;
+        }
+
+        .cart-item {
+            flex-wrap: wrap;
+        }
+
+        .cart-image {
+            width: 82px;
+            height: 72px;
+            flex-basis: 82px;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-price {
+            margin-left: auto;
+        }
+
+        .quantity-section {
+            margin-left: 98px;
+        }
+    }
+
+
+    @@media (max-width: 480px) {
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 75px 1fr auto;
+            gap: 10px;
+        }
+
+        .cart-image {
+            width: 75px;
+            height: 68px;
+        }
+
+        .cart-item-price {
+            grid-column: 2 / 4;
+            text-align: left;
+        }
+
+        .quantity-section {
+            grid-column: 2 / 3;
+            margin-left: 0;
+        }
+
+        .remove-form {
+            grid-column: 3;
+            grid-row: 3;
+        }
+    }
+
+</style>
+
+
+<div class="cart-page">
+
+    <h1 class="cart-title">
+        Your bag
+    </h1>
+
+
+    @if (!Model.Any())
+    {
+        <!-- =====================================================
+             EMPTY CART
+        ====================================================== -->
+
+        <div class="empty-cart">
+
+            <div class="empty-cart-icon">
+                🛍
+            </div>
+
+            <h3>
+                Your bag is empty
+            </h3>
+
+            <p>
+                Looks like you haven't added any frames yet.
+            </p>
+
+            <a asp-controller="Products"
+               asp-action="Index"
+               class="continue-btn">
+
+                Continue Shopping
+
+            </a>
+
+        </div>
+    }
+    else
+    {
+        <!-- =====================================================
+             CART LAYOUT
+        ====================================================== -->
+
+        <div class="cart-layout">
+
+
+            <!-- =================================================
+                 LEFT — CART ITEMS
+            ================================================= -->
+
+            <div class="cart-items">
+
+                @foreach (var item in Model)
+                {
+                    <div class="cart-item">
+
+
+                        <!-- IMAGE -->
+
+                        <div class="cart-image">
+
+                            <img src="@(item.ImageUrl ?? "/images/placeholder.jpg")"
+                                 alt="@item.ProductName" />
+
+                        </div>
+
+
+                        <!-- PRODUCT INFO -->
+
+                        <div class="cart-item-info">
+
+                            <h3 class="cart-item-name">
+                                @item.ProductName
+                            </h3>
+
+                            @if (!string.IsNullOrWhiteSpace(item.Color))
                             {
-                                <div class="small text-muted">@item.Coating</div>
+                                <div class="cart-item-meta">
+                                    @item.Color
+                                </div>
                             }
-                            @if (item.PrescriptionId.HasValue)
+
+
+                            @if (!string.IsNullOrEmpty(item.LensType))
                             {
-                                <div class="small text-success">Prescription attached</div>
+                                <div class="cart-item-lens">
+
+                                    @item.LensType
+
+                                    @if (!string.IsNullOrEmpty(item.Coating) &&
+                                         item.Coating != "None")
+                                    {
+                                        <span>
+                                            · @item.Coating
+                                        </span>
+                                    }
+
+                                    @if (item.PrescriptionId.HasValue)
+                                    {
+                                        <div class="prescription-attached">
+                                            ✓ Prescription attached
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="prescription-missing">
+                                            No prescription attached
+                                        </div>
+                                    }
+
+                                </div>
                             }
-                            else
-                            {
-                                <div class="small text-warning">No prescription yet</div>
-                            }
-                        }
-                        else
-                        {
-                            <span class="text-muted small">—</span>
-                        }
-                    </td>
-                    <td>@item.UnitPrice.ToPkr()</td>
-                    <td style="max-width:100px;">
-                        <form asp-controller="Cart" asp-action="UpdateQuantity" method="post" class="d-flex gap-1">
-                            <input type="hidden" name="lineId" value="@item.LineId" />
-                            <input type="number" name="quantity" value="@item.Quantity" min="1"
-                                   class="form-control form-control-sm" style="width:70px;" />
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Update</button>
+
+                        </div>
+
+
+                        <!-- UNIT PRICE -->
+
+                        <div class="cart-item-price">
+
+                            @item.UnitPrice.ToPkr()
+
+                        </div>
+
+
+                        <!-- QUANTITY -->
+
+                        <div class="quantity-section">
+
+                            <form asp-controller="Cart"
+                                  asp-action="UpdateQuantity"
+                                  method="post"
+                                  class="quantity-form">
+
+                                <input type="hidden"
+                                       name="lineId"
+                                       value="@item.LineId" />
+
+                                <input type="number"
+                                       name="quantity"
+                                       value="@item.Quantity"
+                                       min="1"
+                                       class="quantity-input" />
+
+                                <button type="submit"
+                                        class="update-btn">
+
+                                    Update
+
+                                </button>
+
+                            </form>
+
+                        </div>
+
+
+                        <!-- REMOVE -->
+
+                        <form asp-controller="Cart"
+                              asp-action="Remove"
+                              method="post"
+                              class="remove-form">
+
+                            <input type="hidden"
+                                   name="lineId"
+                                   value="@item.LineId" />
+
+                            <button type="submit"
+                                    class="remove-btn"
+                                    title="Remove item">
+
+                                🗑
+
+                            </button>
+
                         </form>
-                    </td>
-                    <td>@item.TotalPrice.ToPkr()</td>
-                    <td>
-                        <form asp-controller="Cart" asp-action="Remove" method="post">
-                            <input type="hidden" name="lineId" value="@item.LineId" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
 
-    <div class="text-end">
-        <h4>Grand Total: @grandTotal.ToPkr()</h4>
-        <a asp-controller="Cart" asp-action="Checkout" class="btn btn-success btn-lg mt-2">Proceed to Checkout</a>
-    </div>
-}
+                    </div>
+                }
+
+
+                <!-- CONTINUE SHOPPING -->
+
+                <a asp-controller="Products"
+                   asp-action="Index"
+                   class="continue-shopping">
+
+                    ← Continue Shopping
+
+                </a>
+
+            </div>
+
+
+            <!-- =================================================
+                 RIGHT — ORDER SUMMARY
+            ================================================= -->
+
+            <div class="order-summary">
+
+                <h2 class="summary-title">
+                    Order summary
+                </h2>
+
+
+                <!-- COUPON -->
+
+                <div class="coupon-row">
+
+                    <input type="text"
+                           class="coupon-input"
+                           placeholder="Coupon code" />
+
+                    <button type="button"
+                            class="coupon-btn">
+
+                        Apply
+
+                    </button>
+
+                </div>
+
+                <div class="coupon-hint">
+                    Try EYECRAFT20 for 20% off.
+                </div>
+
+
+                <!-- SUBTOTAL -->
+
+                <div class="summary-row">
+
+                    <span>
+                        Subtotal
+                    </span>
+
+                    <strong>
+                        @subtotal.ToPkr()
+                    </strong>
+
+                </div>
+
+
+                <!-- SHIPPING -->
+
+                <div class="summary-row">
+
+                    <span>
+                        Shipping
+                    </span>
+
+                    <strong class="shipping-free">
+                        Free
+                    </strong>
+
+                </div>
+
+
+                <!-- TAX -->
+
+                <div class="summary-row">
+
+                    <span>
+                        Tax (5%)
+                    </span>
+
+                    <strong>
+                        @tax.ToPkr()
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-divider"></div>
+
+
+                <!-- GRAND TOTAL -->
+
+                <div class="grand-total">
+
+                    <span>
+                        Grand total
+                    </span>
+
+                    <span class="grand-total-price">
+                        @grandTotal.ToPkr()
+                    </span>
+
+                </div>
+
+
+                <!-- CHECKOUT -->
+
+                <a asp-controller="Cart"
+                   asp-action="Checkout"
+                   class="checkout-btn">
+
+                    Checkout
+
+                </a>
+
+            </div>
+
+        </div>
+    }
+
+</div>

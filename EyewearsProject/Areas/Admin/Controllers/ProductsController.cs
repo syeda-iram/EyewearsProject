@@ -119,7 +119,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
             // Normalize basic values
             // ---------------------------------------------------------
 
-            model.Name = model.Name?.Trim();
+            model.Name = @model.Name?.Trim();
             model.Sku = model.Sku?.Trim();
 
             // ---------------------------------------------------------
@@ -921,7 +921,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                         model.Name.Trim();
 
                     product.Sku =
-                        newProductSku;
+                        model.Sku;
 
                     product.Description =
                         model.Description;
