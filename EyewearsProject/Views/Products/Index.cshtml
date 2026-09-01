@@ -17,8 +17,8 @@
 <style>
 
     /* =========================================================
-       SHOP PAGE
-    ========================================================= */
+           SHOP PAGE
+        ========================================================= */
 
     .shop-title {
         color: #071b49;
@@ -29,8 +29,8 @@
 
 
     /* =========================================================
-       FILTER PANEL
-    ========================================================= */
+           FILTER PANEL
+        ========================================================= */
 
     .filter-panel {
         background: #ffffff;
@@ -67,16 +67,16 @@
         color: #263b61;
     }
 
-    .filter-panel .form-select:focus,
-    .filter-panel .form-control:focus {
-        border-color: #172c5f;
-        box-shadow: 0 0 0 0.15rem rgba(23, 44, 95, 0.10);
-    }
+        .filter-panel .form-select:focus,
+        .filter-panel .form-control:focus {
+            border-color: #172c5f;
+            box-shadow: 0 0 0 0.15rem rgba(23, 44, 95, 0.10);
+        }
 
 
     /* =========================================================
-       PRODUCTS HEADER
-    ========================================================= */
+           PRODUCTS HEADER
+        ========================================================= */
 
     .products-header {
         display: flex;
@@ -91,14 +91,14 @@
         margin: 0;
     }
 
-    .products-count strong {
-        color: #071b49;
-    }
+        .products-count strong {
+            color: #071b49;
+        }
 
 
     /* =========================================================
-       PRODUCT GRID
-    ========================================================= */
+           PRODUCT GRID
+        ========================================================= */
 
     .products-grid {
         display: grid;
@@ -108,28 +108,27 @@
 
 
     /* =========================================================
-       PRODUCT CARD
-    ========================================================= */
+           PRODUCT CARD
+        ========================================================= */
 
     .product-card {
         background: #ffffff;
         border: 1px solid #dce3ed;
         border-radius: 20px;
         overflow: hidden;
-        transition: transform 0.2s ease,
-                    box-shadow 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
         height: auto;
     }
 
-    .product-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 9px 22px rgba(20, 40, 80, 0.10);
-    }
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 9px 22px rgba(20, 40, 80, 0.10);
+        }
 
 
     /* =========================================================
-       PRODUCT IMAGE
-    ========================================================= */
+           PRODUCT IMAGE
+        ========================================================= */
 
     .product-image-wrapper {
         position: relative;
@@ -137,14 +136,20 @@
         margin: 12px 12px 0;
         border-radius: 16px;
         overflow: hidden;
-        background: #f8f6ef;
+        background: #f4f5f7;
     }
 
     .product-image {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
+        object-position: center;
         display: block;
+        transition: transform 0.35s ease;
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.06);
     }
 
 
@@ -167,8 +172,8 @@
 
 
     /* =========================================================
-       WISHLIST BUTTON
-    ========================================================= */
+           WISHLIST BUTTON
+        ========================================================= */
 
     .wishlist-form {
         position: absolute;
@@ -196,15 +201,15 @@
         transition: transform 0.15s ease, background 0.15s ease;
     }
 
-    .wishlist-btn:hover {
-        background: #ffffff;
-        transform: scale(1.06);
-    }
+        .wishlist-btn:hover {
+            background: #ffffff;
+            transform: scale(1.06);
+        }
 
 
     /* =========================================================
-       PRODUCT INFORMATION
-    ========================================================= */
+           PRODUCT INFORMATION
+        ========================================================= */
 
     .product-info {
         padding: 11px 13px 14px;
@@ -216,101 +221,86 @@
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.3px;
-
         margin-bottom: 3px;
     }
 
     .product-name {
         display: block;
-
         color: #071b49;
         font-size: 15px;
         font-weight: 600;
-
         text-decoration: none;
-
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-
         margin-bottom: 5px;
     }
 
-    .product-name:hover {
-        color: #172c5f;
-    }
+        .product-name:hover {
+            color: #172c5f;
+        }
 
 
     /* =========================================================
-       CATEGORY
-    ========================================================= */
+           CATEGORY
+        ========================================================= */
 
     .product-category {
         color: #7a879d;
         font-size: 11px;
-
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-
         margin-bottom: 6px;
     }
 
 
     /* =========================================================
-       GENDER
-    ========================================================= */
+           GENDER
+        ========================================================= */
 
     .product-gender {
         display: inline-block;
-
         background: #f7f8fa;
         border: 1px solid #e1e6ee;
         border-radius: 12px;
-
         color: #5c6c87;
-
         font-size: 10px;
         padding: 3px 7px;
-
         margin-bottom: 6px;
     }
 
 
     /* =========================================================
-       TAGS
-    ========================================================= */
+           TAGS
+        ========================================================= */
 
     .product-tags {
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
-
         margin-bottom: 7px;
     }
 
     .product-tag {
         background: #f5f7fa;
         color: #61718c;
-
         border: 1px solid #e0e5ec;
         border-radius: 10px;
-
         font-size: 9px;
         padding: 3px 6px;
     }
 
 
     /* =========================================================
-       PRICE
-    ========================================================= */
+           PRICE
+        ========================================================= */
 
     .product-price-row {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
         gap: 6px;
-
         margin-top: 5px;
     }
 
@@ -334,41 +324,34 @@
 
 
     /* =========================================================
-       VIEW DETAILS
-    ========================================================= */
+           VIEW DETAILS
+        ========================================================= */
 
     .product-details-btn {
         width: 100%;
-
         border: 1px solid #172c5f;
         border-radius: 9px;
-
         background: #172c5f;
         color: #ffffff;
-
         font-size: 12px;
         font-weight: 600;
-
         padding: 7px 10px;
-
         margin-top: 10px;
-
         text-decoration: none;
         display: block;
         text-align: center;
-
         transition: background 0.2s ease;
     }
 
-    .product-details-btn:hover {
-        background: #071b49;
-        color: #ffffff;
-    }
+        .product-details-btn:hover {
+            background: #071b49;
+            color: #ffffff;
+        }
 
 
     /* =========================================================
-       EMPTY STATE
-    ========================================================= */
+           EMPTY STATE
+        ========================================================= */
 
     .empty-products {
         border: 1px solid #dfe5ee;
@@ -380,15 +363,14 @@
 
 
     /* =========================================================
-       RESPONSIVE
-    ========================================================= */
+           RESPONSIVE
+        ========================================================= */
 
     @@media (max-width: 1100px) {
 
         .products-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-
     }
 
     @@media (max-width: 767px) {
@@ -422,7 +404,6 @@
         .product-details-btn {
             font-size: 11px;
         }
-
     }
 
     @@media (max-width: 480px) {
@@ -430,7 +411,6 @@
         .products-grid {
             grid-template-columns: 1fr;
         }
-
     }
 
 </style>
@@ -461,7 +441,6 @@
 
 
                 <!-- Preserve Category -->
-
                 @if (!string.IsNullOrEmpty((string)ViewBag.SelectedCategory))
                 {
                     <input type="hidden"
@@ -473,7 +452,6 @@
                 <!-- =================================================
                      SUBCATEGORY
                 ================================================= -->
-
                 @if (subCategories.Any())
                 {
                     <div class="filter-group">
@@ -542,7 +520,6 @@
                 <!-- =================================================
                      GENDER
                 ================================================= -->
-
                 @if (genders.Any())
                 {
                     <div class="filter-group">
@@ -578,7 +555,6 @@
                 <!-- =================================================
                      COLOR
                 ================================================= -->
-
                 @if (colors.Any())
                 {
                     <div class="filter-group">
@@ -614,7 +590,6 @@
                 <!-- =================================================
                      MATERIAL
                 ================================================= -->
-
                 @if (materials.Any())
                 {
                     <div class="filter-group">
@@ -650,7 +625,6 @@
                 <!-- =================================================
                      SHAPE
                 ================================================= -->
-
                 @if (shapes.Any())
                 {
                     <div class="filter-group">
@@ -715,9 +689,8 @@
                 <!-- =================================================
                      SPECIFICATIONS
                 ================================================= -->
-
                 @if (specs != null &&
-                     ((IEnumerable<dynamic>)specs).Any())
+                                     ((IEnumerable<dynamic>)specs).Any())
                 {
                     <div class="filter-group">
 
@@ -792,7 +765,6 @@
 
 
         <!-- CATEGORY -->
-
         @if (!string.IsNullOrEmpty((string)ViewBag.SelectedCategory))
         {
             <div class="mb-3">
@@ -827,7 +799,6 @@
         <!-- =====================================================
              PRODUCT GRID
         ===================================================== -->
-
         @if (Model.Any())
         {
             <div class="products-grid">
