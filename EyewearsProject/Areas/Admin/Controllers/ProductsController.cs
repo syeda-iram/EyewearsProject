@@ -125,6 +125,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
             // ---------------------------------------------------------
             // Basic ModelState validation
             // ---------------------------------------------------------
+
             if (!ModelState.IsValid)
             {
                 ViewBag.DebugErrors = string.Join(" | ", ModelState
@@ -142,11 +143,14 @@ namespace EyewearsProject.Areas.Admin.Controllers
             // ---------------------------------------------------------
             // SKU required
             // ---------------------------------------------------------
+
             if (string.IsNullOrWhiteSpace(model.Sku))
             {
                 ModelState.AddModelError(
                     nameof(model.Sku),
                     "SKU is required.");
+
+                ViewBag.DebugErrors = "[SKU required check] SKU is required.";
 
                 await PopulateDropdownsAsync(
                     model.CategoryId,
@@ -169,6 +173,8 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     nameof(model.Sku),
                     "A product with this SKU already exists.");
 
+                ViewBag.DebugErrors = "[Create duplicate SKU check] A product with this SKU already exists: " + model.Sku;
+
                 await PopulateDropdownsAsync(
                     model.CategoryId,
                     model.SubCategoryId,
@@ -187,6 +193,8 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 ModelState.AddModelError(
                     nameof(model.DiscountPrice),
                     "Discount price must be lower than the regular price.");
+
+                ViewBag.DebugErrors = "[Create discount check] Discount price must be lower than the regular price.";
 
                 await PopulateDropdownsAsync(
                     model.CategoryId,
@@ -836,6 +844,10 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
             if (!ModelState.IsValid)
             {
+                ViewBag.DebugErrors = string.Join(" | ", ModelState
+                    .Where(kvp => kvp.Value.Errors.Count > 0)
+                    .Select(kvp => $"[{kvp.Key}] " + string.Join(", ", kvp.Value.Errors.Select(e => e.ErrorMessage))));
+
                 await PopulateDropdownsAsync(
                     model.CategoryId,
                     model.SubCategoryId,
@@ -853,6 +865,8 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 ModelState.AddModelError(
                     nameof(model.Sku),
                     "SKU is required.");
+
+                ViewBag.DebugErrors = "[SKU required check] SKU is required.";
 
                 await PopulateDropdownsAsync(
                     model.CategoryId,
@@ -872,6 +886,8 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 ModelState.AddModelError(
                     nameof(model.DiscountPrice),
                     "Discount price must be lower than the regular price.");
+
+                ViewBag.DebugErrors = "[Discount check] Discount price must be lower than the regular price.";
 
                 await PopulateDropdownsAsync(
                     model.CategoryId,
@@ -897,6 +913,8 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     nameof(model.Sku),
                     "Another product already uses this SKU.");
 
+                ViewBag.DebugErrors = "[Duplicate SKU check] Another product already uses this SKU: " + model.Sku;
+
                 await PopulateDropdownsAsync(
                     model.CategoryId,
                     model.SubCategoryId,
@@ -906,13 +924,9 @@ namespace EyewearsProject.Areas.Admin.Controllers
             }
 
             // =========================================================
-            // TRANSACTION
-            // =========================================================
-
-            // =====================================================
             // TRANSACTION — wrapped in EF's retry-aware execution
             // strategy, required once EnableRetryOnFailure is on
-            // =====================================================
+            // =========================================================
 
             var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -1063,6 +1077,7 @@ namespace EyewearsProject.Areas.Admin.Controllers
                     throw;
                 }
             });
+
             // =====================================================
             // AUDIT
             // =========================================================
