@@ -21,6 +21,7 @@
         justify-content: space-between;
         align-items: flex-end;
         margin-bottom: 35px;
+        gap: 20px;
     }
 
     .wishlist-heading h1 {
@@ -37,6 +38,12 @@
         font-size: 16px;
     }
 
+    .wishlist-header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
     .wishlist-count {
         background: #F7F2E9;
         color: #14213D;
@@ -45,6 +52,52 @@
         padding: 10px 18px;
         font-size: 14px;
         font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .wishlist-add-all-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 10px 18px;
+        border: 1px solid #14213D;
+        border-radius: 10px;
+        background: #14213D;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .wishlist-add-all-btn:hover {
+            background: #1D2E52;
+            border-color: #1D2E52;
+        }
+
+    /* =========================
+           ALERTS
+           ========================= */
+
+    .wishlist-alert {
+        max-width: 1200px;
+        margin: 0 auto 20px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .wishlist-alert-success {
+        background: #edf7f0;
+        border: 1px solid #cfe6d6;
+        color: #3E7A5E;
+    }
+
+    .wishlist-alert-warning {
+        background: #fff8e8;
+        border: 1px solid #ead9ad;
+        color: #856404;
     }
 
     /* =========================
@@ -165,6 +218,7 @@
         display: flex;
         gap: 8px;
         align-items: stretch;
+        margin-bottom: 8px;
     }
 
     .wishlist-view-btn {
@@ -210,6 +264,29 @@
             background: #B3413A;
             border-color: #B3413A;
             color: #ffffff;
+        }
+
+    .wishlist-cart-form {
+        margin: 0;
+    }
+
+    .wishlist-cart-btn {
+        width: 100%;
+        min-height: 38px;
+        padding: 8px 12px;
+        border: 1px solid #14213D;
+        border-radius: 9px;
+        background: #14213D;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .wishlist-cart-btn:hover {
+            background: #1D2E52;
+            border-color: #1D2E52;
         }
 
     /* =========================
@@ -288,9 +365,18 @@
             font-size: 32px;
         }
 
+        .wishlist-header-right {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
         .wishlist-count {
             padding: 8px 13px;
-            white-space: nowrap;
+        }
+
+        .wishlist-add-all-btn {
+            min-height: 38px;
+            padding: 8px 13px;
         }
 
         .wishlist-grid {
@@ -309,6 +395,11 @@
             flex-direction: column;
         }
 
+        .wishlist-header-right {
+            width: 100%;
+            justify-content: space-between;
+        }
+
         .wishlist-grid {
             grid-template-columns: 1fr;
         }
@@ -325,31 +416,12 @@
 
 
 <div class="wishlist-page">
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">My Wishlist</h1>
-    @if (Model.Items.Any())
-    {
-        <form asp-controller="Wishlist" asp-action="AddAllToCart" method="post">
-            <button type="submit" class="btn btn-dark">Add All to Cart</button>
-        </form>
-    }
-</div>
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-warning">@TempData["Error"]</div>
-}
-
+    <!-- =========================================================
+         EMPTY WISHLIST
+         ========================================================= -->
     @if (Model == null || Model.Items == null || !Model.Items.Any())
     {
-        <!-- =========================
-             EMPTY WISHLIST
-             ========================= -->
-
         <div class="wishlist-empty">
 
             <div class="wishlist-empty-icon">
@@ -372,9 +444,27 @@
     }
     else
     {
-        <!-- =========================
-             WISHLIST HEADER
-             ========================= -->
+        <!-- =====================================================
+             SUCCESS / ERROR MESSAGES
+             ===================================================== -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="wishlist-alert wishlist-alert-success">
+                @TempData["Success"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="wishlist-alert wishlist-alert-warning">
+                @TempData["Error"]
+            </div>
+        }
+
+
+        <!-- =====================================================
+             HEADER
+             ===================================================== -->
 
         <div class="wishlist-header">
 
@@ -388,17 +478,40 @@
 
             </div>
 
-            <div class="wishlist-count">
-                @Model.Items.Count
-                @(Model.Items.Count == 1 ? "item" : "items")
+
+            <div class="wishlist-header-right">
+
+                <div class="wishlist-count">
+                    @Model.Items.Count
+                    @(Model.Items.Count == 1 ? "item" : "items")
+                </div>
+
+
+                <!-- ADD ALL TO CART -->
+
+                <form asp-controller="Wishlist"
+                      asp-action="AddAllToCart"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="wishlist-add-all-btn">
+
+                        Add All to Cart
+
+                    </button>
+
+                </form>
+
             </div>
 
         </div>
 
 
-        <!-- =========================
+        <!-- =====================================================
              WISHLIST PRODUCTS
-             ========================= -->
+             ===================================================== -->
 
         <div class="wishlist-grid">
 
@@ -416,7 +529,8 @@
                     ?? 0;
 
                 var originalPrice =
-                    item.Product?.Price ?? 0;
+                    item.Product?.Price
+                    ?? 0;
 
                 var isOnSale =
                     item.Product?.DiscountPrice.HasValue == true
@@ -425,7 +539,9 @@
 
                 <div class="wishlist-card">
 
-                    <!-- IMAGE -->
+                    <!-- =================================================
+                         IMAGE
+                         ================================================= -->
 
                     <div class="wishlist-image-wrapper">
 
@@ -442,6 +558,7 @@
                                  alt="Product image" />
                         }
 
+
                         <div class="wishlist-heart">
                             ♥
                         </div>
@@ -449,15 +566,20 @@
                     </div>
 
 
-                    <!-- CARD CONTENT -->
+                    <!-- =================================================
+                         CARD CONTENT
+                         ================================================= -->
 
                     <div class="wishlist-card-body">
+
+                        <!-- PRODUCT NAME -->
 
                         <div class="wishlist-card-title">
                             @item.Product?.Name
                         </div>
 
 
+                        <!-- VARIANT -->
                         @if (item.ProductVariant != null)
                         {
                             <div class="wishlist-card-subtitle">
@@ -471,6 +593,8 @@
                             </div>
                         }
 
+
+                        <!-- PRICE -->
 
                         <div class="wishlist-price">
 
@@ -490,7 +614,9 @@
                         </div>
 
 
-                        <!-- ACTIONS -->
+                        <!-- =================================================
+                             VIEW + REMOVE
+                             ================================================= -->
 
                         <div class="wishlist-actions">
 
@@ -498,7 +624,9 @@
                                asp-action="Details"
                                asp-route-id="@item.ProductId"
                                class="wishlist-view-btn">
+
                                 View Product
+
                             </a>
 
 
@@ -507,18 +635,47 @@
                                   method="post"
                                   class="wishlist-remove-form">
 
+                                @Html.AntiForgeryToken()
+
                                 <input type="hidden"
                                        name="itemId"
                                        value="@item.Id" />
 
                                 <button type="submit"
                                         class="wishlist-remove-btn">
+
                                     Remove
+
                                 </button>
 
                             </form>
 
                         </div>
+
+
+                        <!-- =================================================
+                             ADD TO CART
+                             ================================================= -->
+
+                        <form asp-controller="Wishlist"
+                              asp-action="AddToCart"
+                              method="post"
+                              class="wishlist-cart-form">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="itemId"
+                                   value="@item.Id" />
+
+                            <button type="submit"
+                                    class="wishlist-cart-btn">
+
+                                Add to Cart
+
+                            </button>
+
+                        </form>
 
                     </div>
 
@@ -526,31 +683,6 @@
             }
 
         </div>
-
     }
 
 </div>
-                            <p class="text-muted mb-1">Color: @item.ProductVariant.Color</p>
-                        }
-                        <p class="fw-bold">@price.ToPkr()</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <div class="d-flex justify-content-between mb-2">
-                            <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
-                                View Product
-                            </a>
-                            <form asp-controller="Wishlist" asp-action="Remove" method="post">
-                                <input type="hidden" name="itemId" value="@item.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-                            </form>
-                        </div>
-                        <form asp-controller="Wishlist" asp-action="AddToCart" method="post">
-                            <input type="hidden" name="itemId" value="@item.Id" />
-                            <button type="submit" class="btn btn-sm btn-dark w-100">Add to Cart</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-}
