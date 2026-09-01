@@ -32,7 +32,9 @@ namespace EyewearsProject.Models
         public DbSet<Inventory> Inventories { get; set; } = null!;
         public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
         public DbSet<Prescription> Prescriptions { get; set; } = null!;
-
+        public DbSet<Cart> Carts { get; set; } = null!;
+        public DbSet<CartLine> CartLines { get; set; } = null!;
+        public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

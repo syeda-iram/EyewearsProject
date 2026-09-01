@@ -1,0 +1,78 @@
+﻿@using EyewearsProject.Extensions
+@model Order
+
+@{
+    ViewData["Title"] = $"Track Order {Model.OrderNumber}";
+
+    var steps = new[] { OrderStatus.Pending, OrderStatus.Processing, OrderStatus.Shipped, OrderStatus.Delivered };
+    var stepLabels = new[] { "Order Placed", "Processing", "Shipped", "Delivered" };
+
+    bool isTerminalBad = Model.OrderStatus == OrderStatus.Cancelled || Model.OrderStatus == OrderStatus.Returned;
+    int currentIndex = Array.IndexOf(steps, Model.OrderStatus);
+
+    DateTime? TimestampFor(OrderStatus s) =>
+        Model.StatusHistory.Where(h => h.Status == s).OrderBy(h => h.ChangedAt).Select(h => (DateTime?)h.ChangedAt).FirstOrDefault();
+}
+
+<h1>Track Order @Model.OrderNumber</h1>
+<p class="text-muted">Placed on @Model.OrderDate.ToString("dd MMM yyyy, h:mm tt")</p>
+
+@if (isTerminalBad)
+{
+    var badHistory = Model.StatusHistory.OrderByDescending(h => h.ChangedAt).FirstOrDefault(h => h.Status == Model.OrderStatus);
+    <div class="alert alert-danger">
+        <strong>This order was @Model.OrderStatus.ToString().ToLower()</strong>
+        @if (badHistory != null)
+        {
+            <span> on @badHistory.ChangedAt.ToString("dd MMM yyyy, h:mm tt")</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(badHistory?.Note))
+        {
+            <div class="small mt-1">Reason: @badHistory.Note</div>
+        }
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between position-relative my-5" style="max-width:700px;">
+        <div class="position-absolute top-50 start-0 end-0 translate-middle-y" style="height:4px;background:#e9ecef;z-index:0;"></div>
+        <div class="position-absolute top-50 start-0 translate-middle-y bg-dark" style="height:4px;z-index:0;width:@(currentIndex <= 0 ? 0 : (currentIndex * 100 / (steps.Length - 1)))%;"></div>
+
+        @for (int i = 0; i < steps.Length; i++)
+        {
+            bool reached = i <= currentIndex;
+            var ts = TimestampFor(steps[i]);
+            <div class="d-flex flex-column align-items-center position-relative" style="z-index:1;flex:1;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center @(reached ? "bg-dark text-white" : "bg-white border")"
+                     style="width:36px;height:36px;">
+                    @if (reached)
+                    {
+                        <span>&#10003;</span>
+                    }
+                    else
+                    {
+                        <span>@(i + 1)</span>
+                    }
+                </div>
+                <div class="text-center mt-2 small @(reached ? "fw-bold" : "text-muted")" style="max-width:110px;">
+                    @stepLabels[i]
+                </div>
+                <div class="text-center text-muted" style="font-size:0.75rem;">
+                    @(ts.HasValue ? ts.Value.ToString("dd MMM, h:mm tt") : (reached ? "" : "—"))
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">Shipping To</div>
+    <div class="card-body">
+        <p class="mb-1">@Model.RecipientName</p>
+        <p class="mb-1">@Model.ShippingAddressLine</p>
+        <p class="mb-0">@Model.ShippingCity, @Model.ShippingPostalCode, @Model.ShippingCountry</p>
+    </div>
+</div>
+
+<a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-dark">View Full Order Details</a>
+<a asp-action="Index" class="btn btn-secondary">Back to My Orders</a>

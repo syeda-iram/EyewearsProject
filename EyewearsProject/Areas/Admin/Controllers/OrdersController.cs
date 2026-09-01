@@ -214,14 +214,20 @@ namespace EyewearsProject.Areas.Admin.Controllers
             }
 
             // Delivered: no new stock transaction — stock was already finalized at Shipped.
-
             order.OrderStatus = newStatus;
             order.UpdatedAt = DateTime.UtcNow;
+
+            _context.OrderStatusHistories.Add(new OrderStatusHistory
+            {
+                OrderId = order.Id,
+                Status = newStatus,
+                ChangedAt = order.UpdatedAt.Value
+            });
+
             await _context.SaveChangesAsync();
 
             await _auditLogger.LogAsync("Update", "Order", order.Id.ToString(),
                 $"Order {order.OrderNumber} status changed from {oldStatus} to {newStatus}");
-
             TempData["Success"] = $"Order {order.OrderNumber} updated to {newStatus}.";
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -276,11 +282,19 @@ namespace EyewearsProject.Areas.Admin.Controllers
 
             order.OrderStatus = OrderStatus.Cancelled;
             order.UpdatedAt = DateTime.UtcNow;
+
+            _context.OrderStatusHistories.Add(new OrderStatusHistory
+            {
+                OrderId = order.Id,
+                Status = OrderStatus.Cancelled,
+                ChangedAt = order.UpdatedAt.Value,
+                Note = reason
+            });
+
             await _context.SaveChangesAsync();
 
             await _auditLogger.LogAsync("Update", "Order", order.Id.ToString(),
                 $"Order {order.OrderNumber} cancelled (was {oldStatus}). Reason: {reason}");
-
             TempData["Success"] = $"Order {order.OrderNumber} cancelled and inventory adjusted.";
             return RedirectToAction(nameof(Details), new { id });
         }

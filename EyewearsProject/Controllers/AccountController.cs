@@ -7,6 +7,7 @@ using EyewearsProject.Services.Email;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 using EyewearsProject.Services.Sms;
+using EyewearsProject.Services;
 
 namespace EyewearsProject.Controllers
 {
@@ -17,16 +18,19 @@ namespace EyewearsProject.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailService _emailService;
         private readonly ISmsService _smsService;
+        private readonly ICartService _cartService;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            IEmailService emailService, ISmsService smsService)
+            IEmailService emailService, ISmsService smsService,
+            ICartService cartService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailService = emailService;
             _smsService = smsService;
+            _cartService = cartService;
         }
 
         // =========================
@@ -226,7 +230,7 @@ namespace EyewearsProject.Controllers
             var result = await _signInManager.CheckPasswordSignInAsync(
                     user, model.Password, lockoutOnFailure: true);
 
-            if(result.IsLockedOut)
+            if (result.IsLockedOut)
             {
                 ModelState.AddModelError(
                     string.Empty,
@@ -281,6 +285,11 @@ namespace EyewearsProject.Controllers
             await _signInManager.SignInAsync(
                 user,
                 model.RememberMe);
+
+            // Fold anything the customer added while browsing as a guest
+            // into their own cart, and wipe the guest cart so it can never
+            // be picked up by the next person who logs in on this browser.
+            await _cartService.MergeGuestCartIntoUserAsync();
 
             if (!string.IsNullOrEmpty(returnUrl) &&
                 Url.IsLocalUrl(returnUrl))
@@ -552,10 +561,10 @@ namespace EyewearsProject.Controllers
             }
 
             return View(new VerifyTwoFactorOtpViewModel
-                {
-                    Method = method,
-                    RemainingSeconds = remaining
-                });
+            {
+                Method = method,
+                RemainingSeconds = remaining
+            });
         }
         [AllowAnonymous]
         [HttpPost]
@@ -730,6 +739,9 @@ namespace EyewearsProject.Controllers
             await _signInManager.SignInAsync(
                 user,
                 rememberMe);
+
+            // Same guest-cart merge as the normal login path above.
+            await _cartService.MergeGuestCartIntoUserAsync();
 
 
             // =========================
@@ -1717,6 +1729,10 @@ namespace EyewearsProject.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
+
+            // Defense in depth: wipe any guest-cart leftovers in this session
+            // so the next person to use this browser never sees this user's cart.
+            _cartService.ClearGuestSessionCart();
 
             return RedirectToAction(
                 "Index",

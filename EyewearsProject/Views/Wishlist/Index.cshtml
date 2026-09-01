@@ -5,7 +5,24 @@
     ViewData["Title"] = "My Wishlist";
 }
 
-<h1>My Wishlist</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">My Wishlist</h1>
+    @if (Model.Items.Any())
+    {
+        <form asp-controller="Wishlist" asp-action="AddAllToCart" method="post">
+            <button type="submit" class="btn btn-dark">Add All to Cart</button>
+        </form>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning">@TempData["Error"]</div>
+}
 
 @if (!Model.Items.Any())
 {
@@ -37,13 +54,19 @@ else
                         }
                         <p class="fw-bold">@price.ToPkr()</p>
                     </div>
-                    <div class="card-footer d-flex justify-content-between bg-white border-top-0">
-                        <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
-                            View Product
-                        </a>
-                        <form asp-controller="Wishlist" asp-action="Remove" method="post">
+                    <div class="card-footer bg-white border-top-0">
+                        <div class="d-flex justify-content-between mb-2">
+                            <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
+                                View Product
+                            </a>
+                            <form asp-controller="Wishlist" asp-action="Remove" method="post">
+                                <input type="hidden" name="itemId" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                            </form>
+                        </div>
+                        <form asp-controller="Wishlist" asp-action="AddToCart" method="post">
                             <input type="hidden" name="itemId" value="@item.Id" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                            <button type="submit" class="btn btn-sm btn-dark w-100">Add to Cart</button>
                         </form>
                     </div>
                 </div>

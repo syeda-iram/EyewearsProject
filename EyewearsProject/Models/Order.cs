@@ -26,6 +26,7 @@
 
         public List<OrderItem> Items { get; set; } = new();
         public Payment? Payment { get; set; }
+        public List<OrderStatusHistory> StatusHistory { get; set; } = new();
         public string RecipientName { get; set; } = "";
         public string RecipientEmail { get; set; } = "";
         public string RecipientPhone { get; set; } = "";

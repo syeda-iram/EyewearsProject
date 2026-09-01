@@ -13,33 +13,23 @@ namespace EyewearsProject.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IInventoryService _inventoryService;
-        private const string CartSessionKey = "Cart";
+        private readonly ICartService _cartService;
 
-        public CartController(AppDbContext context, UserManager<ApplicationUser> userManager, IInventoryService inventoryService)
+        public CartController(AppDbContext context, UserManager<ApplicationUser> userManager, IInventoryService inventoryService, ICartService cartService)
         {
             _context = context;
             _userManager = userManager;
             _inventoryService = inventoryService;
-        }
-
-        private List<CartItem> GetCart()
-        {
-            return HttpContext.Session.GetObject<List<CartItem>>(CartSessionKey) ?? new List<CartItem>();
-        }
-
-        private void SaveCart(List<CartItem> cart)
-        {
-            HttpContext.Session.SetObject(CartSessionKey, cart);
+            _cartService = cartService;
         }
 
         // GET: /Cart
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var cart = GetCart();
+            var cart = await _cartService.GetCartAsync();
             return View(cart);
         }
 
-        // POST: /Cart/Add  (plain add, no lens customization)
         // POST: /Cart/Add  (plain add, no lens customization)
         [HttpPost]
         public async Task<IActionResult> Add(int productId, int variantId, int quantity = 1)
@@ -63,70 +53,41 @@ namespace EyewearsProject.Controllers
                 return RedirectToAction("Details", "Products", new { id = productId });
             }
 
-            var cart = GetCart();
-
-            // Only merge with an existing line if it's the same variant AND
-            // has no lens customization on either side — a plain add should
-            // never silently merge into a lens-customized line.
-            var existing = cart.FirstOrDefault(c =>
-                c.ProductVariantId == variantId && c.LensType == null && c.Coating == null);
-
-            if (existing != null)
+            await _cartService.AddAsync(new CartItem
             {
-                existing.Quantity += quantity;
-            }
-            else
-            {
-                cart.Add(new CartItem
-                {
-                    ProductId = product.Id,
-                    ProductVariantId = variant.Id,
-                    ProductName = product.Name,
-                    Color = variant.Color,
-                    ImageUrl = product.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
-                               ?? product.Images.FirstOrDefault()?.ImageUrl,
-                    UnitPrice = product.DiscountPrice ?? product.Price,
-                    Quantity = quantity
-                });
-            }
+                ProductId = product.Id,
+                ProductVariantId = variant.Id,
+                ProductName = product.Name,
+                Color = variant.Color,
+                ImageUrl = product.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
+                           ?? product.Images.FirstOrDefault()?.ImageUrl,
+                UnitPrice = product.DiscountPrice ?? product.Price,
+                Quantity = quantity
+            });
 
-            SaveCart(cart);
             return RedirectToAction("Index");
         }
 
         // POST: /Cart/UpdateQuantity
         [HttpPost]
-        public IActionResult UpdateQuantity(string lineId, int quantity)
+        public async Task<IActionResult> UpdateQuantity(string lineId, int quantity)
         {
-            var cart = GetCart();
-            var item = cart.FirstOrDefault(c => c.LineId == lineId);
-
-            if (item != null)
-            {
-                if (quantity <= 0)
-                    cart.Remove(item);
-                else
-                    item.Quantity = quantity;
-            }
-
-            SaveCart(cart);
+            await _cartService.UpdateQuantityAsync(lineId, quantity);
             return RedirectToAction("Index");
         }
 
         // POST: /Cart/Remove
         [HttpPost]
-        public IActionResult Remove(string lineId)
+        public async Task<IActionResult> Remove(string lineId)
         {
-            var cart = GetCart();
-            cart.RemoveAll(c => c.LineId == lineId);
-            SaveCart(cart);
+            await _cartService.RemoveAsync(lineId);
             return RedirectToAction("Index");
         }
 
         // GET: /Cart/Checkout
         public async Task<IActionResult> Checkout()
         {
-            var cart = GetCart();
+            var cart = await _cartService.GetCartAsync();
             if (!cart.Any()) return RedirectToAction("Index");
 
             if (User.Identity?.IsAuthenticated != true)
@@ -167,7 +128,7 @@ namespace EyewearsProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
-            var cart = GetCart();
+            var cart = await _cartService.GetCartAsync();
             if (!cart.Any()) return RedirectToAction("Index");
 
             if (User.Identity?.IsAuthenticated != true)
@@ -296,11 +257,20 @@ namespace EyewearsProject.Controllers
 
             _context.Orders.Add(order);
 
+            _context.Orders.Add(order);
+
             if (promo != null)
                 promo.UsageCount += 1;
 
             await _context.SaveChangesAsync(); // saved here so order.Id exists for the inventory transaction reference
 
+            _context.OrderStatusHistories.Add(new OrderStatusHistory
+            {
+                OrderId = order.Id,
+                Status = OrderStatus.Pending,
+                ChangedAt = order.OrderDate
+            });
+            await _context.SaveChangesAsync();
             foreach (var item in cart)
             {
                 await _inventoryService.RecordTransactionAsync(
@@ -323,7 +293,7 @@ namespace EyewearsProject.Controllers
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            SaveCart(new List<CartItem>());
+            await _cartService.ClearAsync();
 
             return RedirectToAction("Confirmation", new { id = order.Id });
         }
@@ -332,7 +302,7 @@ namespace EyewearsProject.Controllers
         [HttpPost]
         public async Task<IActionResult> ApplyCoupon(string code)
         {
-            var cart = GetCart();
+            var cart = await _cartService.GetCartAsync();
             var subtotal = cart.Sum(i => i.TotalPrice);
 
             var promo = await _context.Promotions.FirstOrDefaultAsync(p => p.Code == code.ToUpper());

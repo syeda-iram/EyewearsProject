@@ -7,6 +7,15 @@
 
 <h1>My Orders</h1>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning">@TempData["Error"]</div>
+}
+
 @if (!Model.Any())
 {
     <div class="alert alert-info">
@@ -37,22 +46,30 @@ else
                     <td>@order.Items.Count</td>
                     <td>@order.GrandTotal.ToPkr()</td>
                     <td>
-                        <span class="badge bg-@(order.OrderStatus switch {
-                            OrderStatus.Delivered => "success",
-                            OrderStatus.Cancelled => "danger",
-                            OrderStatus.Returned => "secondary",
-                            OrderStatus.Shipped => "info",
-                            OrderStatus.Processing => "primary",
-                            _ => "warning"
-                        })">
+                        <span class="badge bg-@(order.OrderStatus switch
+                              {
+                                  OrderStatus.Delivered => "success",
+                                  OrderStatus.Cancelled => "danger",
+                                  OrderStatus.Returned => "secondary",
+                                  OrderStatus.Shipped => "info",
+                                  OrderStatus.Processing => "primary",
+                                  _ => "warning"
+                              })">
                             @order.OrderStatus
                         </span>
                     </td>
                     <td>@order.PaymentStatus</td>
-                    <td>
+                    <td class="d-flex gap-1">
                         <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@order.Id">
                             View Details
                         </a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Track" asp-route-id="@order.Id">
+                            Track
+                        </a>
+                        <form asp-controller="Orders" asp-action="ReorderAll" method="post">
+                            <input type="hidden" name="orderId" value="@order.Id" />
+                            <button type="submit" class="btn btn-sm btn-dark">Order Again</button>
+                        </form>
                     </td>
                 </tr>
             }

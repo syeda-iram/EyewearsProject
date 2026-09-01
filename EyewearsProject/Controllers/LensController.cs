@@ -13,13 +13,14 @@ namespace EyewearsProject.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IInventoryService _inventoryService;
-        private const string CartSessionKey = "Cart";
+        private readonly ICartService _cartService;
 
-        public LensController(AppDbContext context, UserManager<ApplicationUser> userManager, IInventoryService inventoryService)
+        public LensController(AppDbContext context, UserManager<ApplicationUser> userManager, IInventoryService inventoryService, ICartService cartService)
         {
             _context = context;
             _userManager = userManager;
             _inventoryService = inventoryService;
+            _cartService = cartService;
         }
 
         public async Task<IActionResult> Customize(int productId, int variantId)
@@ -126,24 +127,20 @@ namespace EyewearsProject.Controllers
                 }
             }
 
-            var cart = HttpContext.Session.GetObject<List<CartItem>>(CartSessionKey) ?? new List<CartItem>();
-
-            cart.Add(new CartItem
+            await _cartService.AddAsync(new CartItem
             {
                 ProductId = product.Id,
                 ProductVariantId = variant.Id,
                 ProductName = product.Name,
                 Color = variant.Color,
                 ImageUrl = product.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
-                           ?? product.Images.FirstOrDefault()?.ImageUrl,
+               ?? product.Images.FirstOrDefault()?.ImageUrl,
                 UnitPrice = basePrice + lensPrice + coatingPrice,
                 Quantity = quantity,
                 LensType = lensType,
                 Coating = coating,
                 PrescriptionId = prescriptionId
             });
-
-            HttpContext.Session.SetObject(CartSessionKey, cart);
 
             TempData["Success"] = "Added to cart with your lens selection.";
             return RedirectToAction("Index", "Products");
