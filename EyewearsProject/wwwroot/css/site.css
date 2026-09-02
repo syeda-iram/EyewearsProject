@@ -3,19 +3,28 @@
    =================================== */
 
 :root {
-    --brand-navy: #14213D;
-    --brand-navy-hover: #1D2E52;
-    --brand-cream: #FAF6EF;
-    --brand-cream-dark: #F0EAE0;
-    --brand-text: #2A2A2E;
-    --brand-text-muted: #6B6B70;
-    --brand-border: #E4DFD5;
+    /* Dark ink (replaces navy) — used for headings, primary buttons, active icons */
+    --brand-navy: #2B211B;
+    --brand-navy-hover: #3D2F26;
+    /* Warm accent — replaces the old bright-blue "highlight" */
+    --brand-accent: #B5652E;
+    --brand-accent-hover: #9C5526;
+    --brand-accent-bg: #F0E4D3;
+    /* Backgrounds */
+    --brand-cream: #ede2d1;
+    --brand-cream-dark: #F0E4D3;
+    --brand-beige: #F5EEE1;
+    /* Text */
+    --brand-text: #2A211C;
+    --brand-text-muted: #7A6C5D;
+    --brand-border: #E6D9C6;
+    /* Semantic (kept warm-compatible) */
     --brand-danger: #B3413A;
     --brand-success: #3E7A5E;
     --radius-md: 10px;
     --radius-lg: 16px;
-    --shadow-soft: 0 2px 12px rgba(20, 33, 61, 0.06);
-    --shadow-card: 0 4px 20px rgba(20, 33, 61, 0.08);
+    --shadow-soft: 0 2px 12px rgba(43, 33, 27, 0.06);
+    --shadow-card: 0 4px 20px rgba(43, 33, 27, 0.08);
 }
 
 
@@ -37,7 +46,14 @@ html {
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: #FFFFFF;
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background-color: #ede2d1;
+        color: var(--brand-text);
+        margin-bottom: 0;
+    }
+
     color: var(--brand-text);
     margin-bottom: 0;
 }
@@ -78,7 +94,7 @@ h4,
 h5,
 h6,
 .navbar-brand {
-    font-family: 'Poppins', 'Inter', sans-serif;
+    font-family: 'Fraunces', 'Inter', serif;
     font-weight: 600;
     color: var(--brand-navy);
     letter-spacing: -0.01em;
@@ -104,7 +120,7 @@ a {
    =================================== */
 
 .navbar {
-    background-color: #FFFFFF !important;
+    background-color: var(--brand-cream) !important;
     border-bottom: 1px solid var(--brand-border);
     padding-top: 0.85rem;
     padding-bottom: 0.85rem;
@@ -131,6 +147,26 @@ a {
 
 
 /* ===================================
+   Site Topbar (container for the header)
+   =================================== */
+
+.site-topbar {
+    background: #FFFFFF !important;
+    border-bottom: 1px solid var(--brand-border);
+    padding: 12px 0;
+    box-shadow: none;
+}
+
+.evw-header {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(360px, 1fr) auto;
+    align-items: center;
+    column-gap: 28px;
+}
+
+
+/* ===================================
    EyeCraft Header / Logo
    =================================== */
 
@@ -141,12 +177,14 @@ a {
     background: none;
     border: none;
     padding: 0;
+    margin: 0;
     flex-shrink: 0;
+    text-align: left;
 }
 
 .evw-logo-icon {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: var(--brand-navy);
     color: #FFFFFF;
@@ -157,33 +195,38 @@ a {
     flex-shrink: 0;
 }
 
+    .evw-logo-icon svg {
+        width: 17px;
+        height: 17px;
+    }
+
 .evw-brand {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
+    min-width: 150px;
     line-height: 1;
-    min-width: max-content;
 }
 
 .evw-logo-text {
     font-family: "Fraunces", Georgia, serif;
     font-weight: 700;
-    font-size: 19px;
-    line-height: 1;
+    font-size: 20px;
+    line-height: 1.05;
     color: var(--brand-navy);
     letter-spacing: 0.01em;
+    white-space: nowrap;
 }
 
 .evw-tagline {
     display: block;
-    margin-top: 4px;
+    margin-top: 5px;
     font-family: 'Inter', sans-serif;
-    font-size: 0.62rem;
+    font-size: 10px;
     font-weight: 400;
     line-height: 1;
     color: var(--brand-text-muted);
-    opacity: 0.8;
     letter-spacing: 0.02em;
     white-space: nowrap;
 }
@@ -194,57 +237,65 @@ a {
    =================================== */
 
 .evw-search-form {
-    flex: 1 1 auto;
     width: 100%;
-    max-width: 620px;
-    margin: 0 auto;
-    padding: 0 24px;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    margin: 0;
 }
 
     .evw-search-form .input-group {
-        width: 100%;
+        width: min(100%, 650px);
         min-height: 50px;
-        background: #F4F5F7;
+        background: var(--brand-beige);
         border-radius: 999px;
-        padding: 4px 6px 4px 20px;
+        padding: 5px 7px 5px 20px;
+        display: flex;
+        align-items: center;
         border: 1px solid transparent;
-        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
     }
 
         .evw-search-form .input-group:focus-within {
             background: #FFFFFF;
             border-color: var(--brand-border);
-            box-shadow: 0 2px 10px rgba(20, 33, 61, 0.06);
+            box-shadow: var(--shadow-soft);
         }
 
     .evw-search-form input {
-        border: none;
-        outline: none;
-        background: transparent;
+        flex: 1;
+        min-width: 0;
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
         box-shadow: none !important;
+        padding: 8px 4px;
+        font-family: "Inter", sans-serif;
         font-size: 14px;
         color: var(--brand-text);
     }
 
         .evw-search-form input::placeholder {
-            color: #8A8F98;
+            color: #9A8E7E;
+            opacity: 1;
         }
 
     .evw-search-form button {
         width: 40px;
         height: 40px;
+        flex-shrink: 0;
         border: none;
         background: transparent;
-        color: #7A808A;
+        color: var(--brand-text-muted);
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        transition: background-color 0.15s ease, color 0.15s ease;
+        transition: background-color .15s ease, color .15s ease;
     }
 
         .evw-search-form button:hover {
-            background: #E9EBEF;
+            background: var(--brand-cream-dark);
             color: var(--brand-navy);
         }
 
@@ -253,25 +304,40 @@ a {
    Header Navigation
    =================================== */
 
+.topbar-links {
+    flex-shrink: 0;
+    margin: 0 !important;
+    padding: 0;
+}
+
+    .topbar-links .navbar-nav {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
 .evw-nav-link {
-    color: var(--brand-navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-navy) !important;
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
     font-weight: 500;
-    font-size: 14.5px;
-    text-decoration: none;
-    padding: 8px 14px;
+    text-decoration: none !important;
+    padding: 8px 13px;
     border-radius: 999px;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition: background-color .15s ease, color .15s ease;
 }
 
     .evw-nav-link:hover {
-        background: #F4F5F7;
-        color: var(--brand-navy);
-        text-decoration: none;
+        background: var(--brand-beige);
+        color: var(--brand-navy) !important;
     }
 
     .evw-nav-link.active {
-        background: #E7ECFB;
-        color: #2B4EDB;
+        background: var(--brand-accent-bg);
+        color: var(--brand-accent) !important;
     }
 
 
@@ -286,15 +352,15 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--brand-navy);
+    color: var(--brand-navy) !important;
     position: relative;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    text-decoration: none !important;
+    transition: background-color .15s ease, color .15s ease;
 }
 
     .evw-icon-btn:hover {
-        background: #F4F5F7;
-        color: var(--brand-navy);
-        text-decoration: none;
+        background: var(--brand-beige);
+        color: var(--brand-navy) !important;
     }
 
 .btn-icon-only {
@@ -317,19 +383,20 @@ a {
 
 .icon-badge {
     position: absolute;
-    top: 2px;
-    right: 2px;
-    background-color: var(--brand-navy);
+    top: 1px;
+    right: 0;
+    background: var(--brand-accent);
     color: #FFFFFF;
-    font-size: 10px;
+    font-family: "Inter", sans-serif;
+    font-size: 9px;
     font-weight: 600;
     min-width: 16px;
     height: 16px;
+    padding: 0 3px;
     border-radius: 999px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 3px;
 }
 
 
@@ -480,7 +547,7 @@ a {
 }
 
 .alert-info {
-    background-color: #E8EEF7;
+    background-color: var(--brand-accent-bg);
     color: var(--brand-navy);
 }
 
@@ -518,7 +585,7 @@ a {
 }
 
 .evw-highlight {
-    color: #2B4EDB;
+    color: var(--brand-accent);
 }
 
 
@@ -526,37 +593,55 @@ a {
    Sidebar / Offcanvas
    =================================== */
 
-.offcanvas {
-    width: 240px;
-    background-color: #FFFFFF;
+.offcanvas.offcanvas-start {
+    width: 280px !important;
+    max-width: 280px !important;
+    background: #FFFFFF;
+    border-right: 1px solid var(--brand-border);
+    box-shadow: 8px 0 30px rgba(43, 33, 27, 0.08);
 }
 
 .offcanvas-header {
-    padding: 1.25rem 1.15rem;
+    padding: 22px 18px 16px;
+    border-bottom: 1px solid var(--brand-border);
 }
 
 .offcanvas-body {
-    padding: 1rem 1.15rem;
+    padding: 18px;
+}
+
+.offcanvas hr {
+    margin: 16px 0;
+    border-color: var(--brand-border);
+    opacity: 1;
+}
+
+.offcanvas .btn {
+    border-radius: var(--radius-md);
 }
 
 .sidebar-username {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
     font-weight: 600;
     color: var(--brand-navy);
+    margin-bottom: 2px;
 }
 
 .sidebar-usermail {
-    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
     color: var(--brand-text-muted);
 }
 
 .sidebar-section-label {
-    font-size: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     color: var(--brand-text-muted);
-    margin-bottom: 0.5rem;
+    margin-bottom: 8px;
 }
 
 .sidebar-nav {
@@ -565,19 +650,54 @@ a {
     margin: 0;
 }
 
-    .sidebar-nav li a {
-        display: block;
-        padding: 0.6rem 0.75rem;
-        border-radius: var(--radius-md);
-        color: var(--brand-text);
-        font-weight: 500;
-        transition: background-color 0.15s ease, color 0.15s ease;
+    .sidebar-nav li {
+        margin-bottom: 2px;
     }
 
-        .sidebar-nav li a:hover {
-            background-color: var(--brand-cream-dark);
-            color: var(--brand-navy);
+        .sidebar-nav li a {
+            display: block;
+            padding: 9px 12px;
+            border-radius: var(--radius-md);
+            color: var(--brand-text);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
             text-decoration: none;
+        }
+
+            .sidebar-nav li a:hover {
+                background: var(--brand-cream);
+                color: var(--brand-navy);
+                text-decoration: none;
+            }
+
+/* Expandable category groups in the sidebar */
+.sidebar-cat-toggle {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+    .sidebar-cat-toggle i {
+        transition: transform .2s ease;
+    }
+
+    .sidebar-cat-toggle[aria-expanded="true"] i {
+        transform: rotate(180deg);
+    }
+
+.sidebar-subnav {
+    padding-left: 8px;
+}
+
+    .sidebar-subnav li a {
+        font-size: 13px;
+        color: var(--brand-text-muted);
+    }
+
+        .sidebar-subnav li a:hover {
+            color: var(--brand-navy);
         }
 
 
@@ -595,7 +715,7 @@ a {
 }
 
 .filter-title {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Fraunces', serif;
     font-weight: 600;
     margin-bottom: 1rem;
 }
@@ -629,7 +749,7 @@ a {
 
 .evw-footer {
     background: var(--brand-navy);
-    color: #C9CEDA;
+    color: #D9CFC2;
     margin-top: 64px;
     padding: 48px 0 24px;
 }
@@ -642,7 +762,7 @@ a {
     }
 
     .evw-footer a {
-        color: #C9CEDA;
+        color: #D9CFC2;
         text-decoration: none;
         display: block;
         margin-bottom: 8px;
@@ -658,7 +778,7 @@ a {
         margin-top: 32px;
         padding-top: 20px;
         font-size: 13px;
-        color: #8891A8;
+        color: #A69885;
     }
 
 
@@ -666,7 +786,82 @@ a {
    Mobile
    =================================== */
 
+@media (max-width: 1200px) {
+    .evw-header {
+        column-gap: 18px;
+    }
+
+    .evw-search-form .input-group {
+        width: min(100%, 560px);
+    }
+
+    .evw-nav-link {
+        padding-left: 9px;
+        padding-right: 9px;
+    }
+}
+
+@media (max-width: 1050px) {
+    .evw-header {
+        grid-template-columns: auto minmax(280px, 1fr) auto;
+        column-gap: 14px;
+    }
+
+    .evw-search-form .input-group {
+        width: 100%;
+    }
+
+    .evw-logo-text {
+        font-size: 18px;
+    }
+
+    .evw-tagline {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 900px) {
+    .evw-header {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 14px;
+    }
+
+    .evw-logo-btn {
+        flex-shrink: 0;
+    }
+
+    .evw-search-form {
+        flex: 1;
+    }
+
+        .evw-search-form .input-group {
+            min-height: 46px;
+        }
+
+    .evw-nav-link {
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+
+    .evw-tagline {
+        display: none;
+    }
+
+    .evw-brand {
+        min-width: auto;
+    }
+}
+
 @media (max-width: 767px) {
+
+    .site-topbar {
+        padding: 10px 0;
+    }
+
+    .evw-header {
+        gap: 10px;
+    }
 
     .evw-search-form {
         display: none;
@@ -677,6 +872,11 @@ a {
         border-radius: var(--radius-lg);
     }
 
+    .evw-logo-icon {
+        width: 34px;
+        height: 34px;
+    }
+
     .evw-logo-text {
         font-size: 18px;
     }
@@ -685,8 +885,17 @@ a {
         font-size: 0.58rem;
     }
 
-    .offcanvas {
-        width: 240px;
+    .topbar-links {
+        display: none !important;
+    }
+
+    .navbar-toggler {
+        margin-left: auto !important;
+    }
+
+    .offcanvas.offcanvas-start {
+        width: 280px !important;
+        max-width: 280px !important;
     }
 }
 
@@ -707,6 +916,7 @@ a {
         padding-right: 9px;
     }
 }
+
 .tryon-stage {
     background-color: #F4F2EE;
     border-radius: var(--radius-lg, 16px);
