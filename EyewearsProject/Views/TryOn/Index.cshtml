@@ -39,13 +39,13 @@
             <label class="form-label small">Fit size</label>
             <input type="range" id="scaleSlider" min="0.5" max="2" step="0.05" value="1" class="form-range" />
             <label class="form-label small">Position (up/down)</label>
-<input type="range" id="offsetSlider" min="-0.3" max="0.3" step="0.02" value="0" class="form-range" />
+            <input type="range" id="offsetSlider" min="-0.3" max="0.3" step="0.02" value="0" class="form-range" />
 
-<label class="form-label small">Position (left/right)</label>
-<input type="range" id="horizontalOffsetSlider" min="-0.3" max="0.3" step="0.02" value="0" class="form-range" />
+            <label class="form-label small">Position (left/right)</label>
+            <input type="range" id="horizontalOffsetSlider" min="-0.3" max="0.3" step="0.02" value="0" class="form-range" />
 
-<button type="button" id="resetFitBtn" class="btn btn-sm btn-outline-secondary">Reset to default</button>
-               </div>
+            <button type="button" id="resetFitBtn" class="btn btn-sm btn-outline-secondary">Reset to default</button>
+        </div>
         <button type="button" id="startWebcamBtn" class="btn btn-primary w-100 mb-2">Use Webcam</button>
         <button type="button" id="stopWebcamBtn" class="btn btn-outline-secondary w-100" style="display:none;">Stop</button>
 
@@ -54,7 +54,7 @@
 
     <div class="col-md-8">
         <!-- 2D photo mode -->
-        <canvas id="tryonCanvas" width="640" height="480" style="max-width:100%; border-radius:12px; background:#f4f2ee; display:block;"></canvas>
+        <canvas id="tryonCanvas" width="640" height="480" style="max-width:100%; border-radius:12px; background:#F5EEE1; display:block;"></canvas>
 
         <!-- 3D Jeeliz mode -->
         <div id="JeelizVTOWidget" style="width:100%; max-width:640px; aspect-ratio:4/3; display:none;">
@@ -109,110 +109,110 @@
             const scale = Math.min(canvas2d.width / img.naturalWidth, canvas2d.height / img.naturalHeight);
             const w = img.naturalWidth * scale;
             const h = img.naturalHeight * scale;
-            ctx2d.fillStyle = '#f4f2ee';
+            ctx2d.fillStyle = '#F5EEE1';
             ctx2d.fillRect(0, 0, canvas2d.width, canvas2d.height);
             ctx2d.drawImage(img, (canvas2d.width - w) / 2, (canvas2d.height - h) / 2, w, h);
         }
 
         let lastDetection = null; // cached so sliders can redraw instantly without re-running face detection
 
-function drawGlasses(detection) {
-    const leftEye = avg(detection.landmarks.getLeftEye());
-    const rightEye = avg(detection.landmarks.getRightEye());
-    const midX = (leftEye.x + rightEye.x) / 2;
-    const midY = (leftEye.y + rightEye.y) / 2;
-    const eyeDist = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
+        function drawGlasses(detection) {
+            const leftEye = avg(detection.landmarks.getLeftEye());
+            const rightEye = avg(detection.landmarks.getRightEye());
+            const midX = (leftEye.x + rightEye.x) / 2;
+            const midY = (leftEye.y + rightEye.y) / 2;
+            const eyeDist = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
 
-    const selectedOpt = productSelect.options[productSelect.selectedIndex];
-    const baseScale = parseFloat(selectedOpt.dataset.scale) || 1.0;
-    const baseOffset = parseFloat(selectedOpt.dataset.voffset) || 0;
+            const selectedOpt = productSelect.options[productSelect.selectedIndex];
+            const baseScale = parseFloat(selectedOpt.dataset.scale) || 1.0;
+            const baseOffset = parseFloat(selectedOpt.dataset.voffset) || 0;
 
-    // Customer's slider adjustments apply on top of the admin-set defaults.
-    const userScale = parseFloat(document.getElementById('scaleSlider').value);
-    const userVOffset = parseFloat(document.getElementById('offsetSlider').value);
-    const userHOffset = parseFloat(document.getElementById('horizontalOffsetSlider').value);
+            // Customer's slider adjustments apply on top of the admin-set defaults.
+            const userScale = parseFloat(document.getElementById('scaleSlider').value);
+            const userVOffset = parseFloat(document.getElementById('offsetSlider').value);
+            const userHOffset = parseFloat(document.getElementById('horizontalOffsetSlider').value);
 
-    const finalScale = baseScale * userScale;
-    const finalVOffset = baseOffset + userVOffset;
+            const finalScale = baseScale * userScale;
+            const finalVOffset = baseOffset + userVOffset;
 
-    const glassesImg = new Image();
-    glassesImg.crossOrigin = "anonymous";
-    glassesImg.onload = function () {
-        const w = eyeDist * 3.0 * finalScale;
-        const h = w * (glassesImg.height / glassesImg.width);
-        drawImageFitted(currentImage); // redraw the base photo first so old glasses positions don't ghost
-        ctx2d.drawImage(
-            glassesImg,
-            midX - w / 2 + (eyeDist * userHOffset),
-            midY - h / 2.3 + (eyeDist * finalVOffset),
-            w, h
-        );
-        statusEl.textContent = 'Looking good! Use the sliders to fine-tune the fit.';
-    };
-    glassesImg.src = selectedOpt.dataset.overlay;
-}
-async function detectAndDraw2D(img) {
-    if (!modelsLoaded2d) return;
-    drawImageFitted(img);
+            const glassesImg = new Image();
+            glassesImg.crossOrigin = "anonymous";
+            glassesImg.onload = function() {
+                const w = eyeDist * 3.0 * finalScale;
+                const h = w * (glassesImg.height / glassesImg.width);
+                drawImageFitted(currentImage); // redraw the base photo first so old glasses positions don't ghost
+                ctx2d.drawImage(
+                    glassesImg,
+                    midX - w / 2 + (eyeDist * userHOffset),
+                    midY - h / 2.3 + (eyeDist * finalVOffset),
+                    w, h
+                );
+                statusEl.textContent = 'Looking good! Use the sliders to fine-tune the fit.';
+            };
+            glassesImg.src = selectedOpt.dataset.overlay;
+        }
+        async function detectAndDraw2D(img) {
+            if (!modelsLoaded2d) return;
+            drawImageFitted(img);
 
-    const detection = await faceapi
-        .detectSingleFace(canvas2d, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.3 }))
-        .withFaceLandmarks();
+            const detection = await faceapi
+                .detectSingleFace(canvas2d, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.3 }))
+                .withFaceLandmarks();
 
-    if (!detection) {
-        statusEl.textContent = 'No face detected — try a clearer, front-facing photo.';
-        document.getElementById('fitControls').style.display = 'none';
-        return;
-    }
+            if (!detection) {
+                statusEl.textContent = 'No face detected — try a clearer, front-facing photo.';
+                document.getElementById('fitControls').style.display = 'none';
+                return;
+            }
 
-    lastDetection = detection;
-    document.getElementById('fitControls').style.display = 'block';
-    drawGlasses(detection);
-}
+            lastDetection = detection;
+            document.getElementById('fitControls').style.display = 'block';
+            drawGlasses(detection);
+        }
 
-document.getElementById('scaleSlider').addEventListener('input', function () {
-    if (lastDetection) drawGlasses(lastDetection);
-});
+        document.getElementById('scaleSlider').addEventListener('input', function() {
+            if (lastDetection) drawGlasses(lastDetection);
+        });
 
-document.getElementById('offsetSlider').addEventListener('input', function () {
-    if (lastDetection) drawGlasses(lastDetection);
-});
+        document.getElementById('offsetSlider').addEventListener('input', function() {
+            if (lastDetection) drawGlasses(lastDetection);
+        });
 
-document.getElementById('horizontalOffsetSlider').addEventListener('input', function () {
-    if (lastDetection) drawGlasses(lastDetection);
-});
+        document.getElementById('horizontalOffsetSlider').addEventListener('input', function() {
+            if (lastDetection) drawGlasses(lastDetection);
+        });
 
-document.getElementById('resetFitBtn').addEventListener('click', function () {
-    document.getElementById('scaleSlider').value = 1;
-    document.getElementById('offsetSlider').value = 0;
-    document.getElementById('horizontalOffsetSlider').value = 0;
-    if (lastDetection) drawGlasses(lastDetection);
-});
+        document.getElementById('resetFitBtn').addEventListener('click', function() {
+            document.getElementById('scaleSlider').value = 1;
+            document.getElementById('offsetSlider').value = 0;
+            document.getElementById('horizontalOffsetSlider').value = 0;
+            if (lastDetection) drawGlasses(lastDetection);
+        });
         function avg(points) {
             return {
                 x: points.reduce((s, p) => s + p.x, 0) / points.length,
                 y: points.reduce((s, p) => s + p.y, 0) / points.length
             };
         }
-        document.getElementById('photoInput').addEventListener('change', function () {
-    const file = this.files[0];
-    if (!file) return;
-    stopJeeliz();
-    showMode('2d');
-    document.getElementById('scaleSlider').value = 1;
-    document.getElementById('offsetSlider').value = 0;
-    const img = new Image();
-    img.onload = function () { currentImage = img; detectAndDraw2D(img); };
-    img.src = URL.createObjectURL(file);
-});
+        document.getElementById('photoInput').addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            stopJeeliz();
+            showMode('2d');
+            document.getElementById('scaleSlider').value = 1;
+            document.getElementById('offsetSlider').value = 0;
+            const img = new Image();
+            img.onload = function() { currentImage = img; detectAndDraw2D(img); };
+            img.src = URL.createObjectURL(file);
+        });
 
-       productSelect.addEventListener('change', function () {
-    document.getElementById('scaleSlider').value = 1;
-    document.getElementById('offsetSlider').value = 0;
-    if (currentImage && jeelizDiv.style.display === 'none' && lastDetection) {
-        drawGlasses(lastDetection);
-    }
-});
+        productSelect.addEventListener('change', function() {
+            document.getElementById('scaleSlider').value = 1;
+            document.getElementById('offsetSlider').value = 0;
+            if (currentImage && jeelizDiv.style.display === 'none' && lastDetection) {
+                drawGlasses(lastDetection);
+            }
+        });
 
         // ---------- 3D Jeeliz webcam mode ----------
         let jeelizStarted = false;
@@ -225,11 +225,11 @@ document.getElementById('resetFitBtn').addEventListener('click', function () {
                 sku: sku,
                 searchImageMask: 'https://appstatic.jeeliz.com/jeewidget/images/target512.jpg',
                 searchImageColor: 0xeeeeee,
-                callbackReady: function () {
+                callbackReady: function() {
                     jeelizStarted = true;
                     statusEl.textContent = '3D tracking active — move your head to see it follow.';
                 },
-                onError: function (errorLabel) {
+                onError: function(errorLabel) {
                     statusEl.textContent = '3D try-on unavailable for this frame (' + errorLabel + ') — try photo mode instead.';
                     console.error('Jeeliz error:', errorLabel);
                     showMode('2d');
@@ -245,7 +245,7 @@ document.getElementById('resetFitBtn').addEventListener('click', function () {
             document.getElementById('stopWebcamBtn').style.display = 'none';
         }
 
-        document.getElementById('startWebcamBtn').addEventListener('click', function () {
+        document.getElementById('startWebcamBtn').addEventListener('click', function() {
             const sku = productSelect.options[productSelect.selectedIndex].dataset.sku;
             document.getElementById('stopWebcamBtn').style.display = 'block';
 
@@ -257,7 +257,7 @@ document.getElementById('resetFitBtn').addEventListener('click', function () {
             }
         });
 
-        document.getElementById('stopWebcamBtn').addEventListener('click', function () {
+        document.getElementById('stopWebcamBtn').addEventListener('click', function() {
             stopJeeliz();
             showMode('2d');
             statusEl.textContent = 'Stopped.';

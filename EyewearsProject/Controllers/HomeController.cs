@@ -78,6 +78,39 @@ namespace EyewearsProject.Controllers
             ViewBag.CategoryProductCounts = categoryCounts;
 
             // -----------------------------
+            // CATEGORY THUMBNAILS
+            // One representative product image per parent
+            // category (falls back to a subcategory's image
+            // if the parent has none of its own).
+            // -----------------------------
+            var categoryThumbnails = new Dictionary<int, string>();
+
+            foreach (var category in parentCategories)
+            {
+                var categoryIds = new List<int> { category.Id };
+
+                if (category.SubCategories != null)
+                {
+                    categoryIds.AddRange(
+                        category.SubCategories.Select(sc => sc.Id));
+                }
+
+                var thumbnail = await _context.Products
+     .Where(p =>
+         categoryIds.Contains(p.CategoryId) &&
+         p.IsActive)
+     .SelectMany(p => p.Images)
+     .OrderByDescending(pi => pi.IsPrimary)
+     .Select(pi => pi.ImageUrl)
+     .FirstOrDefaultAsync();
+
+                categoryThumbnails[category.Id] =
+                    thumbnail ?? "/images/placeholder.jpg";
+            }
+
+            ViewBag.CategoryThumbnails = categoryThumbnails;
+
+            // -----------------------------
             // FEATURED PRODUCTS
             // -----------------------------
             ViewBag.FeaturedProducts = await _context.Products

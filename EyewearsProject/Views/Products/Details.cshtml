@@ -54,7 +54,7 @@
                      src="@(primaryImage?.ImageUrl ?? "/images/placeholder.jpg")"
                      class="img-fluid rounded shadow-sm w-100"
                      alt="@Model.Name"
-                     style="max-height:520px; object-fit:contain; background:#f8f6f1;" />
+                     style="max-height:520px; object-fit:contain; background:#FBF6EE;" />
 
                 @if (Model.IsFeatured)
                 {
@@ -664,9 +664,9 @@
 
         document
             .querySelectorAll('.product-thumbnail')
-            .forEach(function (thumbnail) {
+            .forEach(function(thumbnail) {
 
-                thumbnail.addEventListener('click', function () {
+                thumbnail.addEventListener('click', function() {
 
                     const imageUrl =
                         this.getAttribute('data-image');
@@ -702,7 +702,7 @@
 
                 const selectedOption =
                     variantSelect.options[
-                        variantSelect.selectedIndex
+                    variantSelect.selectedIndex
                     ];
 
                 if (!selectedOption) {
@@ -758,7 +758,7 @@
 
             selectLensesBtn.addEventListener(
                 'click',
-                function (e) {
+                function(e) {
 
                     e.preventDefault();
 
@@ -768,7 +768,7 @@
 
                     const selectedOption =
                         variantSelect.options[
-                            variantSelect.selectedIndex
+                        variantSelect.selectedIndex
                         ];
 
                     if (!selectedOption) {
@@ -810,7 +810,7 @@
 
             quantityInput.addEventListener(
                 'input',
-                function () {
+                function() {
 
                     const max =
                         parseInt(

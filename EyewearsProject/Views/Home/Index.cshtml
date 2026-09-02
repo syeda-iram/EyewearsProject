@@ -6,27 +6,52 @@
     ViewData["Title"] = "Home";
     var categories = (List<Category>)ViewBag.Categories;
     var featured = (List<Product>)ViewBag.FeaturedProducts;
+    var categoryThumbnails = (Dictionary<int, string>)ViewBag.CategoryThumbnails;
 }
 
 <style>
     :root {
-        --evw-ink: #14213D;
-        --evw-parchment: #F7F2E9;
-        --evw-amber: #D9A441;
-        --evw-sage: #E9EDE6;
-        --evw-charcoal: #2B2B2B;
+        --evw-ink: #2B211B;
+        --evw-parchment: #FBF6EE;
+        --evw-amber: #B5652E;
+        --evw-sage: #F0E4D3;
+        --evw-charcoal: #2B211B;
+        --evw-deep-brown: #241A12;
+        --evw-deep-brown-2: #1B1209;
     }
 
     /* ================================
-           HOME HERO
-           ================================ */
+                   FULL-BLEED UTILITY
+
+                   Breaks a section out of the
+                   Bootstrap .container it sits
+                   in so it spans edge-to-edge,
+                   without touching _Layout.
+                   ================================ */
+
+    .evw-bleed {
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+        margin-bottom: 0;
+    }
+
+    .evw-bleed-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0 48px;
+    }
+
+    /* ================================
+                   HOME HERO
+                   ================================ */
 
     .evw-hero {
         background: var(--evw-parchment);
-        border-radius: 20px;
-        padding: 56px 48px;
-        margin-bottom: 40px;
-        overflow: hidden;
+        padding: 64px 0;
     }
 
         .evw-hero h1 {
@@ -45,7 +70,7 @@
         .evw-hero p.evw-sub {
             font-size: 17px;
             line-height: 1.6;
-            color: #4A5266;
+            color: #7A6C5D;
             max-width: 480px;
             margin-bottom: 28px;
         }
@@ -55,7 +80,7 @@
             align-items: center;
             gap: 8px;
             margin-top: 16px;
-            color: #596174;
+            color: #7A6C5D;
             font-size: 13px;
         }
 
@@ -68,8 +93,8 @@
     }
 
     /* ================================
-           HERO BUTTONS
-           ================================ */
+                   HERO BUTTONS
+                   ================================ */
 
     .evw-cta-primary {
         background: var(--evw-ink);
@@ -86,7 +111,7 @@
     }
 
         .evw-cta-primary:hover {
-            background: #0c1830;
+            background: #1F1712;
             color: #fff;
             transform: translateY(-1px);
             text-decoration: none;
@@ -95,7 +120,7 @@
     .evw-cta-secondary {
         background: #fff;
         color: var(--evw-ink);
-        border: 1px solid #E3DCC9;
+        border: 1px solid #E6D9C6;
         border-radius: 999px;
         padding: 13px 26px;
         font-weight: 600;
@@ -113,16 +138,37 @@
             text-decoration: none;
         }
 
+    .evw-cta-secondary-dark {
+        background: transparent;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, .35);
+        border-radius: 999px;
+        padding: 13px 26px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all .15s ease;
+    }
+
+        .evw-cta-secondary-dark:hover {
+            border-color: #fff;
+            color: #fff;
+            background: rgba(255, 255, 255, .08);
+            text-decoration: none;
+        }
+
     /* ================================
-           HERO IMAGE
-           ================================ */
+                   HERO IMAGE
+                   ================================ */
 
     .evw-focus-wrap {
         position: relative;
         border-radius: 16px;
         overflow: hidden;
         aspect-ratio: 4 / 3;
-        background: #ddd;
+        background: #E6D9C6;
     }
 
         .evw-focus-wrap img {
@@ -133,15 +179,63 @@
         }
 
     /* ================================
-           CATEGORIES
-    ================================ */
+                   STORY SECTION
+                   (dark band, image opposite
+                   side from hero, brand copy)
+                   ================================ */
+
+    .evw-story {
+        background: linear-gradient(135deg, var(--evw-deep-brown) 0%, var(--evw-deep-brown-2) 100%);
+        padding: 64px 0;
+    }
+
+        .evw-story .evw-story-copy h2 {
+            font-family: "Fraunces", serif;
+            font-size: 36px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 18px;
+            line-height: 1.15;
+        }
+
+        .evw-story .evw-story-copy p {
+            color: rgba(255, 255, 255, .72);
+            font-size: 15.5px;
+            line-height: 1.7;
+            max-width: 460px;
+            margin-bottom: 26px;
+        }
+
+        .evw-story .evw-story-copy .evw-highlight {
+            color: var(--evw-amber);
+        }
+
+    .evw-story-img-wrap {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        background: #3A2C1F;
+    }
+
+        .evw-story-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+    /* ================================
+                   CATEGORIES
+            ================================ */
 
     .evw-cat-tile {
-        display: block;
+        display: flex;
+        flex-direction: column;
         background: #fff;
-        border: 1px solid #ECE7DA;
+        border: 1px solid #E6D9C6;
         border-radius: 14px;
-        padding: 20px;
+        overflow: hidden;
         text-decoration: none;
         color: var(--evw-ink);
         transition: transform .15s ease, box-shadow .15s ease;
@@ -150,20 +244,42 @@
 
         .evw-cat-tile:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 24px rgba(20,33,61,.08);
+            box-shadow: 0 10px 24px rgba(43, 33, 27,.08);
             color: var(--evw-ink);
             text-decoration: none;
         }
 
-        .evw-cat-tile .evw-cat-name {
+    .evw-cat-tile-img-wrap {
+        aspect-ratio: 4 / 3;
+        background: var(--evw-parchment);
+        overflow: hidden;
+    }
+
+        .evw-cat-tile-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform .3s ease;
+        }
+
+    .evw-cat-tile:hover .evw-cat-tile-img-wrap img {
+        transform: scale(1.05);
+    }
+
+    .evw-cat-tile-body {
+        padding: 16px 18px;
+    }
+
+        .evw-cat-tile-body .evw-cat-name {
             font-family: "Fraunces", serif;
             font-size: 19px;
             font-weight: 600;
         }
 
     /* ================================
-           SECTION TITLES
-           ================================ */
+                   SECTION TITLES
+                   ================================ */
 
     .evw-section-title {
         font-family: "Fraunces", serif;
@@ -173,11 +289,11 @@
     }
 
     /* ================================
-           FEATURED PRODUCTS
-           ================================ */
+                   FEATURED PRODUCTS
+                   ================================ */
 
     .evw-product-card {
-        border: 1px solid #ECE7DA;
+        border: 1px solid #E6D9C6;
         border-radius: 14px;
         overflow: hidden;
         text-decoration: none;
@@ -189,7 +305,7 @@
     }
 
         .evw-product-card:hover {
-            box-shadow: 0 10px 24px rgba(20,33,61,.08);
+            box-shadow: 0 10px 24px rgba(43, 33, 27,.08);
             color: var(--evw-charcoal);
             transform: translateY(-2px);
             text-decoration: none;
@@ -210,7 +326,7 @@
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: .05em;
-            color: #8A8F98;
+            color: #9A8E7E;
         }
 
         .evw-product-card .evw-p-name {
@@ -219,8 +335,8 @@
         }
 
     /* ================================
-           TRUST STRIP
-           ================================ */
+                   TRUST STRIP
+                   ================================ */
 
     .evw-trust {
         background: var(--evw-sage);
@@ -246,14 +362,20 @@
         }
 
     /* ================================
-           MOBILE
-           ================================ */
+                   MOBILE
+                   ================================ */
+
+    @@media (max-width: 991px) {
+
+        .evw-bleed-inner {
+            padding: 0 24px;
+        }
+    }
 
     @@media (max-width: 767px) {
 
         .evw-hero {
-            padding: 32px 24px;
-            border-radius: 16px;
+            padding: 40px 0;
         }
 
             .evw-hero h1 {
@@ -266,14 +388,25 @@
 
         .evw-focus-wrap {
             aspect-ratio: 1 / 1;
+            margin-top: 24px;
         }
 
-        .evw-tryon-overlay {
-            padding: 11px 12px;
+        .evw-story {
+            padding: 40px 0;
+        }
+
+            .evw-story .evw-story-copy h2 {
+                font-size: 28px;
+            }
+
+        .evw-story-img-wrap {
+            aspect-ratio: 1 / 1;
+            margin-bottom: 24px;
         }
 
         .evw-cta-primary,
-        .evw-cta-secondary {
+        .evw-cta-secondary,
+        .evw-cta-secondary-dark {
             width: 100%;
             justify-content: center;
         }
@@ -282,65 +415,69 @@
 
 
 <!-- ==========================================
-     HERO
+     HERO (full-bleed)
      ========================================== -->
 
-<div class="evw-hero">
+<div class="evw-bleed evw-hero">
 
-    <div class="row align-items-center g-4">
+    <div class="evw-bleed-inner">
 
-        <!-- Hero Text -->
-        <div class="col-lg-6">
-            <h1>
-                See it.<br />
-                <span class="evw-highlight">Try it.</span><br />
-                Love it.
-            </h1>
+        <div class="row align-items-center g-4">
 
-            <p class="evw-sub">
-                Discover frames that match your style and
-                <strong>try them on virtually</strong> before you buy.
-                Find your perfect look without the guesswork.
-            </p>
+            <!-- Hero Text -->
+            <div class="col-lg-6">
+                <h1>
+                    See it.<br />
+                    <span class="evw-highlight">Try it.</span><br />
+                    Love it.
+                </h1>
 
-            <div class="d-flex gap-2 flex-wrap">
+                <p class="evw-sub">
+                    Discover frames that match your style and
+                    <strong>try them on virtually</strong> before you buy.
+                    Find your perfect look without the guesswork.
+                </p>
 
-                <!-- MAIN CTA -->
-                <a asp-controller="Products"
-                   asp-action="Index"
-                   class="evw-cta-primary">
-                    Start Shopping &rarr;
-                </a>
+                <div class="d-flex gap-2 flex-wrap">
 
-                <!-- SECONDARY CTA -->
-                <a asp-controller="TryOn"
-                   asp-action="Index"
-                   class="evw-cta-secondary">
-                    Try Frames On
-                </a>
+                    <!-- MAIN CTA -->
+                    <a asp-controller="Products"
+                       asp-action="Index"
+                       class="evw-cta-primary">
+                        Start Shopping &rarr;
+                    </a>
+
+                    <!-- SECONDARY CTA -->
+                    <a asp-controller="TryOn"
+                       asp-action="Index"
+                       class="evw-cta-secondary">
+                        Try Frames On
+                    </a>
+
+                </div>
+
+                <div class="evw-feature-text">
+                    <span class="evw-feature-dot"></span>
+                    Virtual Try-On made simple
+                </div>
+
+                <div class="evw-feature-text">
+                    <span class="evw-feature-dot"></span>
+                    Prescription-ready eyewear
+                </div>
 
             </div>
 
-            <div class="evw-feature-text">
-                <span class="evw-feature-dot"></span>
-                Virtual Try-On made simple
-            </div>
 
-            <div class="evw-feature-text">
-                <span class="evw-feature-dot"></span>
-                Prescription-ready eyewear
-            </div>
+            <!-- Hero Image -->
+            <div class="col-lg-6">
 
-        </div>
+                <div class="evw-focus-wrap">
 
+                    <img src="~/images/download.jpg"
+                         alt="Person wearing stylish glasses" />
 
-        <!-- Hero Image -->
-        <div class="col-lg-6">
-
-            <div class="evw-focus-wrap">
-
-                <img src="https://images.unsplash.com/photo-1577803645773-f96470509666?w=900&q=80"
-                     alt="Person wearing stylish glasses" />
+                </div>
 
             </div>
 
@@ -352,243 +489,320 @@
 
 
 <!-- ==========================================
-     CATEGORIES
+     STORY SECTION (full-bleed, dark, image
+     on the opposite side from the hero)
      ========================================== -->
 @{
-    var categoryCounts =
-        (Dictionary<int, int>)ViewBag.CategoryProductCounts;
+    var storyImage = Url.Content("~/images/take what you need photo.jpg");
 }
 
-@if (categories.Any())
-{
-    <div class="row g-3 mb-5">
+<div class="evw-bleed evw-story">
 
-        @foreach (var cat in categories.Take(4))
-        {
-            var productCount =
-                categoryCounts.GetValueOrDefault(cat.Id, 0);
+    <div class="evw-bleed-inner">
 
-            <div class="col-6 col-md-3">
+        <div class="row align-items-center g-4">
+
+            <!-- Image (left, opposite of hero) -->
+            <div class="col-lg-6 order-lg-1">
+
+                <div class="evw-story-img-wrap">
+
+                    <img src="@storyImage"
+                         alt="EyeCraft frames" />
+
+                </div>
+
+            </div>
+
+
+            <!-- Copy (right, opposite of hero) -->
+            <div class="col-lg-6 order-lg-2 evw-story-copy">
+
+                <h2>
+                    Crafted for Your <span class="evw-highlight">Vision</span>
+                </h2>
+
+                <p>
+                    EyeCraft was built on a simple idea — buying glasses online
+                    shouldn't mean guessing. Every frame can be tried on
+                    virtually before it ships, and every prescription is
+                    reviewed with care, so what arrives at your door is
+                    exactly right, every time.
+                </p>
 
                 <a asp-controller="Products"
                    asp-action="Index"
-                   asp-route-category="@cat.Name"
-                   class="evw-cat-tile">
-
-                    <div class="evw-cat-name">
-                        @cat.Name
-                    </div>
-
-                    <div class="text-muted small mt-1">
-                        @productCount @(productCount == 1 ? "Product" : "Products") &rarr;
-                    </div>
-
+                   class="evw-cta-secondary-dark">
+                    Explore the Collection &rarr;
                 </a>
 
             </div>
-        }
+
+        </div>
 
     </div>
-}
 
-<!-- ==========================================
-     CMS BANNER CAROUSEL
-     ========================================== -->
-@if (Model.Any())
-{
-    <div id="bannerCarousel"
-         class="carousel slide mb-5"
-         data-bs-ride="carousel">
+</div>
 
-        <div class="carousel-inner rounded-4 overflow-hidden">
 
-            @for (int i = 0; i < Model.Count; i++)
+<div class="container">
+
+    <!-- ==========================================
+         CATEGORIES
+         ========================================== -->
+    @{
+        var categoryCounts =
+            (Dictionary<int, int>)ViewBag.CategoryProductCounts;
+    }
+
+    @if (categories.Any())
+    {
+        <div class="row g-3 mb-5 mt-5">
+
+            @foreach (var cat in categories.Take(4))
             {
-                var banner = Model[i];
+                var productCount =
+                    categoryCounts.GetValueOrDefault(cat.Id, 0);
 
-                <div class="carousel-item @(i == 0 ? "active" : "")">
+                var thumb = cat.Name switch
+                {
+                    "Eyeglasses" => Url.Content("~/images/eyeglasses.jpg"),
+                    "Sunglasses" => Url.Content("~/images/sunglasses.jpg"),
+                    "Contact Lenses" => Url.Content("~/images/contact lenses.jpg"),
+                    "Accessories" => Url.Content("~/images/eye accessories.jpg"),
+                    _ => categoryThumbnails.GetValueOrDefault(cat.Id, "/images/placeholder.jpg")
+                };
 
-                    @if (!string.IsNullOrEmpty(banner.LinkUrl))
-                    {
-                        <a href="@banner.LinkUrl">
+                <div class="col-6 col-md-3">
+                    <a asp-controller="Products"
+                       asp-action="Index"
+                       asp-route-category="@cat.Name"
+                       class="evw-cat-tile">
 
-                            <img src="@banner.ImageUrl"
-                                 class="d-block w-100"
-                                 alt="@banner.Title"
-                                 style="max-height:320px; object-fit:cover;" />
+                        <div class="evw-cat-tile-img-wrap">
+                            <img src="@thumb" alt="@cat.Name" />
+                        </div>
 
-                        </a>
-                    }
-                    else
-                    {
-                        <img src="@banner.ImageUrl"
-                             class="d-block w-100"
-                             alt="@banner.Title"
-                             style="max-height:320px; object-fit:cover;" />
-                    }
+                        <div class="evw-cat-tile-body">
+
+                            <div class="evw-cat-name">
+                                @cat.Name
+                            </div>
+
+                            <div class="text-muted small mt-1">
+                                @productCount @(productCount == 1 ? "Product" : "Products") &rarr;
+                            </div>
+
+                        </div>
+
+                    </a>
 
                 </div>
             }
 
         </div>
+    }
 
-        @if (Model.Count > 1)
-        {
-            <button class="carousel-control-prev"
-                    type="button"
-                    data-bs-target="#bannerCarousel"
-                    data-bs-slide="prev">
+    <!-- ==========================================
+         CMS BANNER CAROUSEL
+         ========================================== -->
+    @if (Model.Any())
+    {
+        <div id="bannerCarousel"
+             class="carousel slide mb-5"
+             data-bs-ride="carousel">
 
-                <span class="carousel-control-prev-icon"></span>
+            <div class="carousel-inner rounded-4 overflow-hidden">
 
-            </button>
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    var banner = Model[i];
 
-            <button class="carousel-control-next"
-                    type="button"
-                    data-bs-target="#bannerCarousel"
-                    data-bs-slide="next">
+                    <div class="carousel-item @(i == 0 ? "active" : "")">
 
-                <span class="carousel-control-next-icon"></span>
+                        @if (!string.IsNullOrEmpty(banner.LinkUrl))
+                        {
+                            <a href="@banner.LinkUrl">
 
-            </button>
-        }
+                                <img src="@banner.ImageUrl"
+                                     class="d-block w-100"
+                                     alt="@banner.Title"
+                                     style="max-height:320px; object-fit:cover;" />
 
-    </div>
-}
-
-
-<!-- ==========================================
-     FEATURED FRAMES
-     ========================================== -->
-@if (featured.Any())
-{
-    <div class="d-flex justify-content-between align-items-end mb-3">
-
-        <span class="evw-section-title">
-            Featured Frames
-        </span>
-
-        <a asp-controller="Products"
-           asp-action="Index"
-           class="text-decoration-none">
-
-            View all &rarr;
-
-        </a>
-
-    </div>
-
-
-    <div class="row g-3 mb-5">
-
-        @foreach (var p in featured)
-        {
-            var img = p.Images.FirstOrDefault(i => i.IsPrimary)
-                      ?? p.Images.FirstOrDefault();
-
-            <div class="col-6 col-md-3">
-
-                <a asp-controller="Products"
-                   asp-action="Details"
-                   asp-route-id="@p.Id"
-                   class="evw-product-card">
-
-                    <img src="@(img?.ImageUrl ?? "/images/placeholder.jpg")"
-                         alt="@p.Name" />
-
-                    <div class="evw-p-body">
-
-                        <div class="evw-p-brand">
-                            @p.Brand?.Name
-                        </div>
-
-                        <div class="evw-p-name">
-                            @p.Name
-                        </div>
-
-                        <div>
-                            @((p.DiscountPrice ?? p.Price).ToPkr())
-                        </div>
+                            </a>
+                        }
+                        else
+                        {
+                            <img src="@banner.ImageUrl"
+                                 class="d-block w-100"
+                                 alt="@banner.Title"
+                                 style="max-height:320px; object-fit:cover;" />
+                        }
 
                     </div>
-
-                </a>
-
-            </div>
-        }
-
-    </div>
-}
-
-
-<!-- ==========================================
-     TRUST STRIP
-     ========================================== -->
-
-<div class="evw-trust mb-5">
-
-    <div class="row g-4">
-
-        <div class="col-md-4">
-
-            <div class="evw-trust-item">
-
-                <div class="evw-trust-icon">
-                    👓
-                </div>
-
-                <div>
-
-                    <strong>Virtual Try-On</strong>
-
-                    <div class="text-muted small">
-                        Try different frames before making your choice.
-                    </div>
-
-                </div>
+                }
 
             </div>
+
+            @if (Model.Count > 1)
+            {
+                <button class="carousel-control-prev"
+                        type="button"
+                        data-bs-target="#bannerCarousel"
+                        data-bs-slide="prev">
+
+                    <span class="carousel-control-prev-icon"></span>
+
+                </button>
+
+                <button class="carousel-control-next"
+                        type="button"
+                        data-bs-target="#bannerCarousel"
+                        data-bs-slide="next">
+
+                    <span class="carousel-control-next-icon"></span>
+
+                </button>
+            }
+
+        </div>
+    }
+
+
+    <!-- ==========================================
+         FEATURED FRAMES
+         ========================================== -->
+    @if (featured.Any())
+    {
+        <div class="d-flex justify-content-between align-items-end mb-3">
+
+            <span class="evw-section-title">
+                Featured Frames
+            </span>
+
+            <a asp-controller="Products"
+               asp-action="Index"
+               class="text-decoration-none">
+
+                View all &rarr;
+
+            </a>
 
         </div>
 
 
-        <div class="col-md-4">
+        <div class="row g-3 mb-5">
 
-            <div class="evw-trust-item">
+            @foreach (var p in featured)
+            {
+                var img = p.Images.FirstOrDefault(i => i.IsPrimary)
+                          ?? p.Images.FirstOrDefault();
 
-                <div class="evw-trust-icon">
-                    ✔️
+                <div class="col-6 col-md-3">
+
+                    <a asp-controller="Products"
+                       asp-action="Details"
+                       asp-route-id="@p.Id"
+                       class="evw-product-card">
+
+                        <img src="@(img?.ImageUrl ?? "/images/placeholder.jpg")"
+                             alt="@p.Name" />
+
+                        <div class="evw-p-body">
+
+                            <div class="evw-p-brand">
+                                @p.Brand?.Name
+                            </div>
+
+                            <div class="evw-p-name">
+                                @p.Name
+                            </div>
+
+                            <div>
+                                @((p.DiscountPrice ?? p.Price).ToPkr())
+                            </div>
+
+                        </div>
+
+                    </a>
+
                 </div>
+            }
 
-                <div>
+        </div>
+    }
 
-                    <strong>Prescription Ready</strong>
 
-                    <div class="text-muted small">
-                        Choose your frame and add your prescription.
+    <!-- ==========================================
+         TRUST STRIP
+         ========================================== -->
+
+    <div class="evw-trust mb-5">
+
+        <div class="row g-4">
+
+            <div class="col-md-4">
+
+                <div class="evw-trust-item">
+
+                    <div class="evw-trust-icon">
+                        👓
+                    </div>
+
+                    <div>
+
+                        <strong>Virtual Try-On</strong>
+
+                        <div class="text-muted small">
+                            Try different frames before making your choice.
+                        </div>
+
                     </div>
 
                 </div>
 
             </div>
 
-        </div>
 
+            <div class="col-md-4">
 
-        <div class="col-md-4">
+                <div class="evw-trust-item">
 
-            <div class="evw-trust-item">
+                    <div class="evw-trust-icon">
+                        ✔️
+                    </div>
 
-                <div class="evw-trust-icon">
-                    🚚
+                    <div>
+
+                        <strong>Prescription Ready</strong>
+
+                        <div class="text-muted small">
+                            Choose your frame and add your prescription.
+                        </div>
+
+                    </div>
+
                 </div>
 
-                <div>
+            </div>
 
-                    <strong>Delivered to Your Door</strong>
 
-                    <div class="text-muted small">
-                        Your eyewear, prepared and delivered with care.
+            <div class="col-md-4">
+
+                <div class="evw-trust-item">
+
+                    <div class="evw-trust-icon">
+                        🚚
+                    </div>
+
+                    <div>
+
+                        <strong>Delivered to Your Door</strong>
+
+                        <div class="text-muted small">
+                            Your eyewear, prepared and delivered with care.
+                        </div>
+
                     </div>
 
                 </div>
