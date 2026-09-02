@@ -1,4 +1,5 @@
-﻿@{
+﻿@using EyewearsProject.Areas.Admin
+@{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
 
     bool IsActive(string c) =>
@@ -15,6 +16,165 @@
         User.Claims.FirstOrDefault(c => c.Type.EndsWith("/role"))?.Value
         ?? User.Claims.FirstOrDefault(c => c.Type == "role")?.Value
         ?? "Staff";
+
+
+    // =========================================================
+    // ADMIN LEVEL ACCESS
+    // =========================================================
+
+    bool IsSuperAdminOrAdmin =
+        User.IsInRole(AdminRoles.SuperAdmin) ||
+        User.IsInRole(AdminRoles.Admin);
+
+
+    // =========================================================
+    // USER / ROLE MANAGEMENT
+    // Only SuperAdmin and Admin
+    // =========================================================
+
+    bool CanManageUsers =
+        IsSuperAdminOrAdmin;
+
+
+    // =========================================================
+    // PRODUCTS MODULE
+    // ProductManager + Admins
+    // =========================================================
+
+    bool CanAccessProducts =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("ProductManager");
+
+
+    // =========================================================
+    // CATEGORIES
+    // ProductManager + Admins
+    // =========================================================
+
+    bool CanAccessCategories =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("ProductManager");
+
+
+    // =========================================================
+    // BRANDS
+    // ProductManager + Admins
+    // =========================================================
+
+    bool CanAccessBrands =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("ProductManager");
+
+
+    // =========================================================
+    // INVENTORY
+    // ProductManager + InventoryManager + Admins
+    // =========================================================
+
+    bool CanAccessInventory =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("ProductManager") ||
+        User.IsInRole("InventoryManager");
+
+
+    // =========================================================
+    // ORDERS
+    // OrderManager + Admins
+    // =========================================================
+
+    bool CanAccessOrders =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("OrderManager");
+
+
+    // =========================================================
+    // RETURNS
+    // OrderManager + Admins
+    // =========================================================
+
+    bool CanAccessReturns =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("OrderManager");
+
+
+    // =========================================================
+    // MARKETING
+    // MarketingManager + Admins
+    // =========================================================
+
+    bool CanAccessMarketing =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("MarketingManager");
+
+
+    // =========================================================
+    // PROMOTIONS
+    // MarketingManager + Admins
+    // =========================================================
+
+    bool CanAccessPromotions =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("MarketingManager");
+
+
+    // =========================================================
+    // REVIEWS
+    // CustomerSupport + Admins
+    // =========================================================
+
+    bool CanAccessReviews =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("CustomerSupport");
+
+
+    // =========================================================
+    // VENDORS
+    // VendorManager + Admins
+    // =========================================================
+
+    bool CanAccessVendors =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("VendorManager");
+
+
+    // =========================================================
+    // PURCHASE ORDERS
+    // VendorManager + InventoryManager + Admins
+    // =========================================================
+
+    bool CanAccessPurchaseOrders =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("VendorManager") ||
+        User.IsInRole("InventoryManager");
+
+
+    // =========================================================
+    // CMS
+    // MarketingManager + Admins
+    // =========================================================
+
+    bool CanAccessCms =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("MarketingManager");
+
+
+    // =========================================================
+    // AUDIT LOGS
+    // Admin level only
+    // =========================================================
+
+    bool CanAccessAuditLogs =
+        IsSuperAdminOrAdmin;
+
+
+    // =========================================================
+    // REPORTS
+    // Admins + FinanceManager
+    // =========================================================
+
+    bool CanAccessReports =
+        IsSuperAdminOrAdmin ||
+        User.IsInRole("FinanceManager");
 }
 
 <!DOCTYPE html>
@@ -506,16 +666,12 @@
             </div>
 
 
-            <!-- ================================================= -->
-            <!-- NAVIGATION
-
-This section scrolls independently.
-                 ================================================= -->
-
             <nav class="admin-nav">
 
 
-                <!-- Dashboard -->
+                <!-- =========================================================
+         DASHBOARD
+         ========================================================= -->
 
                 <a class="admin-nav-link @(IsActive("Dashboard") ? "active" : "")"
                    asp-area="Admin"
@@ -531,244 +687,320 @@ This section scrolls independently.
                 </a>
 
 
-                <!-- User Management -->
+                <!-- =========================================================
+         USER MANAGEMENT
+         SuperAdmin / Admin only
+         ========================================================= -->
+                @if (CanManageUsers)
+                {
+                    <a class="admin-nav-link @(IsActive("Users") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Users"
+                       asp-action="Index">
+
+                        <i class="bi bi-people-fill"></i>
+
+                        <span>
+                            User Management
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         ROLE PERMISSIONS
+         SuperAdmin / Admin only
+         ========================================================= -->
+                @if (CanManageUsers)
+                {
+                    <a class="admin-nav-link @(IsActive("Roles") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Roles"
+                       asp-action="Index">
+
+                        <i class="bi bi-shield-lock-fill"></i>
+
+                        <span>
+                            Role Permissions
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         PRODUCTS
+         ProductManager
+         ========================================================= -->
+                @if (CanAccessProducts)
+                {
+                    <a class="admin-nav-link @(IsActive("Products") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Products"
+                       asp-action="Index">
+
+                        <i class="bi bi-box-seam-fill"></i>
+
+                        <span>
+                            Products
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         CATEGORIES
+         ProductManager
+         ========================================================= -->
+                @if (CanAccessCategories)
+                {
+                    <a class="admin-nav-link @(IsActive("Categories") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Categories"
+                       asp-action="Index">
+
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+
+                        <span>
+                            Categories
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         BRANDS
+         ProductManager
+         ========================================================= -->
+                @if (CanAccessBrands)
+                {
+                    <a class="admin-nav-link @(IsActive("Brands") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Brands"
+                       asp-action="Index">
+
+                        <i class="bi bi-tags-fill"></i>
+
+                        <span>
+                            Brands
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         INVENTORY
+         ProductManager / InventoryManager
+         ========================================================= -->
+                @if (CanAccessInventory)
+                {
+                    <a class="admin-nav-link @(IsActive("Inventory") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Inventory"
+                       asp-action="Index">
+
+                        <i class="bi bi-boxes"></i>
+
+                        <span>
+                            Inventory
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         ORDERS
+         OrderManager
+         ========================================================= -->
+                @if (CanAccessOrders)
+                {
+                    <a class="admin-nav-link @(IsActive("Orders") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Orders"
+                       asp-action="Index">
+
+                        <i class="bi bi-cart3"></i>
+
+                        <span>
+                            Orders
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         RETURNS
+         OrderManager
+         ========================================================= -->
+                @if (CanAccessReturns)
+                {
+                    <a class="admin-nav-link @(IsActive("Returns") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Returns"
+                       asp-action="Index">
+
+                        <i class="bi bi-arrow-return-left"></i>
+
+                        <span>
+                            Returns
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         PROMOTIONS
+         MarketingManager
+         ========================================================= -->
+                @if (CanAccessPromotions)
+                {
+                    <a class="admin-nav-link @(IsActive("Promotions") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Promotions"
+                       asp-action="Index">
+
+                        <i class="bi bi-percent"></i>
+
+                        <span>
+                            Promotions
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         REVIEWS
+         CustomerSupport
+         ========================================================= -->
+                @if (CanAccessReviews)
+                {
+                    <a class="admin-nav-link @(IsActive("Reviews") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Reviews"
+                       asp-action="Index">
+
+                        <i class="bi bi-star-fill"></i>
+
+                        <span>
+                            Reviews
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         VENDORS
+         VendorManager
+         ========================================================= -->
+                @if (CanAccessVendors)
+                {
+                    <a class="admin-nav-link @(IsActive("Vendors") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Vendors"
+                       asp-action="Index">
+
+                        <i class="bi bi-truck"></i>
+
+                        <span>
+                            Vendors
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         PURCHASE ORDERS
+         VendorManager / InventoryManager
+         ========================================================= -->
+                @if (CanAccessPurchaseOrders)
+                {
+                    <a class="admin-nav-link @(IsActive("PurchaseOrders") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="PurchaseOrders"
+                       asp-action="Index">
+
+                        <i class="bi bi-receipt"></i>
+
+                        <span>
+                            Purchase Orders
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         CMS
+         MarketingManager
+         ========================================================= -->
+                @if (CanAccessCms)
+                {
+                    <a class="admin-nav-link @(IsActive("Cms") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Cms"
+                       asp-action="Index">
+
+                        <i class="bi bi-file-earmark-text-fill"></i>
+
+                        <span>
+                            CMS
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         AUDIT LOGS
+         SuperAdmin / Admin only
+         ========================================================= -->
+                @if (CanAccessAuditLogs)
+                {
+                    <a class="admin-nav-link @(IsActive("AuditLogs") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="AuditLogs"
+                       asp-action="Index">
+
+                        <i class="bi bi-journal-check"></i>
+
+                        <span>
+                            Audit Logs
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- =========================================================
+         REPORTS
+         FinanceManager + Admins
+         ========================================================= -->
+                @if (CanAccessReports)
+                {
+                    <a class="admin-nav-link @(IsActive("Reports") ? "active" : "")"
+                       asp-area="Admin"
+                       asp-controller="Reports"
+                       asp-action="Index">
+
+                        <i class="bi bi-bar-chart-fill"></i>
+
+                        <span>
+                            Reports
+                        </span>
+
+                    </a>
+                }
 
-                <a class="admin-nav-link @(IsActive("Users") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Users"
-                   asp-action="Index">
-
-                    <i class="bi bi-people-fill"></i>
-
-                    <span>
-                        User Management
-                    </span>
-
-                </a>
-
-
-                <!-- Role Permissions -->
-
-                <a class="admin-nav-link @(IsActive("Roles") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Roles"
-                   asp-action="Index">
-
-                    <i class="bi bi-shield-lock-fill"></i>
-
-                    <span>
-                        Role Permissions
-                    </span>
-
-                </a>
-
-
-                <!-- Products -->
-
-                <a class="admin-nav-link @(IsActive("Products") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Products"
-                   asp-action="Index">
-
-                    <i class="bi bi-box-seam-fill"></i>
-
-                    <span>
-                        Products
-                    </span>
-
-                </a>
-
-
-                <!-- Categories -->
-
-                <a class="admin-nav-link @(IsActive("Categories") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Categories"
-                   asp-action="Index">
-
-                    <i class="bi bi-grid-3x3-gap-fill"></i>
-
-                    <span>
-                        Categories
-                    </span>
-
-                </a>
-
-
-                <!-- Brands -->
-
-                <a class="admin-nav-link @(IsActive("Brands") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Brands"
-                   asp-action="Index">
-
-                    <i class="bi bi-tags-fill"></i>
-
-                    <span>
-                        Brands
-                    </span>
-
-                </a>
-
-
-                <!-- Inventory -->
-
-                <a class="admin-nav-link @(IsActive("Inventory") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Inventory"
-                   asp-action="Index">
-
-                    <i class="bi bi-boxes"></i>
-
-                    <span>
-                        Inventory
-                    </span>
-
-                </a>
-
-
-                <!-- Orders -->
-
-                <a class="admin-nav-link @(IsActive("Orders") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Orders"
-                   asp-action="Index">
-
-                    <i class="bi bi-cart3"></i>
-
-                    <span>
-                        Orders
-                    </span>
-
-                </a>
-
-
-                <!-- Returns -->
-
-                <a class="admin-nav-link @(IsActive("Returns") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Returns"
-                   asp-action="Index">
-
-                    <i class="bi bi-arrow-return-left"></i>
-
-                    <span>
-                        Returns
-                    </span>
-
-                </a>
-
-
-                <!-- Promotions -->
-
-                <a class="admin-nav-link @(IsActive("Promotions") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Promotions"
-                   asp-action="Index">
-
-                    <i class="bi bi-percent"></i>
-
-                    <span>
-                        Promotions
-                    </span>
-
-                </a>
-
-
-                <!-- Reviews -->
-
-                <a class="admin-nav-link @(IsActive("Reviews") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Reviews"
-                   asp-action="Index">
-
-                    <i class="bi bi-star-fill"></i>
-
-                    <span>
-                        Reviews
-                    </span>
-
-                </a>
-
-
-                <!-- Vendors -->
-
-                <a class="admin-nav-link @(IsActive("Vendors") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Vendors"
-                   asp-action="Index">
-
-                    <i class="bi bi-truck"></i>
-
-                    <span>
-                        Vendors
-                    </span>
-
-                </a>
-
-
-                <!-- Purchase Orders -->
-
-                <a class="admin-nav-link @(IsActive("PurchaseOrders") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="PurchaseOrders"
-                   asp-action="Index">
-
-                    <i class="bi bi-receipt"></i>
-
-                    <span>
-                        Purchase Orders
-                    </span>
-
-                </a>
-
-
-                <!-- CMS -->
-
-                <a class="admin-nav-link @(IsActive("Cms") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Cms"
-                   asp-action="Index">
-
-                    <i class="bi bi-file-earmark-text-fill"></i>
-
-                    <span>
-                        CMS
-                    </span>
-
-                </a>
-
-
-                <!-- Audit Logs -->
-
-                <a class="admin-nav-link @(IsActive("AuditLogs") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="AuditLogs"
-                   asp-action="Index">
-
-                    <i class="bi bi-journal-check"></i>
-
-                    <span>
-                        Audit Logs
-                    </span>
-
-                </a>
-
-
-                <!-- Reports -->
-
-                <a class="admin-nav-link @(IsActive("Reports") ? "active" : "")"
-                   asp-area="Admin"
-                   asp-controller="Reports"
-                   asp-action="Index">
-
-                    <i class="bi bi-bar-chart-fill"></i>
-
-                    <span>
-                        Reports
-                    </span>
-
-                </a>
 
             </nav>
 

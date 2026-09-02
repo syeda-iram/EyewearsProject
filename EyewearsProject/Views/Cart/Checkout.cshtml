@@ -1016,8 +1016,8 @@
 
 
                 <!-- =================================================
-                     PAYMENT
-                ================================================= -->
+     PAYMENT METHOD
+================================================= -->
 
                 <div class="checkout-card">
 
@@ -1050,7 +1050,7 @@
                         </div>
 
 
-                        <!-- COD -->
+                        <!-- CASH ON DELIVERY -->
 
                         <div class="payment-option">
 
@@ -1071,43 +1071,81 @@
 
                         </div>
 
+
+                        <!-- JAZZCASH -->
+
+                        <div class="payment-option">
+
+                            <input type="radio"
+                                   asp-for="PaymentMethod"
+                                   value="JazzCash"
+                                   id="paymentJazzCash" />
+
+                            <label for="paymentJazzCash">
+
+                                <span class="payment-icon">
+                                    ▣
+                                </span>
+
+                                JazzCash
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- EASYPAISA -->
+
+                        <div class="payment-option">
+
+                            <input type="radio"
+                                   asp-for="PaymentMethod"
+                                   value="Easypaisa"
+                                   id="paymentEasypaisa" />
+
+                            <label for="paymentEasypaisa">
+
+                                <span class="payment-icon">
+                                    ▣
+                                </span>
+
+                                Easypaisa
+
+                            </label>
+
+                        </div>
+
                     </div>
 
 
                     <!-- =================================================
-                         CARD DETAILS
-                    ================================================= -->
+         CARD DETAILS
+    ================================================= -->
 
                     <div id="cardPaymentBox"
                          class="card-payment-box">
 
                         <div class="card-payment-header">
 
-                            <span class="card-payment-title">
+                            <strong>
                                 Card Details
-                            </span>
+                            </strong>
 
-                            <span class="card-payment-secure">
+                            <span>
                                 🔒 Secure Payment
                             </span>
 
                         </div>
 
 
-                        <!-- CARD HOLDER -->
-
                         <div class="checkout-field">
 
-                            <label for="cardHolderName"
-                                   class="checkout-label">
-
+                            <label class="checkout-label">
                                 Card Holder Name
-
                             </label>
 
                             <input type="text"
                                    id="cardHolderName"
-                                   name="cardHolderName"
                                    class="checkout-input"
                                    placeholder="Name as shown on card"
                                    autocomplete="cc-name" />
@@ -1115,53 +1153,33 @@
                         </div>
 
 
-                        <!-- CARD NUMBER -->
-
                         <div class="checkout-field">
 
-                            <label for="cardNumber"
-                                   class="checkout-label">
-
+                            <label class="checkout-label">
                                 Card Number
-
                             </label>
 
-                            <div class="card-input-wrapper">
-
-                                <input type="text"
-                                       id="cardNumber"
-                                       name="cardNumber"
-                                       class="checkout-input"
-                                       placeholder="1234 5678 9012 3456"
-                                       maxlength="19"
-                                       inputmode="numeric"
-                                       autocomplete="cc-number" />
-
-                                <span class="card-input-icon">
-                                    ▣
-                                </span>
-
-                            </div>
+                            <input type="text"
+                                   id="cardNumber"
+                                   class="checkout-input"
+                                   placeholder="1234 5678 9012 3456"
+                                   maxlength="19"
+                                   inputmode="numeric"
+                                   autocomplete="cc-number" />
 
                         </div>
 
-
-                        <!-- EXPIRY + CVV -->
 
                         <div class="checkout-row">
 
                             <div class="checkout-field">
 
-                                <label for="cardExpiry"
-                                       class="checkout-label">
-
+                                <label class="checkout-label">
                                     Expiry Date
-
                                 </label>
 
                                 <input type="text"
                                        id="cardExpiry"
-                                       name="cardExpiry"
                                        class="checkout-input"
                                        placeholder="MM/YY"
                                        maxlength="5"
@@ -1173,16 +1191,12 @@
 
                             <div class="checkout-field">
 
-                                <label for="cardCvv"
-                                       class="checkout-label">
-
+                                <label class="checkout-label">
                                     CVV
-
                                 </label>
 
                                 <input type="password"
                                        id="cardCvv"
-                                       name="cardCvv"
                                        class="checkout-input"
                                        placeholder="•••"
                                        maxlength="4"
@@ -1211,8 +1225,99 @@
 
                     </div>
 
-                </div>
 
+                    <!-- =================================================
+         JAZZCASH DETAILS
+    ================================================= -->
+
+                    <div id="jazzCashPaymentBox"
+                         class="card-payment-box wallet-payment-box">
+
+                        <div class="card-payment-header">
+
+                            <strong>
+                                JazzCash Details
+                            </strong>
+
+                            <span>
+                                📱 Mobile Wallet
+                            </span>
+
+                        </div>
+
+
+                        <div class="checkout-field">
+
+                            <label class="checkout-label">
+                                JazzCash Mobile Number
+                            </label>
+
+                            <input type="text"
+                                   id="jazzCashNumber"
+                                   class="checkout-input"
+                                   placeholder="03XX XXXXXXX"
+                                   maxlength="11"
+                                   inputmode="numeric" />
+
+                        </div>
+
+
+                        <div class="card-payment-note">
+
+                            Enter the JazzCash mobile number you will use for
+                            this payment.
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+         EASYPAISA DETAILS
+    ================================================= -->
+
+                    <div id="easypaisaPaymentBox"
+                         class="card-payment-box wallet-payment-box">
+
+                        <div class="card-payment-header">
+
+                            <strong>
+                                Easypaisa Details
+                            </strong>
+
+                            <span>
+                                📱 Mobile Wallet
+                            </span>
+
+                        </div>
+
+
+                        <div class="checkout-field">
+
+                            <label class="checkout-label">
+                                Easypaisa Mobile Number
+                            </label>
+
+                            <input type="text"
+                                   id="easypaisaNumber"
+                                   class="checkout-input"
+                                   placeholder="03XX XXXXXXX"
+                                   maxlength="11"
+                                   inputmode="numeric" />
+
+                        </div>
+
+
+                        <div class="card-payment-note">
+
+                            Enter the Easypaisa mobile number you will use for
+                            this payment.
+
+                        </div>
+
+                    </div>
+
+                </div>
 
                 <!-- =================================================
                      PLACE ORDER
@@ -1639,9 +1744,8 @@
 
         }
 
-
         // =========================================================
-        // CARD PAYMENT TOGGLE
+        // PAYMENT METHOD TOGGLE
         // =========================================================
 
         const paymentCard =
@@ -1650,8 +1754,21 @@
         const paymentCod =
             document.getElementById('paymentCod');
 
+        const paymentJazzCash =
+            document.getElementById('paymentJazzCash');
+
+        const paymentEasypaisa =
+            document.getElementById('paymentEasypaisa');
+
+
         const cardPaymentBox =
             document.getElementById('cardPaymentBox');
+
+        const jazzCashPaymentBox =
+            document.getElementById('jazzCashPaymentBox');
+
+        const easypaisaPaymentBox =
+            document.getElementById('easypaisaPaymentBox');
 
 
         const cardHolderName =
@@ -1670,33 +1787,71 @@
             document.getElementById('cardError');
 
 
-        function toggleCardPayment() {
+        function hidePaymentBoxes() {
 
-            if (!paymentCard || !paymentCod || !cardPaymentBox)
-                return;
-
-
-            if (paymentCard.checked) {
-
-                cardPaymentBox.classList.add('show');
-
-            }
-            else {
-
+            if (cardPaymentBox) {
                 cardPaymentBox.classList.remove('show');
-
-                cardError.style.display = 'none';
-
             }
 
+            if (jazzCashPaymentBox) {
+                jazzCashPaymentBox.classList.remove('show');
+            }
+
+            if (easypaisaPaymentBox) {
+                easypaisaPaymentBox.classList.remove('show');
+            }
+
+            if (cardError) {
+                cardError.style.display = 'none';
+            }
         }
 
+
+        function togglePaymentMethod() {
+
+            hidePaymentBoxes();
+
+
+            if (paymentCard && paymentCard.checked) {
+
+                if (cardPaymentBox) {
+                    cardPaymentBox.classList.add('show');
+                }
+
+                return;
+            }
+
+
+            if (paymentJazzCash && paymentJazzCash.checked) {
+
+                if (jazzCashPaymentBox) {
+                    jazzCashPaymentBox.classList.add('show');
+                }
+
+                return;
+            }
+
+
+            if (paymentEasypaisa && paymentEasypaisa.checked) {
+
+                if (easypaisaPaymentBox) {
+                    easypaisaPaymentBox.classList.add('show');
+                }
+
+                return;
+            }
+        }
+
+
+        // =========================================================
+        // PAYMENT EVENTS
+        // =========================================================
 
         if (paymentCard) {
 
             paymentCard.addEventListener(
                 'change',
-                toggleCardPayment
+                togglePaymentMethod
             );
 
         }
@@ -1706,178 +1861,34 @@
 
             paymentCod.addEventListener(
                 'change',
-                toggleCardPayment
+                togglePaymentMethod
             );
 
         }
 
 
-        toggleCardPayment();
+        if (paymentJazzCash) {
 
-
-        // =========================================================
-        // CARD NUMBER FORMATTING
-        // =========================================================
-
-        if (cardNumber) {
-
-            cardNumber.addEventListener(
-                'input',
-                function() {
-
-                    let value =
-                        this.value.replace(/\D/g, '');
-
-                    value =
-                        value.substring(0, 16);
-
-                    let formatted =
-                        value.match(/.{1,4}/g);
-
-                    this.value =
-                        formatted
-                            ? formatted.join(' ')
-                            : '';
-
-                }
+            paymentJazzCash.addEventListener(
+                'change',
+                togglePaymentMethod
             );
 
         }
 
 
-        // =========================================================
-        // EXPIRY DATE FORMATTING
-        // =========================================================
+        if (paymentEasypaisa) {
 
-        if (cardExpiry) {
-
-            cardExpiry.addEventListener(
-                'input',
-                function() {
-
-                    let value =
-                        this.value.replace(/\D/g, '');
-
-                    value =
-                        value.substring(0, 4);
-
-                    if (value.length >= 3) {
-
-                        this.value =
-                            value.substring(0, 2) +
-                            '/' +
-                            value.substring(2);
-
-                    }
-                    else {
-
-                        this.value = value;
-
-                    }
-
-                }
+            paymentEasypaisa.addEventListener(
+                'change',
+                togglePaymentMethod
             );
 
         }
 
 
-        // =========================================================
-        // CVV — NUMBERS ONLY
-        // =========================================================
+        togglePaymentMethod();
 
-        if (cardCvv) {
-
-            cardCvv.addEventListener(
-                'input',
-                function() {
-
-                    this.value =
-                        this.value
-                            .replace(/\D/g, '')
-                            .substring(0, 4);
-
-                }
-            );
-
-        }
-
-
-        // =========================================================
-        // CARD PAYMENT SIMULATION VALIDATION
-        // =========================================================
-
-        const checkoutForm =
-            document.getElementById('checkoutForm');
-
-
-        if (checkoutForm) {
-
-            checkoutForm.addEventListener(
-                'submit',
-                function(event) {
-
-                    // Only validate card fields
-                    // when Card Payment is selected.
-
-                    if (!paymentCard || !paymentCard.checked)
-                        return;
-
-
-                    const holder =
-                        cardHolderName.value.trim();
-
-                    const number =
-                        cardNumber.value.replace(/\s/g, '');
-
-                    const expiry =
-                        cardExpiry.value.trim();
-
-                    const cvv =
-                        cardCvv.value.trim();
-
-
-                    const validHolder =
-                        holder.length >= 2;
-
-                    const validNumber =
-                        /^\d{16}$/.test(number);
-
-                    const validExpiry =
-                        /^\d{2}\/\d{2}$/.test(expiry);
-
-                    const validCvv =
-                        /^\d{3,4}$/.test(cvv);
-
-
-                    if (
-                        !validHolder ||
-                        !validNumber ||
-                        !validExpiry ||
-                        !validCvv
-                    ) {
-
-                        event.preventDefault();
-
-                        cardError.style.display =
-                            'block';
-
-                        cardPaymentBox.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
-
-                        return;
-
-                    }
-
-
-                    cardError.style.display =
-                        'none';
-
-                }
-            );
-
-        }
 
     </script>
 

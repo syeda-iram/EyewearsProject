@@ -51,17 +51,15 @@ namespace EyewearsProject.Areas.Admin.Controllers
                 .OrderBy(b => b.Name)
                 .ToListAsync();
 
-            ViewBag.Categories = new SelectList(
-                parentCategories,
-                "Id",
-                "Name",
-                selectedCategoryId);
+            ViewBag.Categories = await _context.Categories
+                .Where(c => c.ParentCategoryId == null)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
 
-            ViewBag.SubCategories = new SelectList(
-                subCategories,
-                "Id",
-                "Name",
-                selectedSubCategoryId);
+            ViewBag.SubCategories = await _context.Categories
+                .Where(c => c.ParentCategoryId != null)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
 
             ViewBag.Brands = new SelectList(
                 brands,

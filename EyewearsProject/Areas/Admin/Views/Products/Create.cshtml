@@ -1,4 +1,5 @@
-﻿@model ProductFormViewModel
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model ProductFormViewModel
 
 @{
     ViewData["Title"] = "Create New Product";
@@ -145,7 +146,8 @@
 
                                 <select asp-for="CategoryId"
                                         class="form-select"
-                                        asp-items="ViewBag.Categories">
+                                        asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))"
+                                        id="categorySelect">
 
                                     <option value="">
                                         -- Select Category --
@@ -175,11 +177,17 @@
 
                                 <select asp-for="SubCategoryId"
                                         class="form-select"
-                                        asp-items="ViewBag.SubCategories">
+                                        id="subCategorySelect">
 
-                                    <option value="">
-                                        -- Select Subcategory --
-                                    </option>
+                                    <option value="">-- Select Subcategory --</option>
+
+                                    @foreach (var subCategory in ViewBag.SubCategories)
+                                    {
+                                        <option value="@subCategory.Id"
+                                                data-parent-id="@subCategory.ParentCategoryId">
+                                            @subCategory.Name
+                                        </option>
+                                    }
 
                                 </select>
 
@@ -1909,6 +1917,72 @@
 
     <partial name="_ValidationScriptsPartial" />
 
+    <script>
+
+        const categorySelect =
+            document.getElementById("categorySelect");
+
+        const subCategorySelect =
+            document.getElementById("subCategorySelect");
+
+
+        function filterSubCategories() {
+
+            if (!categorySelect || !subCategorySelect)
+                return;
+
+            const selectedCategoryId =
+                categorySelect.value;
+
+            const options =
+                subCategorySelect.querySelectorAll(
+                    "option[data-parent-id]"
+                );
+
+
+            options.forEach(option => {
+
+                if (
+                    option.dataset.parentId ===
+                    selectedCategoryId
+                ) {
+                    option.style.display = "";
+                }
+                else {
+                    option.style.display = "none";
+                }
+
+            });
+
+
+            // Check currently selected subcategory
+            const selectedOption =
+                subCategorySelect.options[
+                subCategorySelect.selectedIndex
+                ];
+
+
+            if (
+                selectedOption &&
+                selectedOption.dataset.parentId &&
+                selectedOption.dataset.parentId !== selectedCategoryId
+            ) {
+                subCategorySelect.value = "";
+            }
+
+        }
+
+
+        categorySelect?.addEventListener(
+            "change",
+            filterSubCategories
+        );
+
+
+        // Run when page loads
+        filterSubCategories();
+
+    </script>
 
     <!-- =========================================================
          TRY-ON SCRIPT

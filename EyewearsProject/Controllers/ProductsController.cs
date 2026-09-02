@@ -29,6 +29,7 @@ namespace EyewearsProject.Controllers
         // =====================================================
 
         public async Task<IActionResult> Index(
+            string? search,
             string? category,
             int? subCategoryId,
             int? brandId,
@@ -59,6 +60,32 @@ namespace EyewearsProject.Controllers
                 .Include(p => p.ProductTags)
                 .Where(p => p.IsActive)
                 .AsQueryable();
+
+            // =================================================
+            // SEARCH
+            // =================================================
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    p.Sku.Contains(search) ||
+                    (p.Description != null && p.Description.Contains(search)) ||
+                    (p.Brand != null && p.Brand.Name.Contains(search)) ||
+                    (p.Category != null && p.Category.Name.Contains(search)) ||
+                    (p.SubCategory != null && p.SubCategory.Name.Contains(search)) ||
+                    (p.Gender != null && p.Gender.Contains(search)) ||
+                    (p.Material != null && p.Material.Contains(search)) ||
+                    (p.Shape != null && p.Shape.Contains(search)) ||
+                    p.Variants.Any(v => v.Color.Contains(search)) ||
+                    p.ProductTags.Any(t => t.Name.Contains(search)) ||
+                    p.Specifications.Any(s =>
+                        s.Name.Contains(search) ||
+                        s.Value.Contains(search))
+                );
+            }
 
             // =================================================
             // CATEGORY
@@ -328,6 +355,7 @@ namespace EyewearsProject.Controllers
             // SELECTED FILTERS
             // =================================================
 
+            ViewBag.Search = search;
             ViewBag.SelectedCategory = category;
             ViewBag.SelectedSubCategoryId = subCategoryId;
             ViewBag.SelectedBrandId = brandId;
